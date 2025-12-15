@@ -1,14 +1,14 @@
-from typing import Union
+from typing import TypeVar
 import pytest
 
-Number = Union[int, float]
+T = TypeVar("T", int, float)
 
 
-def add(a: Number, b: Number) -> Number:
+def add(a: T, b: T) -> T:
     return a + b
 
 
-def divide(a: Number, b: Number) -> float:
+def divide(a: int | float, b: int | float) -> float:
     if b == 0:
         raise ValueError("Cannot divide by zero")
     return a / b
