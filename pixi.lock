@@ -1776,7 +1776,7 @@ packages:
 - pypi: ./
   name: database-builder
   version: 0.1.0
-  sha256: f4083b6539b828f8ddc0f0f5e09af2f39abf879e1de98675984d13d5b7a0e8f0
+  sha256: 2a7e59b82f0b91a8b4c4d0f9a770b790da381b67ecd4fdeb2587bd7112070dee
   requires_python: '>=3.11'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/dav1d-1.2.1-hd590300_0.conda
