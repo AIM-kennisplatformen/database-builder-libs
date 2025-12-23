@@ -3167,7 +3167,7 @@ packages:
 - pypi: .
   name: database-builder
   version: 0.1.0
-  sha256: 00cd834bf0acf7ed88a3219010c624bebcec3f2e68b6e175942f7825fd38ab76
+  sha256: 5132585e24c8e8df99d2f8dc591c57857b9c52e995941585f9053c8d7f5c2d77
   requires_dist:
   - typedb-driver==2.29.2
   - pyzotero

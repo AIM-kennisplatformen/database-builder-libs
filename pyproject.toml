@@ -91,7 +91,7 @@ exclude = [".pixi", "tests"]
 [tool.pixi.tasks]
 lint = "ruff check"
 typecheck = "mypy ."
-test = "pytest -q"
+test = "pytest -s"
 
 [tool.pixi.activation.env]
 PYTHONNOUSERSITE = "1"
