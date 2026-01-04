@@ -23,7 +23,8 @@ dev = [
   "types-requests",
   "types-openpyxl",
   "isort",
-  "httpretty"
+  "httpretty",
+  "qdrant-client"
 ]
 
 [build-system]
