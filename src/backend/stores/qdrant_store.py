@@ -1,10 +1,9 @@
-from typing import Final
+from typing import Final, Sequence, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
 from backend.config import settings
 from backend.stores.store import Datastore
-
 
 class QdrantDatastore(Datastore):
     def __init__(self) -> None:
@@ -27,39 +26,34 @@ class QdrantDatastore(Datastore):
                 ),
             )
 
-    def connect(self) -> None:
-        pass
-
-    def save(self, data: dict) -> None:
+    def save(self,
+        id: str | int,
+        vector: Sequence[float],
+        payload: Optional[dict] = None,
+    ) -> None:
+        """Save a single point to the collection."""
         point = PointStruct(
-            id=data["id"],
-            vector=data["vector"],
-            payload=data.get("payload"),
+            id=id,
+            vector=list(vector),
+            payload=payload,
         )
         self.client.upsert(
             collection_name=self.collection,
             points=[point],
         )
-        
-        
-        
+
+
 if __name__ == "__main__":
-    from backend.config import settings
-    from qdrant_client import QdrantClient
+    import random
+    import uuid
 
-    store = QdrantDatastore()
-    test_point = {
-        "id": 1,
-        "vector": [0.01] * store.vector_size,
-        "payload": {"text": "Hello Qdrant from Docker"}
-    }
-    store.save(test_point)
-    print("Saved successfully!")
+    ds = QdrantDatastore()
 
-    client = QdrantClient(url=settings.QDRANT_URL)
-    retrieved = client.retrieve(
-        collection_name=settings.QDRANT_COLLECTION,
-        ids=[test_point["id"]]
-    )
-    print("Retrieved point from Qdrant:")
-    print(retrieved)
+    test_vector = [random.random() for _ in range(ds.vector_size)]
+    test_id = str(uuid.uuid4())
+    test_payload = {"text": "Hello, Qdrant!"}
+
+    print("Saving point...")
+    ds.save(id=test_id, vector=test_vector, payload=test_payload)
+
+    print("Point saved successfully!")
