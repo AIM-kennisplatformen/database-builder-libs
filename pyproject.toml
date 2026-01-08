@@ -55,6 +55,7 @@ pkg-config = ">=0.29.2"
 # torch
 pytorch = ">=2.2.2"
 torchvision = ">=0.17"
+testcontainers = ">=4.10.0,<5"
 
 [tool.pixi.pypi-dependencies]
 database_builder = { path = ".", editable = true }

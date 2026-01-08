@@ -12,9 +12,6 @@ class TypeDbDatastore(Datastore):
     interacting with a TypeDB database.
 
     Data in TypeDB can be inserted, queried, and managed using TypeDB's schema and query language.
-
-    Due to the implementation of the typedb-driver for TypeDB 2.x this datastore needs separate 
-    methods for inserting, fetching, deleting, and updating data.
     """
     def __init__(self) -> None:
         self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(address=settings.TYPEDB_URI)
@@ -29,10 +26,11 @@ class TypeDbDatastore(Datastore):
         current_dir = Path(__file__).parent
         schema_path = current_dir / 'schema.tql'
 
-        with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
-            with open(schema_path, 'r', encoding='utf-8') as f:
-                schema = f.read()
-                transaction.query.define(schema)
+        if schema_path.exists():
+            with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
+                with open(schema_path, 'r', encoding='utf-8') as f:
+                    schema = f.read()
+                    transaction.query.define(schema)
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
@@ -49,26 +47,29 @@ class TypeDbDatastore(Datastore):
     def save(self, query: str, options: TypeDBOptions = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.insert(query, options)
-            transaction.commit()
 
     def delete(self, query: str, options: TypeDBOptions = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.delete(query, options)
-            transaction.commit()
 
     def fetch(self, query: str, options: TypeDBOptions = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.fetch(query, options)
-            results = [result.map() for result in iterator]
-            return results
+            return list(iterator)
 
     def get(self, query: str, options: TypeDBOptions = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.get(query, options)
-            results = [result.map() for result in iterator]
+            results = []
+            for result in iterator:
+                if hasattr(result, "map") and callable(result.map):
+                    results.append(result.map())
+                elif hasattr(result, "map"):
+                    results.append(result.map)
+                else:
+                    results.append(result)
             return results
 
     def update(self, query: str, options: TypeDBOptions = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.update(query, options)
-            transaction.commit()
