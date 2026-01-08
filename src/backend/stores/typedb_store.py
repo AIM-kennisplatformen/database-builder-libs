@@ -20,6 +20,8 @@ class TypeDbDatastore(Datastore):
         self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(address=settings.TYPEDB_URI)
         self.database: Final[str] = settings.TYPEDB_DATABASE
 
+        assert self.typedb_driver is not None, "TypeDB driver is not initialized."
+        assert self.database is not None, "TypeDB database name is not set."
 
         if not self.typedb_driver.databases.contains(self.database):
             self.typedb_driver.databases.create(self.database)
@@ -34,9 +36,6 @@ class TypeDbDatastore(Datastore):
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
-        assert self.typedb_driver is not None, "TypeDB driver is not initialized."
-        assert self.database is not None, "TypeDB database name is not set."
-
         session: TypeDBSession
         transaction: TypeDBTransaction
         with self.typedb_driver.session(self.database, session_type) as session:
