@@ -42,7 +42,7 @@ platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 [tool.pixi.dependencies]
 python = "3.12.*"
 # Dotenv is for reading .env files
-python-dotenv = ">=1.1.0"
+python-dotenv = ">=1.1.0,<2"
 # Async network lib
 anyio = ">=4.9.0"
 # Web framework
@@ -92,6 +92,7 @@ exclude = [".pixi", "tests"]
 lint = "ruff check"
 typecheck = "mypy ."
 test = "pytest -s"
+app = "python -m src.backend.main"
 
 [tool.pixi.activation.env]
 PYTHONNOUSERSITE = "1"

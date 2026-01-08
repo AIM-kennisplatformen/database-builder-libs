@@ -1,11 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
-class Datastore(ABC):
 
-    @abstractmethod
-    def connect(self) -> None:
-        pass
 
-    @abstractmethod
-    def save(self, data: dict) -> None:
-        pass
+class Datastore(ABC):  # noqa: B024
+    """
+    Abstract base class that should be implemented by datasources to save entities and relations to various datastores.
+    Exists for the purpose of typehinting.
+    """
