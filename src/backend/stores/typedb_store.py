@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 from typedb.driver import SessionType, TransactionType, TypeDB, TypeDBDriver, TypeDBOptions, TypeDBSession, TypeDBTransaction
 
 from backend.config import settings
@@ -33,14 +33,14 @@ class TypeDbDatastore(Datastore):
                 transaction.query.define(schema)
 
     @contextmanager
-    def _query(self, session: SessionType, transaction: TransactionType):
+    def _query(self, session_type: SessionType, transaction_type: TransactionType):
         assert self.typedb_driver is not None, "TypeDB driver is not initialized."
         assert self.database is not None, "TypeDB database name is not set."
 
         session: TypeDBSession
         transaction: TypeDBTransaction
-        with self.typedb_driver.session(self.database, session) as session:
-            with session.transaction(transaction) as transaction:
+        with self.typedb_driver.session(self.database, session_type) as session:
+            with session.transaction(transaction_type) as transaction:
                 try:
                     yield transaction
                 finally:
@@ -57,13 +57,13 @@ class TypeDbDatastore(Datastore):
             transaction.query.delete(query, options)
             transaction.commit()
 
-    def fetch(self, query: str, options: TypeDBOptions = None) -> dict:
+    def fetch(self, query: str, options: TypeDBOptions = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.fetch(query, options)
             results = [result.map() for result in iterator]
             return results
 
-    def get(self, query: str, options: TypeDBOptions = None) -> dict:
+    def get(self, query: str, options: TypeDBOptions = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.get(query, options)
             results = [result.map() for result in iterator]
