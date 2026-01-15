@@ -1,7 +1,7 @@
 [project]
 authors = [{name = "Hoog-v", email = "hogeweyv@gmail.com"}]
 name = "database-builder"
-requires-python = ">= 3.12"
+requires-python = ">= 3.11"
 version = "0.1.0"
 dependencies = [
     "typedb-driver==2.29.2",
@@ -41,7 +41,7 @@ packages = ["src/backend"]
 channels = ["https://fast.prefix.dev/conda-forge",
   "https://repo.prefix.dev/pypdfium2-public",
   "https://repo.prefix.dev/pytorch"]
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+platforms = ["linux-64","osx-arm64", "win-64"]
 
 [tool.pixi.dependencies]
 # Dotenv is for reading .env files
