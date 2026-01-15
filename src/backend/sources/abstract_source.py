@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -13,12 +13,13 @@ class Content(BaseModel):
 
 
 class UUIDdata(BaseModel):
-    def __call__(self, artefacts_ref: list[str]) -> list[UUID]:
-        pass
+    @abstractmethod
+    def __call__(self, artefacts_ref: list[str]) -> list[UUID]: ...
 
+    @abstractmethod
     def check_uuid(self, artefact_ref: str) -> UUID:
         """checks in the database if an artefact is already present"""
-        pass
+        ...
 
 
 class AbstractSource(ABC, BaseModel):
@@ -30,19 +31,22 @@ class AbstractSource(ABC, BaseModel):
 
     uuididata: UUIDdata = UUIDdata()
 
+    @abstractmethod
     def connect_to_source(self) -> None:
         """Abstract method to connect to the source."""
-        pass
+        ...
 
+    @abstractmethod
     def get_list_artefacts(
         self, last_synced: Optional[datetime]
     ) -> list[tuple[UUID, datetime]]:
         """Abstract method to preprocess data from the source."""
-        pass
+        ...
 
-    def get_content(self, artefacts: list[UUID, datetime]) -> list[Content]:
+    @abstractmethod
+    def get_content(self, artefacts: list[tuple[UUID, datetime]]) -> list[Content]:
         """Abstract method to get data from the source."""
-        pass
+        ...
 
     def __call__(self, last_synced: Optional[datetime]) -> list[Content]:
         self.connect_to_source()
