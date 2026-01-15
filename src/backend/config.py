@@ -14,6 +14,9 @@ if project is not None:
 class Settings:
     TYPEDB_URI: Final[str] = os.getenv("TYPEDB_URI", "localhost:1729")
     TYPEDB_DATABASE: Final[str] = os.getenv("TYPEDB_DB", "knowledge_platform")
+    ZOTERO_LIBRARY_ID: Final[str] = os.getenv("ZOTERO_LIBRARY_ID", "myuserid")
+    ZOTERO_LIBRARY_TYPE: Final[str] = os.getenv("ZOTERO_LIBRARY_TYPE", "user")
+    ZOTERO_API_KEY: Final[str] = os.getenv("ZOTERO_API_KEY", "myuserkey")
 
 
 settings = Settings()

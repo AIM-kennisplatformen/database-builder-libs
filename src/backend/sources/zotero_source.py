@@ -1,16 +1,29 @@
 from pathlib import Path
 import shutil
 from typing import Any, List
+from pydantic import PrivateAttr
 from pyzotero import zotero
 
 from loguru import logger
+from backend.sources.abstract_source import AbstractSource
+from backend.config import Settings
 
 
-class ZoteroSource:
-    def __init__(self, library_id: str, library_type: str, api_key: str) -> None:
-        self.zotero = zotero.Zotero(
-            library_id=library_id, library_type=library_type, api_key=api_key
+class ZoteroSource(AbstractSource):
+    _zotero: zotero.Zotero = PrivateAttr(default=None)
+
+    def model_post_init(self, __context: Any) -> None:
+        """Called automatically by Pydantic after initialization."""
+        self.connect_to_source()
+
+    def connect_to_source(self) -> None:
+        """Abstract method to connect to the source."""
+        self._zotero = zotero.Zotero(
+            library_id=Settings.ZOTERO_LIBRARY_ID,
+            library_type=Settings.ZOTERO_LIBRARY_TYPE,
+            api_key=Settings.ZOTERO_API_KEY,
         )
+        pass
 
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection
@@ -29,8 +42,8 @@ class ZoteroSource:
             The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
-        return self.zotero.everything(
-            self.zotero.collection_items_top(collection_id, limit=None)
+        return self._zotero.everything(
+            self._zotero.collection_items_top(collection_id, limit=None)
         )
 
     def download_zotero_item(
@@ -50,7 +63,7 @@ class ZoteroSource:
         """
         logger.debug("Fetching File: %s", item_id)
 
-        children = self.zotero.children(item_id)
+        children = self._zotero.children(item_id)
         if not children:
             logger.warning("No child attachments found for item %s", item_id)
             return
@@ -75,7 +88,7 @@ class ZoteroSource:
 
         logger.info("Local attachment not found, downloading via Zotero API")
 
-        self.zotero.dump(
+        self._zotero.dump(
             itemkey=attachment["key"],
             filename=target.name,
             path=download_path,
