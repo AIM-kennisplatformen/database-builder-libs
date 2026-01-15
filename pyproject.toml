@@ -12,8 +12,8 @@ dependencies = [
     "anyio>=4.12.1",
     "spacy>=3.8.11",
     "loguru>=0.7.3",
-    "torch>=2.9.1",
-    "torchvision>=0.24.1",
+    "torch",
+    "torchvision",
 ]
 
 [dependency-groups]
