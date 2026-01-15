@@ -1,10 +1,19 @@
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Final
-from typedb.driver import SessionType, TransactionType, TypeDB, TypeDBDriver, TypeDBOptions, TypeDBSession, TypeDBTransaction
+from typing import Any, Final, Optional
+from typedb.driver import (
+    SessionType,
+    TransactionType,
+    TypeDB,
+    TypeDBDriver,
+    TypeDBOptions,
+    TypeDBSession,
+    TypeDBTransaction,
+)
 
 from backend.config import settings
 from backend.stores.store import Datastore
+
 
 class TypeDbDatastore(Datastore):
     """
@@ -12,9 +21,15 @@ class TypeDbDatastore(Datastore):
     interacting with a TypeDB database.
 
     Data in TypeDB can be inserted, queried, and managed using TypeDB's schema and query language.
+
+    Due to the implementation of the typedb-driver for TypeDB 2.x this datastore needs separate
+    methods for inserting, fetching, deleting, and updating data.
     """
+
     def __init__(self) -> None:
-        self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(address=settings.TYPEDB_URI)
+        self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(
+            address=settings.TYPEDB_URI
+        )
         self.database: Final[str] = settings.TYPEDB_DATABASE
 
         assert self.typedb_driver is not None, "TypeDB driver is not initialized."
@@ -24,13 +39,12 @@ class TypeDbDatastore(Datastore):
             self.typedb_driver.databases.create(self.database)
 
         current_dir = Path(__file__).parent
-        schema_path = current_dir / 'schema.tql'
+        schema_path = current_dir / "schema.tql"
 
-        if schema_path.exists():
-            with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
-                with open(schema_path, 'r', encoding='utf-8') as f:
-                    schema = f.read()
-                    transaction.query.define(schema)
+        with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
+            with open(schema_path, "r", encoding="utf-8") as f:
+                schema = f.read()
+                transaction.query.define(schema)
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
@@ -41,35 +55,29 @@ class TypeDbDatastore(Datastore):
                 try:
                     yield transaction
                 finally:
-                    if transaction.is_open() and transaction.transaction_type.is_write():
+                    if transaction.is_open() and transaction_type.is_write():
                         transaction.commit()
 
-    def save(self, query: str, options: TypeDBOptions = None) -> None:
+    def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.insert(query, options)
 
-    def delete(self, query: str, options: TypeDBOptions = None) -> None:
+    def delete(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.delete(query, options)
 
-    def fetch(self, query: str, options: TypeDBOptions = None) -> list[Any]:
+    def fetch(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.fetch(query, options)
-            return list(iterator)
-
-    def get(self, query: str, options: TypeDBOptions = None) -> list[Any]:
-        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
-            iterator = transaction.query.get(query, options)
-            results = []
-            for result in iterator:
-                if hasattr(result, "map") and callable(result.map):
-                    results.append(result.map())
-                elif hasattr(result, "map"):
-                    results.append(result.map)
-                else:
-                    results.append(result)
+            results = list(iterator)
             return results
 
-    def update(self, query: str, options: TypeDBOptions = None) -> None:
+    def get(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
+        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
+            iterator = transaction.query.get(query, options)
+            results = [result.map for result in iterator]
+            return results
+
+    def update(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.update(query, options)

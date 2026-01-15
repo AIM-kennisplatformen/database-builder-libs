@@ -1,26 +1,23 @@
 pre-commit:
   commands:
-    isort:
-      files: git ls-files
-      glob: '*.{py}'
-      run: isort {staged_files}
-      stage_fixed: true
     format:
       files: git ls-files
+      glob: '*.{py}'
+      run: pixi run ruff format {staged_files}
+      stage_fixed: true
+    check:
+      files: git ls-files
       glob: '*.{py, ipynb}'
-      run: ruff format {staged_files}
+      run: pixi run ruff check {staged_files}
       stage_fixed: true
     clean-jupyter:
       files: git ls-files
       glob: '*.ipynb'
-      run: jupyter nbconvert --clear-output --inplace {staged_files}
+      run: pixi run jupyter nbconvert --clear-output --inplace {staged_files}
       stage_fixed: true
-    check:
+    types:
       files: git ls-files
       glob: '*.py'
-      run: ruff check {staged_files} --fix
-    mypy:
-      glob: '*.py'
-      run: mypy --pretty {staged_files} --ignore-missing-imports
+      run: pixi run ty check {staged_files}
     lychee:
       run: lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d

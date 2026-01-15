@@ -1,29 +1,34 @@
 [project]
 authors = [{name = "Hoog-v", email = "hogeweyv@gmail.com"}]
 name = "database-builder"
-requires-python = ">= 3.12"
+requires-python = ">= 3.11, <=3.12"
 version = "0.1.0"
-dependencies = ["typedb-driver==2.29.2", "pyzotero"]
+dependencies = [
+    "typedb-driver==2.29.2",
+    "fastapi>=0.128.0",
+    "pyzotero>=1.7.6",
+    "pydantic>=2.12.5",
+    "python-dotenv>=1.2.1",
+    "anyio>=4.12.1",
+    "spacy>=3.8.11",
+    "loguru>=0.7.3",
+    "torch",
+    "torchvision",
+    "testcontainers"
+]
 
 [dependency-groups]
 dev = [
-  "pip",
-  "pydantic",
-  "pytest-profiling",
-  "pytest-xdist",
-  "pytest",
-  "ruff",
-  "ssort",
-  "creosote",
-  "debugpy",
   "lefthook",
-  "mypy",
-  "lychee",
-  "pandas-stubs",
-  "types-requests",
-  "types-openpyxl",
-  "isort",
-  "httpretty"
+  "debugpy>=1.8.19",
+  "httpretty>=1.1.4",
+  "pandas-stubs>=2.3.3.260113",
+  "pytest>=9.0.2",
+  "ruff>=0.14.11",
+  "ty>=0.0.12",
+  "types-openpyxl>=3.1.5.20250919",
+  "types-requests>=2.32.4.20260107",
+  "lychee"
 ]
 
 [build-system]
@@ -37,25 +42,12 @@ packages = ["src/backend"]
 channels = ["https://fast.prefix.dev/conda-forge",
   "https://repo.prefix.dev/pypdfium2-public",
   "https://repo.prefix.dev/pytorch"]
-platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+platforms = ["linux-64","osx-arm64", "win-64"]
 
 [tool.pixi.dependencies]
-python = "3.12.*"
 # Dotenv is for reading .env files
-python-dotenv = ">=1.1.0,<2"
-# Async network lib
-anyio = ">=4.9.0"
-# Web framework
-fastapi = ">=0.115.12"
-# Linguistic data manipulation
-spacy = ">=3.8.6"
-loguru = ">=0.7.3,<0.8"
 compilers = ">=1.9.0"
 pkg-config = ">=0.29.2"
-# torch
-pytorch = ">=2.2.2"
-torchvision = ">=0.17"
-testcontainers = ">=4.10.0,<5"
 
 [tool.pixi.pypi-dependencies]
 database_builder = { path = ".", editable = true }
@@ -68,20 +60,9 @@ filterwarnings = [
     "ignore:datetime.datetime.utcnow.*:DeprecationWarning"
 ]
 
-[tool.mypy]
-allow_redefinition = true
-disable_error_code = [
-    "call-arg",        # unexpected keyword arguments
-    "import-untyped",  # missing stubs like requests
-    "import-not-found",
-    "call-overload",
-    "arg-type",
-    "misc",
-]
-pretty = true
-exclude = [
-    "^\\.pixi/",  # ignore the .pixi folder at repo root
-]
+[tool.ty.src]
+include=["src"]
+exclude=["tests/", ".pixi/"]
 
 [tool.ruff.lint]
 select = ["B024", "E4", "E7", "E9", "F", "C4", "PT"]
@@ -91,7 +72,8 @@ exclude = [".pixi", "tests"]
 
 [tool.pixi.tasks]
 lint = "ruff check"
-typecheck = "mypy ."
+format = "ruff format"
+typecheck = "ty check ."
 test = "pytest -s"
 app = "python -m src.backend.main"
 
@@ -101,7 +83,7 @@ LD_LIBRARY_PATH = "$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
 
 # Platform-specific deps
 [tool.pixi.target.linux-64.dependencies]
-python-devtools = ">=0.12.2"       
+python-devtools = ">=0.12.2"
 
 
 [tool.pixi.environments]
