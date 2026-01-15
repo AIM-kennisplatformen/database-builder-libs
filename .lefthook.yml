@@ -3,21 +3,21 @@ pre-commit:
     format:
       files: git ls-files
       glob: '*.{py}'
-      run: pixi run ruff format {staged_files}
+      run: pixi run -e development ruff format {staged_files}
       stage_fixed: true
     check:
       files: git ls-files
       glob: '*.{py, ipynb}'
-      run: pixi run ruff check {staged_files}
+      run: pixi run -e development ruff check {staged_files}
       stage_fixed: true
     clean-jupyter:
       files: git ls-files
       glob: '*.ipynb'
-      run: pixi run jupyter nbconvert --clear-output --inplace {staged_files}
+      run: pixi run -e development jupyter nbconvert --clear-output --inplace {staged_files}
       stage_fixed: true
     types:
       files: git ls-files
       glob: '*.py'
-      run: pixi run ty check {staged_files}
+      run: pixi run -e development ty check {staged_files}
     lychee:
-      run: lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d
+      run: pixi run -e development lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d
