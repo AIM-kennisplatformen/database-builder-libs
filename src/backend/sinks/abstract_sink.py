@@ -6,10 +6,12 @@ from backend.stores.qdrant_store import QdrantDatastore
 from backend.stores.typedb_store import TypeDbDatastore
 from backend.stores.store import Datastore
 
+
 class AbstractSink(ABC):
     """
     Abstract base class that should be implemented by datasources to save entities and relations to various datastores.
     """
+
     type: str
 
     @singledispatchmethod

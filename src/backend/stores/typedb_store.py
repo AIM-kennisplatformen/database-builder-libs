@@ -1,10 +1,19 @@
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Final
-from typedb.driver import SessionType, TransactionType, TypeDB, TypeDBDriver, TypeDBOptions, TypeDBSession, TypeDBTransaction
+from typedb.driver import (
+    SessionType,
+    TransactionType,
+    TypeDB,
+    TypeDBDriver,
+    TypeDBOptions,
+    TypeDBSession,
+    TypeDBTransaction,
+)
 
 from backend.config import settings
 from backend.stores.store import Datastore
+
 
 class TypeDbDatastore(Datastore):
     """
@@ -13,11 +22,14 @@ class TypeDbDatastore(Datastore):
 
     Data in TypeDB can be inserted, queried, and managed using TypeDB's schema and query language.
 
-    Due to the implementation of the typedb-driver for TypeDB 2.x this datastore needs separate 
+    Due to the implementation of the typedb-driver for TypeDB 2.x this datastore needs separate
     methods for inserting, fetching, deleting, and updating data.
     """
+
     def __init__(self) -> None:
-        self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(address=settings.TYPEDB_URI)
+        self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(
+            address=settings.TYPEDB_URI
+        )
         self.database: Final[str] = settings.TYPEDB_DATABASE
 
         assert self.typedb_driver is not None, "TypeDB driver is not initialized."
@@ -27,10 +39,10 @@ class TypeDbDatastore(Datastore):
             self.typedb_driver.databases.create(self.database)
 
         current_dir = Path(__file__).parent
-        schema_path = current_dir / 'schema.tql'
+        schema_path = current_dir / "schema.tql"
 
         with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
-            with open(schema_path, 'r', encoding='utf-8') as f:
+            with open(schema_path, "r", encoding="utf-8") as f:
                 schema = f.read()
                 transaction.query.define(schema)
 
@@ -43,7 +55,10 @@ class TypeDbDatastore(Datastore):
                 try:
                     yield transaction
                 finally:
-                    if transaction.is_open() and transaction.transaction_type.is_write():
+                    if (
+                        transaction.is_open()
+                        and transaction.transaction_type.is_write()
+                    ):
                         transaction.commit()
 
     def save(self, query: str, options: TypeDBOptions = None) -> None:

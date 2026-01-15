@@ -5,15 +5,14 @@ from pyzotero import zotero
 
 from loguru import logger
 
+
 class ZoteroSource:
     def __init__(self, library_id: str, library_type: str, api_key: str) -> None:
         self.zotero = zotero.Zotero(
-            library_id=library_id,
-            library_type=library_type,
-            api_key=api_key
+            library_id=library_id, library_type=library_type, api_key=api_key
         )
-    
-    def get_all_documents_metadata(self, collection_id : str) -> List[dict[str, Any]]:
+
+    def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection
 
         This function calls the zotero collection items api:
@@ -22,18 +21,17 @@ class ZoteroSource:
         Keep in mind, that the structures returned by this function are large and take some time to retrieve.
 
         Args:
-            `collection_id`: The collection to retrieve document metadata from 
+            `collection_id`: The collection to retrieve document metadata from
                             (should be visible in WebURL when using zotero webportal)
 
         Yields:
             List containing document-metadata dict for all documents in the library (one dict per document).
-            The dict output closely resembles the dict output format of pyzotero: 
+            The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
         return self.zotero.everything(
             self.zotero.collection_items_top(collection_id, limit=None)
         )
-
 
     def download_zotero_item(
         self,
@@ -44,7 +42,7 @@ class ZoteroSource:
         """Download the first attachment of specified zotero item to specified path
 
         This function is a wrapper around the dump api to provide a means to download attachments of zotero items using
-        local & cloud api. As the default (at this time) dump api_call only provides cloud download functionality. 
+        local & cloud api. As the default (at this time) dump api_call only provides cloud download functionality.
 
         Args:
            `item_id`: The specific item_id of the item to get the attachment/pdf from (`key` attribute from above mentioned zotero dict)
@@ -58,8 +56,7 @@ class ZoteroSource:
             return
 
         attachments = [
-            c for c in children
-            if c.get("data", {}).get("itemType") == "attachment"
+            c for c in children if c.get("data", {}).get("itemType") == "attachment"
         ]
         if not attachments:
             logger.warning("No attachment-type children for item %s", item_id)
