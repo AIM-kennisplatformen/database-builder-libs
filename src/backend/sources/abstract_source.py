@@ -12,24 +12,12 @@ class Content(BaseModel):
     content: dict
 
 
-class UUIDdata(BaseModel):
-    @abstractmethod
-    def __call__(self, artefacts_ref: list[str]) -> list[UUID]: ...
-
-    @abstractmethod
-    def check_uuid(self, artefact_ref: str) -> UUID:
-        """checks in the database if an artefact is already present"""
-        ...
-
-
 class AbstractSource(ABC, BaseModel):
     """
     connects optionally to the source,
     retrieves data from the source,
     optionally preprocesses the data (eg pdf to text, metadata extraction, etc)
     """
-
-    uuididata: UUIDdata = UUIDdata()
 
     @abstractmethod
     def connect_to_source(self) -> None:

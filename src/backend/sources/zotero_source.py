@@ -1,11 +1,13 @@
+from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Any, List, Optional
+from uuid import UUID
 from pydantic import PrivateAttr
 from pyzotero import zotero
 
 from loguru import logger
-from backend.sources.abstract_source import AbstractSource
+from backend.sources.abstract_source import AbstractSource, Content
 from backend.config import Settings
 
 
@@ -17,13 +19,14 @@ class ZoteroSource(AbstractSource):
         self.connect_to_source()
 
     def connect_to_source(self) -> None:
-        """Abstract method to connect to the source."""
+        if self._zotero is not None:
+            return  # already connected
+
         self._zotero = zotero.Zotero(
             library_id=Settings.ZOTERO_LIBRARY_ID,
             library_type=Settings.ZOTERO_LIBRARY_TYPE,
             api_key=Settings.ZOTERO_API_KEY,
         )
-        pass
 
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection
@@ -42,6 +45,9 @@ class ZoteroSource(AbstractSource):
             The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
+        if self._zotero is None:
+            raise RuntimeError("Zotero client not initialized")
+
         return self._zotero.everything(
             self._zotero.collection_items_top(collection_id, limit=None)
         )
@@ -61,6 +67,9 @@ class ZoteroSource(AbstractSource):
            `item_id`: The specific item_id of the item to get the attachment/pdf from (`key` attribute from above mentioned zotero dict)
            `download_path`: The folder to download the item to, the file_path will be -> <download_path>/<item_id>.pdf
         """
+        if self._zotero is None:
+            raise RuntimeError("Zotero client not initialized")
+
         logger.debug("Fetching File: %s", item_id)
 
         children = self._zotero.children(item_id)
@@ -93,3 +102,13 @@ class ZoteroSource(AbstractSource):
             filename=target.name,
             path=download_path,
         )
+
+    def get_list_artefacts(
+        self, last_synced: Optional[datetime]
+    ) -> list[tuple[UUID, datetime]]:
+        # TODO: real implementation later
+        return []
+
+    def get_content(self, artefacts: list[tuple[UUID, datetime]]) -> list[Content]:
+        # TODO: real implementation later
+        return []
