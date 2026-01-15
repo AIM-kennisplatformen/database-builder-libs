@@ -1,6 +1,6 @@
 from pathlib import Path
 import shutil
-from typing import Any, List
+from typing import Any, List, Optional
 from pydantic import PrivateAttr
 from pyzotero import zotero
 
@@ -10,7 +10,7 @@ from backend.config import Settings
 
 
 class ZoteroSource(AbstractSource):
-    _zotero: zotero.Zotero = PrivateAttr(default=None)
+    _zotero: Optional[zotero.Zotero] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
         """Called automatically by Pydantic after initialization."""
