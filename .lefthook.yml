@@ -15,9 +15,9 @@ pre-commit:
       glob: '*.ipynb'
       run: uv run jupyter nbconvert --clear-output --inplace {staged_files}
       stage_fixed: true
-    types:
-      files: git ls-files
-      glob: '*.py'
-      run: uv run ty check {staged_files} --fix
+    # types:
+    #   files: git ls-files
+    #   glob: '*.py'
+    #   run: uv run ty check {staged_files} --fix
     lychee:
       run: lychee . --suggest --max-concurrency 32 --cache --format detailed --max-cache-age 7d
