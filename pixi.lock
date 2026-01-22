@@ -465,7 +465,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/libstdcxx-devel_linux-64-13.3.0-hc03c837_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.38.1-h0b41bf4_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.1-hb9d3cd8_2.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-64/lychee-0.15.1-h53e704d_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.5-h2d0b736_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/openssl-3.5.0-h7b32b05_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pkg-config-0.29.2-h4bc722e_1009.conda
@@ -615,7 +614,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-openmp-20.1.7-hdb05f8b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-tools-18-18.1.8-default_hb458b26_5.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-tools-18.1.8-default_hb458b26_5.conda
-      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/lychee-0.15.1-hdf53557_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/mpc-1.3.1-h8f1351a_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/mpfr-4.2.1-hb693164_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.5-h5e97a16_3.conda
@@ -736,7 +734,6 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/libzlib-1.3.1-h2466b09_2.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/lld-20.1.7-he99c172_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/llvm-tools-19.1.7-h2a44499_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/lychee-0.15.1-hd533304_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/openssl-3.5.0-ha4e3fda_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/pcre2-10.45-h99c9b8b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/pkg-config-0.29.2-h88c491f_1009.conda
@@ -1413,7 +1410,7 @@ packages:
 - pypi: ./
   name: database-builder
   version: 0.1.0
-  sha256: 791f36333875d2adb04c6a304e9eb5e3c5f2e4d8906fffb35e84760888f1cab5
+  sha256: 541df29229b174b8f55c3fc2a17dc6af0014b05ee0035ef00137255112256b72
   requires_dist:
   - typedb-driver==2.29.2
   - fastapi>=0.128.0
@@ -2724,46 +2721,6 @@ packages:
   - build==1.2.2 ; python_full_version >= '3.11' and extra == 'dev'
   - twine==6.0.1 ; python_full_version >= '3.11' and extra == 'dev'
   requires_python: '>=3.5,<4.0'
-- conda: https://conda.anaconda.org/conda-forge/linux-64/lychee-0.15.1-h53e704d_1.conda
-  sha256: 61325f3d46dce6c3fa502784469cbbb06f043cf81bec2c20dda495945a985271
-  md5: 04f27b3929b771db8d3c32b69c206d3b
-  depends:
-  - __glibc >=2.17,<3.0.a0
-  - libgcc >=13
-  - openssl >=3.3.2,<4.0a0
-  constrains:
-  - __glibc >=2.17
-  channel: https://fast.prefix.dev/conda-forge
-  license: Apache-2.0 OR MIT
-  purls: []
-  size: 5877382
-  timestamp: 1726762353455
-- conda: https://conda.anaconda.org/conda-forge/osx-arm64/lychee-0.15.1-hdf53557_1.conda
-  sha256: ec0f805f695c9fde62945431de8b10ba03262a36243cc03850fd5edc86741aac
-  md5: 7062f355ee2fa03a483cf84b96b3d13d
-  depends:
-  - __osx >=11.0
-  - openssl >=3.3.2,<4.0a0
-  constrains:
-  - __osx >=11.0
-  channel: https://fast.prefix.dev/conda-forge
-  license: Apache-2.0 OR MIT
-  purls: []
-  size: 5163821
-  timestamp: 1726762749492
-- conda: https://conda.anaconda.org/conda-forge/win-64/lychee-0.15.1-hd533304_1.conda
-  sha256: 0a4e50c6f7cf50c8e51f2389c790776f01c2db7ffb254f40734299c4933cda70
-  md5: be9808acc673519b2af53fb610fe7b62
-  depends:
-  - openssl >=3.3.2,<4.0a0
-  - ucrt >=10.0.20348.0
-  - vc >=14.2,<15
-  - vc14_runtime >=14.29.30139
-  channel: https://fast.prefix.dev/conda-forge
-  license: Apache-2.0 OR MIT
-  purls: []
-  size: 4854045
-  timestamp: 1726763619951
 - pypi: https://files.pythonhosted.org/packages/3c/2e/8d0c2ab90a8c1d9a24f0399058ab8519a3279d1bd4289511d74e909f060e/markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
   name: markupsafe
   version: 3.0.3

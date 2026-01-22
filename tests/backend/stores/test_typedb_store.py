@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 from testcontainers.core.container import DockerContainer
 from typedb.driver import TypeDB, SessionType, TransactionType
 
+
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
     Continuously tries to connect to the host:port until successful.
@@ -16,8 +17,11 @@ def wait_for_port(host: str, port: int, timeout: float = 60.0):
                 return
         except (OSError, ConnectionRefusedError) as exc:
             if time.time() - start_time > timeout:
-                raise TimeoutError(f"Port {port} on {host} did not open within {timeout} seconds.") from exc
+                raise TimeoutError(
+                    f"Port {port} on {host} did not open within {timeout} seconds."
+                ) from exc
             time.sleep(0.5)
+
 
 TEST_SCHEMA = """
 define
@@ -29,6 +33,7 @@ define
     email sub attribute, value string;
     age sub attribute, value long;
 """
+
 
 @pytest.fixture(scope="module")
 def typedb_container():
@@ -67,19 +72,19 @@ def typedb_container():
         print(stderr.decode())
         raise e
 
-    yield container
+    yield container, address
     container.stop()
+
 
 @pytest.fixture
 def mock_settings(typedb_container):
-    host = "127.0.0.1"
-    port = typedb_container.get_exposed_port(1729)
-    address = f"{host}:{port}"
+    container, address = typedb_container
 
     with patch("backend.config.settings") as settings_mock:
         settings_mock.TYPEDB_URI = address
         settings_mock.TYPEDB_DATABASE = "integration_test_db"
         yield settings_mock
+
 
 @pytest.fixture
 def store(mock_settings):
@@ -88,8 +93,10 @@ def store(mock_settings):
     """
     with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
         from backend.stores.typedb_store import TypeDbDatastore
+
         datastore = TypeDbDatastore()
         yield datastore
+
 
 def test_initialization_creates_database_and_schema(store):
     with store.typedb_driver.session(store.database, SessionType.SCHEMA) as session:
@@ -98,22 +105,27 @@ def test_initialization_creates_database_and_schema(store):
             assert person_type is not None
             assert person_type.get_label().name == "person"
 
+
 def test_save_and_fetch_workflow(store):
     store.save('insert $p isa person, has name "Alice", has email "alice@test.com";')
 
-    results = store.fetch('match $p isa person, has name "Alice"; fetch $p: name, email;')
+    results = store.fetch(
+        'match $p isa person, has name "Alice"; fetch $p: name, email;'
+    )
 
     assert len(results) == 1
-    data = results[0]['p']
+    data = results[0]["p"]
 
-    assert data['name'][0]['value'] == "Alice"
-    assert data['email'][0]['value'] == "alice@test.com"
+    assert data["name"][0]["value"] == "Alice"
+    assert data["email"][0]["value"] == "alice@test.com"
+
 
 def test_get_workflow(store):
     store.save('insert $p isa person, has name "Bob", has age 30;')
     results = store.get('match $p isa person, has name "Bob"; get $p;')
 
     assert len(results) > 0
+
 
 def test_update_workflow(store):
     store.save('insert $p isa person, has name "Charlie", has age 20;')
@@ -131,11 +143,14 @@ def test_update_workflow(store):
 
     results = store.fetch('match $p isa person, has name "Charlie"; fetch $p: age;')
 
-    assert results[0]['p']['age'][0]['value'] == 21
+    assert results[0]["p"]["age"][0]["value"] == 21
+
 
 def test_delete_workflow(store):
     store.save('insert $p isa person, has name "Dave";')
-    assert len(store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')) == 1
+    assert (
+        len(store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')) == 1
+    )
 
     store.delete('match $p isa person, has name "Dave"; delete $p isa person;')
 

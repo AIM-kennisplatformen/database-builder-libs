@@ -48,9 +48,6 @@ platforms = ["linux-64","osx-arm64", "win-64"]
 compilers = ">=1.9.0"
 pkg-config = ">=0.29.2"
 
-[tool.pixi.feature.precommit.dependencies]
-lychee = ">=0.15.1"
-
 [tool.pixi.pypi-dependencies]
 database_builder = { path = ".", editable = true }
 
@@ -90,4 +87,4 @@ python-devtools = ">=0.12.2"
 
 [tool.pixi.environments]
 default = { features = ["dev"], solve-group = "default" }
-development = { features = ["precommit", "dev"], solve-group = "default" }
+development = { features = ["dev"], solve-group = "default" }
