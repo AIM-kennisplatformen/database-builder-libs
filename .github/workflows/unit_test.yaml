@@ -21,4 +21,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pixi run bash -e {0}
         run: |
-          pixi run -e development test
+          pixi run test

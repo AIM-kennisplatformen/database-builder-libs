@@ -5,6 +5,7 @@ from qdrant_client.models import Distance, VectorParams, PointStruct
 from backend.config import settings
 from backend.stores.store import Datastore
 
+
 class QdrantDatastore(Datastore):
     def __init__(self) -> None:
         self.client: Final[QdrantClient] = QdrantClient(
@@ -26,7 +27,8 @@ class QdrantDatastore(Datastore):
                 ),
             )
 
-    def save(self,
+    def save(
+        self,
         id: str | int,
         vector: Sequence[float],
         payload: Optional[dict] = None,
@@ -41,19 +43,3 @@ class QdrantDatastore(Datastore):
             collection_name=self.collection,
             points=[point],
         )
-
-
-if __name__ == "__main__":
-    import random
-    import uuid
-
-    ds = QdrantDatastore()
-
-    test_vector = [random.random() for _ in range(ds.vector_size)]
-    test_id = str(uuid.uuid4())
-    test_payload = {"text": "Hello, Qdrant!"}
-
-    print("Saving point...")
-    ds.save(id=test_id, vector=test_vector, payload=test_payload)
-
-    print("Point saved successfully!")
