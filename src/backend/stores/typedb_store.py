@@ -55,35 +55,29 @@ class TypeDbDatastore(Datastore):
                 try:
                     yield transaction
                 finally:
-                    if (
-                        transaction.is_open()
-                        and transaction.transaction_type.is_write()
-                    ):
+                    if transaction.is_open() and transaction_type.is_write():
                         transaction.commit()
 
     def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.insert(query, options)
-            transaction.commit()
 
     def delete(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.delete(query, options)
-            transaction.commit()
 
     def fetch(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.fetch(query, options)
-            results = [result.map() for result in iterator]
+            results = list(iterator)
             return results
 
     def get(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
         with self._query(SessionType.DATA, TransactionType.READ) as transaction:
             iterator = transaction.query.get(query, options)
-            results = [result.map() for result in iterator]
+            results = [result.map for result in iterator]
             return results
 
     def update(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.update(query, options)
-            transaction.commit()

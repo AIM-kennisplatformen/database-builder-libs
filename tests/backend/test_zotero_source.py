@@ -44,7 +44,7 @@ class ZoteroTests(unittest.TestCase):
 
         result = zot.get_all_documents_metadata("COLL123")
 
-        self.assertEqual(json.loads(self.items_doc), result)
+        assert json.loads(self.items_doc) == result
 
     def test_download_zotero_item_calls_dump_with_attachment(self):
         """Test the `download_zotero_item` call using mock methods.
@@ -124,13 +124,13 @@ class ZoteroTests(unittest.TestCase):
             )
 
             downloaded = os.path.join(tmpdir, "myitemid.pdf")
-            self.assertTrue(os.path.exists(downloaded))
+            assert os.path.exists(downloaded)
 
             with open(downloaded, "rb") as f:
                 items_data = f.read()
 
             logger.debug("Downloaded PDF bytes: {}", items_data)
-            self.assertEqual(b"One very strange PDF\n", items_data)
+            assert b"One very strange PDF\n" == items_data
 
     def test_get_all_documents_metadata_returns_everything(self):
         """Test the `get_all_documents_metadata` call using mock methods.
@@ -163,7 +163,7 @@ class ZoteroTests(unittest.TestCase):
             limit=None,
         )
         fake_zotero.everything.assert_called_once_with(fake_iterator)
-        self.assertEqual(result, expected_items)
+        assert result == expected_items
 
 
 if __name__ == "__main__":
