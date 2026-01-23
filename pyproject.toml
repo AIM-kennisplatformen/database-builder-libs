@@ -14,7 +14,8 @@ dependencies = [
     "loguru>=0.7.3",
     "torch",
     "torchvision",
-    "testcontainers"
+    "testcontainers",
+    "qdrant-client"
 ]
 
 [dependency-groups]
