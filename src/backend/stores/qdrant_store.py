@@ -57,10 +57,18 @@ class QdrantDatastore(Datastore):
             points=[point],
         )
 
-    def delete(self, ids: PointIdsList) -> None:
+    def delete_by_id(self, ids: PointIdsList) -> None:
+        """Delete points from the collection based on their IDs."""
         self.client.delete(
             collection_name=self.collection,
             points_selector=ids,
+        )
+
+    def delete_by_filter(self, filter: Filter) -> None:
+        """Delete points from the collection based on a filter."""
+        self.client.delete(
+            collection_name=self.collection,
+            points_selector=filter,
         )
 
     def query(
@@ -69,6 +77,7 @@ class QdrantDatastore(Datastore):
         limit: int = 10,
         filter: Optional[Filter] = None,
     ) -> list[ScoredPoint]:
+        """Query the collection for points similar to the query vector."""
         response = self.client.query_points(
             collection_name=self.collection,
             query=[float(v) for v in query_vector],

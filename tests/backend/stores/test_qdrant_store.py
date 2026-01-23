@@ -4,6 +4,7 @@ import socket
 from unittest.mock import patch
 from testcontainers.core.container import DockerContainer
 from qdrant_client import QdrantClient
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
@@ -109,7 +110,7 @@ def test_delete_workflow(store):
     assert len(results) > 0
     assert results[0].id == 99
 
-    store.delete(ids=[99])
+    store.delete_by_id(ids=[99])
 
     points, _ = store.scroll(limit=100)
     ids = [p.id for p in points]
@@ -134,3 +135,35 @@ def test_scroll_workflow(store):
     assert 10 in ids
     assert 11 in ids
     assert 12 in ids
+
+
+def test_delete_by_filter_workflow(store):
+    store.save(id=200, vector=[0.1] * 4, payload={"group": "A"})
+    store.save(id=201, vector=[0.1] * 4, payload={"group": "A"})
+    store.save(id=202, vector=[0.1] * 4, payload={"group": "B"})
+
+    # Ensure they are there
+    points, _ = store.scroll(limit=100)
+    ids = {p.id for p in points}
+    assert 200 in ids
+    assert 201 in ids
+    assert 202 in ids
+
+    # Delete where group == "A"
+    store.delete_by_filter(
+        filter=Filter(
+            must=[
+                FieldCondition(
+                    key="group",
+                    match=MatchValue(value="A"),
+                )
+            ]
+        )
+    )
+
+    # Verify 200, 201 are gone, 202 remains
+    points, _ = store.scroll(limit=100)
+    ids = {p.id for p in points}
+    assert 200 not in ids
+    assert 201 not in ids
+    assert 202 in ids
