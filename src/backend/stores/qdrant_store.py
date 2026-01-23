@@ -1,6 +1,15 @@
 from typing import Final, Sequence, Optional
+from qdrant_client.conversions.common_types import PointId
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointStruct,
+    Filter,
+    PointIdsList,
+    ScoredPoint,
+    Record,
+)
 
 from backend.config import settings
 from backend.stores.store import Datastore
@@ -14,6 +23,10 @@ class QdrantDatastore(Datastore):
         )
         self.collection: Final[str] = settings.QDRANT_COLLECTION
         self.vector_size: Final[int] = settings.QDRANT_VECTOR_SIZE
+
+        assert self.client is not None, "Qdrant client is not set."
+        assert self.collection is not None, "Qdrant collection is not set."
+        assert self.vector_size is not None, "Qdrant vector size is not set."
 
         collections = self.client.get_collections().collections
         existing = {c.name for c in collections}
@@ -42,4 +55,36 @@ class QdrantDatastore(Datastore):
         self.client.upsert(
             collection_name=self.collection,
             points=[point],
+        )
+
+    def delete(self, ids: PointIdsList) -> None:
+        self.client.delete(
+            collection_name=self.collection,
+            points_selector=ids,
+        )
+
+    def query(
+        self,
+        query_vector: Sequence[float],
+        limit: int = 10,
+        filter: Optional[Filter] = None,
+    ) -> list[ScoredPoint]:
+        response = self.client.query_points(
+            collection_name=self.collection,
+            query=[float(v) for v in query_vector],
+            limit=limit,
+            query_filter=filter,
+        )
+        return response.points
+
+    def scroll(
+        self,
+        limit: int = 10,
+        filter: Optional[Filter] = None,
+    ) -> tuple[list[Record], PointId | None]:
+        """Scroll through the collection sorted by ascending ID."""
+        return self.client.scroll(
+            collection_name=self.collection,
+            limit=limit,
+            scroll_filter=filter,
         )
