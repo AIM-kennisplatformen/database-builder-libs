@@ -3,8 +3,8 @@ import time
 import socket
 from unittest.mock import patch, mock_open
 from testcontainers.core.container import DockerContainer
+from testcontainers.core.wait_strategies import LogMessageWaitStrategy
 from typedb.driver import TypeDB, SessionType, TransactionType
-
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
@@ -40,12 +40,13 @@ def typedb_container():
     """
     Starts a TypeDB 2.29 container and waits for the driver to be ready.
     """
-    container = DockerContainer("vaticle/typedb:2.29.0")
-    container.with_exposed_ports(1729)
-    container.with_env("JAVA_TOOL_OPTIONS", "-Xmx1g")
+    container = (
+        DockerContainer("vaticle/typedb:2.29.0")
+        .with_exposed_ports(1729)
+        .with_env("JAVA_TOOL_OPTIONS", "-Xmx1g")
+    )
 
     container.start()
-
     host = "127.0.0.1"
     port = container.get_exposed_port(1729)
     address = f"{host}:{port}"
@@ -88,13 +89,19 @@ def mock_settings(typedb_container):
 
 @pytest.fixture
 def store(mock_settings):
-    """
-    Initialize the store with a mocked schema file.
-    """
+    from typedb.driver import TypeDB
+
     with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
         from backend.stores.typedb_store import TypeDbDatastore
 
         datastore = TypeDbDatastore()
+        
+        with datastore.typedb_driver.session(
+            datastore.database, SessionType.DATA
+        ) as session:
+            with session.transaction(TransactionType.WRITE) as tx:
+                tx.query.delete("match $x isa person; delete $x isa person;")
+                tx.commit()
         yield datastore
 
 
@@ -156,3 +163,89 @@ def test_delete_workflow(store):
 
     results = store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')
     assert len(results) == 0
+
+import pytest
+
+
+def test_get_nodes_by_keyed_filter(store):
+    # Arrange
+    store.save(
+        'insert $p isa person, has name "Alice", has email "alice@test.com", has age 25;'
+    )
+
+    # Act
+    results = store.get_nodes("entity=person&name=Alice")
+
+    # Assert
+    assert len(results) == 1
+    node = results[0]
+
+    assert node.payload_data["name"] == "Alice"
+    assert node.payload_data["email"] == "alice@test.com"
+    assert node.payload_data["age"] == 25
+
+
+def test_get_nodes_returns_empty_when_no_match(store):
+    results = store.get_nodes("entity=person&name=Nonexistent")
+    assert results == []
+
+
+def test_get_nodes_multiple_matches(store):
+    store.save('insert $p isa person, has name "Bob", has age 30;')
+    store.save('insert $p isa person, has name "Bob", has age 40;')
+
+    results = store.get_nodes("entity=person&name=Bob")
+
+    assert len(results) == 2
+    ages = sorted(n.payload_data["age"] for n in results)
+    assert ages == [30, 40]
+
+
+def test_remove_single_node_by_keyed_filter(store):
+    store.save(
+        'insert $p isa person, has name "Charlie", has email "charlie@test.com";'
+    )
+
+    assert len(store.get_nodes("entity=person&name=Charlie")) == 1
+
+    deleted_count = store.remove_nodes("entity=person&name=Charlie")
+
+    assert deleted_count == 1
+    assert store.get_nodes("entity=person&name=Charlie") == []
+
+
+def test_remove_nodes_refuses_bulk_delete_by_default(store):
+    store.save('insert $p isa person, has name "Dave";')
+    store.save('insert $p isa person, has name "Eve";')
+
+    with pytest.raises(ValueError):
+        store.remove_nodes("entity=person")
+
+
+def test_remove_nodes_bulk_delete_with_explicit_flag(store):
+    store.save('insert $p isa person, has name "Frank";')
+    store.save('insert $p isa person, has name "Grace";')
+
+    deleted_count = store.remove_nodes(
+        "entity=person",
+        allow_multiple=True,
+    )
+
+    assert deleted_count >= 2
+    assert store.get_nodes("entity=person") == []
+
+
+def test_remove_nodes_only_affects_target_entities(store):
+    store.save('insert $p isa person, has name "Henry";')
+    store.save('insert $p isa person, has name "Ivy";')
+
+    store.save(
+        'insert $p isa person, has name "Jack";'
+    )
+
+    store.remove_nodes("entity=person&name=Jack")
+
+    remaining = store.get_nodes("entity=person")
+    names = sorted(n.payload_data["name"] for n in remaining)
+
+    assert names == ["Henry", "Ivy"]

@@ -1,4 +1,4 @@
-from typing import Final, Sequence, Optional
+from typing import Final, Sequence, Optional, List
 from qdrant_client.conversions.common_types import PointId
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
@@ -12,10 +12,10 @@ from qdrant_client.models import (
 )
 
 from backend.config import settings
-from backend.stores.store import Datastore
+from backend.stores.abstract_store import AbstractStore, Node
 
 
-class QdrantDatastore(Datastore):
+class QdrantDatastore(AbstractStore):
     def __init__(self) -> None:
         self.client: Final[QdrantClient] = QdrantClient(
             url=settings.QDRANT_URL,
@@ -97,3 +97,16 @@ class QdrantDatastore(Datastore):
             limit=limit,
             scroll_filter=filter,
         )
+    def connect_to_source(self) -> None:
+        """Method that connects qdrant source."""
+        ...
+    
+    def store_node(self, node: Node) -> None:
+        """Method to store a node."""
+        if(Node.vector_data):
+            self.save(Node.id, Node.vector_data, Node.payload_data)
+    
+    def get_nodes(self, filter:  str | Sequence[float] | None) -> List[Node]:
+        """Method to get a node."""
+        if(isinstance(filter, Sequence[float])):
+            self.query(self, query_vector=filter)
