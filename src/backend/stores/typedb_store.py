@@ -1,7 +1,7 @@
-from typing import Final, Sequence, Optional, List
+from typing import Final, Mapping, Optional, Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Final, Optional
+from typing import Any
 from typedb.driver import (
     SessionType,
     TransactionType,
@@ -13,8 +13,21 @@ from typedb.driver import (
 )
 
 from backend.config import settings
-from backend.stores.abstract_store import AbstractStore, Node
+from backend.models.abstract_store import AbstractStore
+from backend.models.node import EntityType, KeyAttribute, Node, NodeId
 from urllib.parse import parse_qs
+from typing import TypedDict, cast
+
+class RelationRef(TypedDict):
+    entity_type: str
+    key_attr: str
+    key: str
+
+class RelationData(TypedDict, total=False):
+    type: str
+    roles: Mapping[str, RelationRef]
+    attributes: Mapping[str, object]
+
 
 class TypeDbDatastore(AbstractStore):
     """
@@ -33,8 +46,8 @@ class TypeDbDatastore(AbstractStore):
         )
         self.database: Final[str] = settings.TYPEDB_DATABASE
 
-        assert self.typedb_driver is not None, "TypeDB driver is not initialized."
-        assert self.database is not None, "TypeDB database name is not set."
+        assert self.typedb_driver is not None
+        assert self.database is not None
 
         if not self.typedb_driver.databases.contains(self.database):
             self.typedb_driver.databases.create(self.database)
@@ -42,10 +55,17 @@ class TypeDbDatastore(AbstractStore):
         current_dir = Path(__file__).parent
         schema_path = current_dir / "schema.tql"
 
+        # ---- DEFINE SCHEMA ----
         with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
             with open(schema_path, "r", encoding="utf-8") as f:
                 schema = f.read()
                 transaction.query.define(schema)
+
+        # ---- CRITICAL FIX ----
+        # TypeDB requires reopening driver after schema changes
+        self.typedb_driver.close()
+        self.typedb_driver = TypeDB.core_driver(address=settings.TYPEDB_URI)
+
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
@@ -83,7 +103,7 @@ class TypeDbDatastore(AbstractStore):
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
             transaction.query.update(query, options)
 
-    def _format_attributes(self, payload: dict) -> str:
+    def _format_attributes(self, payload: Mapping[str, object]) -> str:
         clauses = []
 
         for attr, value in payload.items():
@@ -116,7 +136,7 @@ class TypeDbDatastore(AbstractStore):
         entity_type: str,
         key_attr: str,
         key_value: str,
-        payload: dict
+        payload: Mapping[str, object],
     ) -> None:
         attrs = self._format_attributes(payload)
 
@@ -134,7 +154,7 @@ class TypeDbDatastore(AbstractStore):
         self.__init__()
     
 
-    def _relation_exists(self, rel_type: str, role_map: dict) -> bool:
+    def _relation_exists(self, rel_type: str, role_map: Mapping[str, RelationRef]) -> bool:
         match_roles = []
 
         for role, ref in role_map.items():
@@ -155,7 +175,7 @@ class TypeDbDatastore(AbstractStore):
         return bool(self.fetch(query))
 
 
-    def _insert_relation(self, rel: dict) -> None:
+    def _insert_relation(self, rel: RelationData) -> None:
         if self._relation_exists(rel["type"], rel["roles"]):
             return
 
@@ -197,8 +217,8 @@ class TypeDbDatastore(AbstractStore):
             )
 
         for rel in node.relations:
-            self._insert_relation(rel)
-
+            self._insert_relation(cast(RelationData, rel))
+    
     def _parse_filter(self, filter: str) -> dict:
         parsed = parse_qs(filter, keep_blank_values=False)
 
@@ -249,7 +269,10 @@ class TypeDbDatastore(AbstractStore):
         results = self.get(query)
         return sorted({r["a"].get_label().name for r in results})
     
-    def get_nodes(self, filter: str | None) -> list[Node]:
+    def get_nodes(self, filter: str | Sequence[float] | None) -> list[Node]:
+        if not isinstance(filter, str):
+            raise TypeError("TypeDB datastore requires string filter")
+
         if not filter:
             raise ValueError("TypeDB datastore requires a keyed filter string")
 
@@ -278,7 +301,7 @@ class TypeDbDatastore(AbstractStore):
 
         nodes: list[Node] = []
 
-        def is_subset(a: dict, b: dict) -> bool:
+        def is_subset(a: Mapping[str, object], b: Mapping[str, object]) -> bool:
             return all(k in b and b[k] == v for k, v in a.items())
 
         with self._query(SessionType.DATA, TransactionType.READ) as tx:
@@ -291,28 +314,39 @@ class TypeDbDatastore(AbstractStore):
                         continue
                     payload[attr_name] = values[0]["value"]
 
+                # derive key attribute (first attribute)
+                if not payload:
+                    continue
+
+                key_attr = next(iter(payload))
+                key_val = payload[key_attr]
+
+                new_node = Node(
+                    id=NodeId(str(key_val)),
+                    entity_type=EntityType(entity_type),
+                    key_attribute=KeyAttribute(key_attr),
+                    payload_data=payload,
+                    relations=(),
+                    vector_data=(),
+                    embedding_model="typedb",
+                )
+
                 merged = False
-                for node in nodes:
-                    if is_subset(payload, node.payload_data):
+                for i, existing in enumerate(nodes):
+                    if is_subset(payload, existing.payload_data):
                         merged = True
                         break
-                    if is_subset(node.payload_data, payload):
-                        node.payload_data = payload
+
+                    if is_subset(existing.payload_data, payload):
+                        nodes[i] = new_node
                         merged = True
                         break
 
                 if not merged:
-                    nodes.append(
-                        Node(
-                            id=entity_type,
-                            payload_data=payload,
-                            relations=[],
-                            vector_data=[],
-                        )
-                    )
+                    nodes.append(new_node)
 
         return nodes
-
+    
     def _ensure_safe_delete(
         self,
         entity_type: str,
@@ -366,3 +400,30 @@ class TypeDbDatastore(AbstractStore):
             tx.query.delete(delete_query)
 
         return count
+    
+    def remove_node(self, filter: str) -> Node:
+        """
+        Remove exactly one node and return it.
+        Adapter around remove_nodes() to satisfy AbstractStore.
+        """
+
+        nodes = self.get_nodes(filter)
+
+        if not nodes:
+            raise ValueError(f"No node found for filter: {filter}")
+
+        if len(nodes) > 1:
+            raise ValueError(
+                "remove_node() matched multiple nodes. "
+                "Use remove_nodes(..., allow_multiple=True) instead."
+            )
+
+        removed = nodes[0]
+
+        # perform actual deletion using your existing logic
+        deleted_count = self.remove_nodes(filter, allow_multiple=False)
+
+        if deleted_count != 1:
+            raise RuntimeError("TypeDB deletion inconsistency detected")
+
+        return removed

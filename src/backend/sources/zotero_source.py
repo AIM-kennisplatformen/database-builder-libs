@@ -7,7 +7,7 @@ from pydantic import PrivateAttr
 from pyzotero import zotero
 
 from loguru import logger
-from backend.sources.abstract_source import AbstractSource, Content
+from backend.models.abstract_source import AbstractSource, Content
 from backend.config import Settings
 
 
@@ -162,3 +162,6 @@ class ZoteroSource(AbstractSource):
             )
 
         return contents
+    
+    def _map_item_type(self, item_type: str | None) -> str:
+        return item_type or "unknown"

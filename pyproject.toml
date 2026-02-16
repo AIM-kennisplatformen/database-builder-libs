@@ -16,7 +16,7 @@ dependencies = [
     "torchvision",
     "testcontainers",
     "qdrant-client"
-]
+, "docling>=2.73.0,<3"]
 
 [dependency-groups]
 dev = [

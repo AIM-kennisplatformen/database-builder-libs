@@ -5,6 +5,7 @@ from unittest.mock import patch, mock_open
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import LogMessageWaitStrategy
 from typedb.driver import TypeDB, SessionType, TransactionType
+from backend.models.node import Node
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
@@ -163,9 +164,6 @@ def test_delete_workflow(store):
 
     results = store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')
     assert len(results) == 0
-
-import pytest
-
 
 def test_get_nodes_by_keyed_filter(store):
     # Arrange
