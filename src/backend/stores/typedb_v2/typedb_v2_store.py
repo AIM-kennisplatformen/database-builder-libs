@@ -327,7 +327,6 @@ class TypeDbDatastore(AbstractStore):
                     key_attribute=KeyAttribute(key_attr),
                     payload_data=payload,
                     relations=(),
-                    vector_data=(),
                     embedding_model="typedb",
                 )
 

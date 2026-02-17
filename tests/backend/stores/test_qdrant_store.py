@@ -6,8 +6,12 @@ import pytest
 from qdrant_client import QdrantClient
 from testcontainers.core.container import DockerContainer
 
-from backend.models.node import Node
+from backend.models.chunk import Chunk
 
+
+# -----------------------------------------------------------
+# helpers
+# -----------------------------------------------------------
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0) -> None:
     start_time = time.time()
@@ -22,6 +26,10 @@ def wait_for_port(host: str, port: int, timeout: float = 60.0) -> None:
                 ) from exc
             time.sleep(0.5)
 
+
+# -----------------------------------------------------------
+# container
+# -----------------------------------------------------------
 
 @pytest.fixture(scope="module")
 def qdrant_container():
@@ -55,26 +63,28 @@ def qdrant_container():
     container.stop()
 
 
+# -----------------------------------------------------------
+# fixtures
+# -----------------------------------------------------------
+
 @pytest.fixture
 def mock_settings(qdrant_container):
     _, url = qdrant_container
     with patch("backend.config.settings") as settings_mock:
         settings_mock.QDRANT_URL = url
-        settings_mock.QDRANT_COLLECTION = "test_collection_vectors"
+        settings_mock.QDRANT_COLLECTION = "test_collection_chunks"
         settings_mock.QDRANT_VECTOR_SIZE = 4
         yield settings_mock
 
 
 @pytest.fixture
 def store(mock_settings):
-    from backend.stores.qdrant_store import QdrantDatastore
-
+    from backend.stores.qdrant.qdrant_store import QdrantDatastore
     return QdrantDatastore()
 
 
 @pytest.fixture(autouse=True)
 def clean_collection(store, mock_settings):
-    # Defensive: delete might fail if it doesn't exist
     try:
         store.client.delete_collection(mock_settings.QDRANT_COLLECTION)
     except Exception:
@@ -90,68 +100,59 @@ def clean_collection(store, mock_settings):
     yield
 
 
-def test_connect_to_source(store):
-    store.connect_to_source()  # should not raise
+# -----------------------------------------------------------
+# tests
+# -----------------------------------------------------------
+
+def test_store_and_retrieve_document_chunks(store):
+    chunks = [
+        Chunk(document_id="doc1", chunk_index=0, text="hello world", vector=(0.1,0.1,0.1,0.1)),
+        Chunk(document_id="doc1", chunk_index=1, text="more text", vector=(0.2,0.2,0.2,0.2)),
+    ]
+
+    store.store_chunks(chunks)
+
+    retrieved = store.get_document_chunks("doc1")
+
+    assert len(retrieved) == 2
+    assert retrieved[0].chunk_index == 0
+    assert retrieved[1].chunk_index == 1
+    assert retrieved[0].text == "hello world"
 
 
-def test_store_node_workflow(store):
-    node = Node(
-        id="1001",
-        vector_data=(0.5, 0.5, 0.5, 0.5),
-        payload_data={"type": "test_node"},
-        relations=(),
-        embedding_model="test",
-    )
+def test_similarity_search(store):
+    chunks = [
+        Chunk(document_id="doc2", chunk_index=0, text="cats", vector=(0.9,0.0,0.0,0.0)),
+        Chunk(document_id="doc3", chunk_index=0, text="dogs", vector=(0.0,0.9,0.0,0.0)),
+    ]
+    store.store_chunks(chunks)
 
-    store.store_node(node)
-
-    # Retrieval by payload filter (contract-level)
-    results = store.get_nodes("id=1001")
+    results = store.similarity_search((0.9,0.0,0.0,0.0), limit=1)
 
     assert len(results) == 1
-    assert results[0].id == "1001"
-    assert results[0].payload_data["type"] == "test_node"
+    assert results[0].document_id == "doc2"
 
 
-def test_get_nodes_by_vector(store):
-    node = Node(
-        id="1002",
-        vector_data=(0.2, 0.2, 0.2, 0.2),
-        payload_data={"category": "vector_test"},
-        relations=(),
-        embedding_model="test",
-    )
+def test_delete_document(store):
+    chunks = [
+        Chunk(document_id="doc4", chunk_index=0, text="temp", vector=(0.3,0.3,0.3,0.3)),
+        Chunk(document_id="doc4", chunk_index=1, text="temp2", vector=(0.4,0.4,0.4,0.4)),
+    ]
 
-    store.store_node(node)
+    store.store_chunks(chunks)
 
-    results = store.get_nodes((0.2, 0.2, 0.2, 0.2))
+    deleted = store.delete_document("doc4")
+    assert deleted == 2
 
-    assert any(n.id == "1002" for n in results)
-
-
-def test_get_nodes_scroll_all(store):
-    # Should return list[Node], possibly empty
-    results = store.get_nodes(None)
-    assert isinstance(results, list)
-    if results:
-        assert isinstance(results[0], Node)
+    remaining = store.get_document_chunks("doc4")
+    assert remaining == []
 
 
-def test_remove_node_by_payload_filter(store):
-    node = Node(
-        id="1003",
-        vector_data=(0.7, 0.7, 0.7, 0.7),
-        payload_data={"status": "temporary"},
-        relations=(),
-        embedding_model="test",
-    )
-    store.store_node(node)
+def test_multiple_documents_isolated(store):
+    store.store_chunks([
+        Chunk(document_id="docA", chunk_index=0, text="A", vector=(0.1,0.1,0.1,0.1)),
+        Chunk(document_id="docB", chunk_index=0, text="B", vector=(0.2,0.2,0.2,0.2)),
+    ])
 
-    removed = store.remove_node("id=1003")
-
-    assert isinstance(removed, Node)
-    assert removed.id == "1003"
-
-    # Ensure it's gone
-    results = store.get_nodes("id=1003")
-    assert results == []
+    assert len(store.get_document_chunks("docA")) == 1
+    assert len(store.get_document_chunks("docB")) == 1

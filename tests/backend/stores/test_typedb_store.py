@@ -93,7 +93,7 @@ def store(mock_settings):
     from typedb.driver import TypeDB
 
     with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
-        from backend.stores.typedb_store import TypeDbDatastore
+        from backend.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
 
         datastore = TypeDbDatastore()
         
@@ -247,3 +247,31 @@ def test_remove_nodes_only_affects_target_entities(store):
     names = sorted(n.payload_data["name"] for n in remaining)
 
     assert names == ["Henry", "Ivy"]
+
+
+def test_store_node_inserts_entity(store):
+    node = Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={
+            "name": "Alice",
+            "email": "alice@test.com",
+            "age": 25,
+        },
+        relations=(),
+        embedding_model="typedb",
+    )
+
+    store.store_node(node)
+
+    results = store.fetch(
+        'match $p isa person, has email "alice@test.com"; fetch $p: name, email, age;'
+    )
+
+    assert len(results) == 1
+    person = results[0]["p"]
+
+    assert person["name"][0]["value"] == "Alice"
+    assert person["email"][0]["value"] == "alice@test.com"
+    assert person["age"][0]["value"] == 25

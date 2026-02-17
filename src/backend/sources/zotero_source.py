@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Any, List, Optional
-from uuid import UUID
 from pydantic import PrivateAttr
 from pyzotero import zotero
 
@@ -105,7 +104,7 @@ class ZoteroSource(AbstractSource):
 
     def get_list_artefacts(
         self, last_synced: Optional[datetime]
-    ) -> list[tuple[UUID, datetime]]:
+    ) -> list[tuple[str, datetime]]:
         if self._zotero is None:
             raise RuntimeError("Zotero client not initialized")
 
@@ -115,7 +114,7 @@ class ZoteroSource(AbstractSource):
             else self._zotero.items()
         )
 
-        artefacts: list[tuple[UUID, datetime]] = []
+        artefacts: list[tuple[str, datetime]] = []
 
         for item in items:
             data = item.get("data", {})
@@ -126,42 +125,33 @@ class ZoteroSource(AbstractSource):
                 continue
 
             artefacts.append(
-                (UUID(key.ljust(32, "0")), datetime.fromisoformat(modified.replace("Z", "+00:00")))
+                (
+                    key,
+                    datetime.fromisoformat(modified.replace("Z", "+00:00")),
+                )
             )
 
         return artefacts
 
-
     def get_content(
-        self, artefacts: list[tuple[UUID, datetime]]
+        self, artefacts: list[tuple[str, datetime]]
     ) -> list[Content]:
         if self._zotero is None:
             raise RuntimeError("Zotero client not initialized")
 
         contents: list[Content] = []
 
-        for artefact_id, modified in artefacts:
-            item_key = artefact_id.hex[:8]  # reverse your UUID mapping
+        for item_key, modified in artefacts:
             item = self._zotero.item(item_key)
             data = item.get("data", {})
 
-            content = {
-                "entity": self._map_item_type(data.get("itemType")),
-                "hashvalue": item_key,
-                "namelike-title": data.get("title"),
-                "publishingdate": data.get("date"),
-                "creators": data.get("creators", []),
-            }
-
             contents.append(
                 Content(
-                    id_=artefact_id,
+                    id_=item_key, 
                     date=modified,
-                    content=content,
+                    content=data,
                 )
             )
 
         return contents
-    
-    def _map_item_type(self, item_type: str | None) -> str:
-        return item_type or "unknown"
+

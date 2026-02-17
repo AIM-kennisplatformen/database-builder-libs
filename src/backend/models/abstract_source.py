@@ -1,14 +1,13 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class Content(BaseModel):
     date: datetime
-    id_: UUID
+    id_: str
     content: dict
 
 
@@ -27,12 +26,12 @@ class AbstractSource(ABC, BaseModel):
     @abstractmethod
     def get_list_artefacts(
         self, last_synced: Optional[datetime]
-    ) -> list[tuple[UUID, datetime]]:
+    ) -> list[tuple[str, datetime]]:
         """Abstract method to preprocess data from the source."""
         ...
 
     @abstractmethod
-    def get_content(self, artefacts: list[tuple[UUID, datetime]]) -> list[Content]:
+    def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
         """Abstract method to get data from the source."""
         ...
 
