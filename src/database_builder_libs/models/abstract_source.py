@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional
+from typing import Mapping, Optional
 
 from pydantic import BaseModel
 
@@ -57,26 +57,61 @@ class AbstractSource(ABC, BaseModel):
     SharePoint, Zotero, REST APIs, file repositories, databases.
     """
 
-    @abstractmethod
-    def connect_to_source(self) -> None:
-        """
-        Establish connection to the external data source.
 
-        This method should:
-        - Authenticate
-        - Validate configuration
-        - Prepare internal clients/sessions
+    _connected: bool = False
+    _config: Mapping[str, str] | None = None
+    """
+        Configuration
+    -------------
+    `config` is a mapping containing backend-specific parameters.
+
+    Examples
+    --------
+    Zotero:
+        {"library_id": "...", "api_key": "..."}
+    Filesystem:
+        {"path": "/data"}
+    REST API:
+        {"url": "...", "token": "..."}
+
+    Consistency guarantees
+    ----------------------
+    Implementations must ensure:
+    - Stable artefact identifiers across runs
+    - Monotonic modification timestamps
+    - Deterministic content serialization
+    """
+    
+    def connect(self, config: Mapping[str, str] | None = None) -> None:
+        """
+        Establish connection to the external source.
+
+        Idempotent: safe to call multiple times.
 
         Raises
         ------
         ConnectionError
-            If the source cannot be reached.
         PermissionError
-            If authentication fails.
         ValueError
-            If configuration is invalid.
         """
+        if self._connected:
+            return
 
+        self._connect_impl(config or {})
+        self._config = config
+        self._connected = True
+
+    @abstractmethod
+    def _connect_impl(self, config: Mapping[str, str]) -> None:
+        """Backend-specific connection logic."""
+        ...
+
+    def _ensure_connected(self) -> None:
+        """Raise if the source is used before connect()."""
+        if not self._connected:
+            raise RuntimeError(
+                f"{self.__class__.__name__} used before connect() was called"
+            )
 
     @abstractmethod
     def get_list_artefacts(

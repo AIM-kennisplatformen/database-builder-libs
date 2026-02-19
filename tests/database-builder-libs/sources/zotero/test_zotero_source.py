@@ -17,6 +17,16 @@ class ZoteroTests(unittest.TestCase):
     """Tests for ZoteroSource"""
 
     cwd = os.path.dirname(os.path.realpath(__file__))
+    def connect_source(self) -> ZoteroSource:
+        src = ZoteroSource()
+        src.connect(
+            {
+                "library_id": "myuserid",
+                "library_type": "user",
+                "api_key": "fakekey",
+            }
+        )
+        return src
 
     def get_doc(self, doc_name):
         with open(
@@ -35,7 +45,7 @@ class ZoteroTests(unittest.TestCase):
         This test verifies both the underlying pyzotero and zotero source methods by mocking the zotero API
         using HTTPretty. It provides some troubleshooting and regression insights beyond testing the functionality of methods.
         """
-        zot = ZoteroSource()
+        zot = self.connect_source()
 
         HTTPretty.register_uri(
             HTTPretty.GET,
@@ -69,7 +79,7 @@ class ZoteroTests(unittest.TestCase):
         fake_zotero = MagicMock()
         fake_zotero.children.return_value = fake_children
 
-        source = ZoteroSource.__new__(ZoteroSource)
+        source = self.connect_source()
         source._zotero = fake_zotero
 
         source.download_zotero_item(
@@ -87,7 +97,7 @@ class ZoteroTests(unittest.TestCase):
     def test_list_artefacts_str_ids_http(self):
         """Ensure Zotero item keys are returned as stable string identifiers"""
 
-        zot = ZoteroSource()
+        zot = self.connect_source()
         BASE = "https://api.zotero.org/users/myuserid"
 
         # prevent accidental real HTTP
@@ -142,7 +152,7 @@ class ZoteroTests(unittest.TestCase):
         This test verifies both the underlying pyzotero and zotero source methods by mocking the zotero API
         using HTTPretty. It provides some troubleshooting and regression insights beyond testing the functionality of methods.
         """
-        zot = ZoteroSource()
+        zot = self.connect_source()
 
         HTTPretty.register_uri(
             HTTPretty.GET,
@@ -205,7 +215,7 @@ class ZoteroTests(unittest.TestCase):
         fake_zotero.collection_items_top.return_value = fake_iterator
         fake_zotero.everything.return_value = expected_items
 
-        source = ZoteroSource.__new__(ZoteroSource)
+        source = self.connect_source()
         source._zotero = fake_zotero
 
         result = source.get_all_documents_metadata("COLL123")
@@ -221,7 +231,7 @@ class ZoteroTests(unittest.TestCase):
     def test_get_content_http(self):
         """Verify get_content fetches items using string Zotero IDs"""
 
-        zot = ZoteroSource()
+        zot = self.connect_source()
         BASE = "https://api.zotero.org/users/myuserid"
 
         # Block real internet

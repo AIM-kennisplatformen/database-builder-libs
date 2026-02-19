@@ -63,41 +63,47 @@ def qdrant_container():
     container.stop()
 
 
-# -----------------------------------------------------------
-# fixtures
-# -----------------------------------------------------------
-
 @pytest.fixture
-def mock_settings(qdrant_container):
+def store(qdrant_container):
     _, url = qdrant_container
-    with patch("database_builder_libs.config.settings") as settings_mock:
-        settings_mock.QDRANT_URL = url
-        settings_mock.QDRANT_COLLECTION = "test_collection_chunks"
-        settings_mock.QDRANT_VECTOR_SIZE = 4
-        yield settings_mock
 
-
-@pytest.fixture
-def store(mock_settings):
     from database_builder_libs.stores.qdrant.qdrant_store import QdrantDatastore
-    return QdrantDatastore()
 
+    store = QdrantDatastore()
+    store.connect(
+        {
+            "url": url,
+            "collection": "test_collection_chunks",
+            "vector_size": 4,
+        }
+    )
+    return store
 
 @pytest.fixture(autouse=True)
-def clean_collection(store, mock_settings):
+def clean_collection(store):
+    client = store.client
+    collection = store.collection
+    size = store.vector_size
+
     try:
-        store.client.delete_collection(mock_settings.QDRANT_COLLECTION)
+        client.delete_collection(collection)
     except Exception:
         pass
 
-    store.client.create_collection(
-        collection_name=mock_settings.QDRANT_COLLECTION,
-        vectors_config={
-            "size": mock_settings.QDRANT_VECTOR_SIZE,
-            "distance": "Cosine",
-        },
+    client.create_collection(
+        collection_name=collection,
+        vectors_config={"size": size, "distance": "Cosine"},
     )
+
     yield
+
+def test_requires_connect(qdrant_container):
+    from database_builder_libs.stores.qdrant.qdrant_store import QdrantDatastore
+
+    store = QdrantDatastore()
+
+    with pytest.raises(RuntimeError):
+        store.similarity_search((0.1,0.1,0.1,0.1))
 
 
 # -----------------------------------------------------------

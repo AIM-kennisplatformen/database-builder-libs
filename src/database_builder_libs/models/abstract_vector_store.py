@@ -34,9 +34,11 @@ class AbstractVectorStore(ABC):
 
     Mixing embedding models in one index is forbidden.
     """
+    def __init__(self) -> None:
+        self._connected: bool = False
+        self._connecting: bool = False
 
-    @abstractmethod
-    def connect(self) -> None:
+    def connect(self, config: dict | None = None) -> None:
         """
         Initialize the vector index and verify accessibility.
 
@@ -52,8 +54,26 @@ class AbstractVectorStore(ABC):
         RuntimeError
             Index exists but is incompatible.
         """
-        raise NotImplementedError
+        if self._connected:
+            return
 
+        self._connecting = True
+        try:
+            self._connect_impl(config)
+            self._connected = True
+        finally:
+            self._connecting = False
+
+    def _connect_impl(self, config: dict | None) -> None:
+        """Backend specific connection logic"""
+        ...
+
+    def _ensure_connected(self) -> None:
+        if not (self._connected or self._connecting):
+            raise RuntimeError(
+                f"{self.__class__.__name__} used before connect() was called"
+            )
+        
     @abstractmethod
     def store_chunks(self, chunks: List[Chunk]) -> None:
         """

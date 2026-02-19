@@ -83,46 +83,46 @@ class TypeDbDatastore(AbstractStore):
     -----
     This adapter assumes the schema defines a key attribute for each entity type.
     """
-
     def __init__(self) -> None:
-        self.typedb_driver: Final[TypeDBDriver] = TypeDB.core_driver(
-            address=settings.TYPEDB_URI
-        )
-        self.database: Final[str] = settings.TYPEDB_DATABASE
+        super().__init__()
+        self.typedb_driver: TypeDBDriver | None = None
+        self.database: str | None = None
+   
+    def _connect_impl(self, config: dict | None) -> None:
+        if not config:
+            raise ValueError("TypeDB requires configuration")
 
-        assert self.typedb_driver is not None
-        assert self.database is not None
+        uri = config.get("uri")
+        database = config.get("database")
+        schema_path = config.get("schema_path")
 
-        if not self.typedb_driver.databases.contains(self.database):
-            self.typedb_driver.databases.create(self.database)
+        if not uri or not database:
+            raise ValueError("TypeDB config requires 'uri' and 'database'")
 
-        current_dir = Path(__file__).parent
-        schema_path = current_dir / "schema.tql"
+        self.typedb_driver = TypeDB.core_driver(address=uri)
+        self.database = database
 
-        # ---- DEFINE SCHEMA ----
-        with self._query(SessionType.SCHEMA, TransactionType.WRITE) as transaction:
-            with open(schema_path, "r", encoding="utf-8") as f:
-                schema = f.read()
-                transaction.query.define(schema)
+        # create database if missing
+        if not self.typedb_driver.databases.contains(database):
+            self.typedb_driver.databases.create(database)
 
-        # ---- CRITICAL FIX ----
-        # TypeDB requires reopening driver after schema changes
-        self.typedb_driver.close()
-        self.typedb_driver = TypeDB.core_driver(address=settings.TYPEDB_URI)
+        # apply schema if provided
+        if schema_path:
+            path = Path(schema_path)
+            with self._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+                tx.query.define(path.read_text(encoding="utf-8"))
+
+            # required by TypeDB after schema change
+            self.typedb_driver.close()
+            self.typedb_driver = TypeDB.core_driver(address=uri)
 
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
-        """
-        Open a TypeDB transaction context.
+        self._ensure_connected()
+        assert self.typedb_driver is not None
+        assert self.database is not None
 
-        Commits automatically for WRITE transactions if no exception occurs.
-        READ transactions are never committed.
-
-        This method is the single transaction boundary for all database operations.
-        """
-        session: TypeDBSession
-        transaction: TypeDBTransaction
         with self.typedb_driver.session(self.database, session_type) as session:
             with session.transaction(transaction_type) as transaction:
                 try:
@@ -130,6 +130,7 @@ class TypeDbDatastore(AbstractStore):
                 finally:
                     if transaction.is_open() and transaction_type.is_write():
                         transaction.commit()
+
 
     def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
@@ -200,10 +201,6 @@ class TypeDbDatastore(AbstractStore):
         """
 
         self.save(query)
-
-    def connect_to_source(self) -> None:
-        """Abstract method to connect to the sink."""
-        self.__init__()
     
 
     def _relation_exists(self, rel_type: str, role_map: Mapping[str, RelationRef]) -> bool:
@@ -273,7 +270,7 @@ class TypeDbDatastore(AbstractStore):
 
         Relations are inserted only if not already present.
         """
-
+        self._ensure_connected()
         if not self._entity_exists(
             node.entity_type,
             node.key_attribute,
@@ -371,6 +368,8 @@ class TypeDbDatastore(AbstractStore):
 
         if not filter:
             raise ValueError("TypeDB datastore requires a keyed filter string")
+        
+        self._ensure_connected()
 
         parsed = self._parse_filter(filter)
         entity_type = parsed["entity_type"]
@@ -481,6 +480,7 @@ class TypeDbDatastore(AbstractStore):
         parsed = self._parse_filter(filter)
         entity_type: str = parsed["entity_type"]
         attrs: dict[str, str] = parsed["attributes"]
+        self._ensure_connected()
 
         if not allow_multiple and not attrs:
             raise ValueError(

@@ -24,24 +24,49 @@ class AbstractStore(ABC):
     - Idempotent storage: storing the same Node twice must not create duplicates
     """
 
+    def __init__(self) -> None:
+        self._connected: bool = False
+        self._connecting: bool = False
+    
+    def connect(self, config: dict | None = None) -> None:
+            """
+            Establish connection to the backend.
+
+            This method is idempotent. Calling it multiple times must be safe.
+
+            Parameters
+            ----------
+            config : Any | None
+                Backend-specific configuration object.
+
+            Raises
+            ------
+            ConnectionError
+                Backend unreachable.
+            RuntimeError
+                Backend misconfigured.
+            """
+            if self._connected:
+                return
+
+            self._connecting = True
+            try:
+                self._connect_impl(config)
+                self._connected = True
+            finally:
+                self._connecting = False
+
+    
     @abstractmethod
-    def connect_to_source(self) -> None:
-        """
-        Initialize connection to the storage backend.
-
-        This method should:
-        - Open database/session connection
-        - Validate schema or index availability
-        - Prepare search indexes if necessary
-
-        Raises
-        ------
-        ConnectionError
-            If the backend cannot be reached.
-        RuntimeError
-            If the storage backend is misconfigured.
-        """
+    def _connect_impl(self, config: dict | None) -> None:
+        """Backend-specific connection logic."""
         ...
+
+    def _ensure_connected(self) -> None:
+        if not (self._connected or self._connecting):
+            raise RuntimeError(
+                f"{self.__class__.__name__} used before connect() was called"
+            )
 
     @abstractmethod
     def store_node(self, node: Node) -> None:

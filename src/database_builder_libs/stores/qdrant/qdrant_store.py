@@ -67,22 +67,25 @@ class QdrantDatastore(AbstractVectorStore):
     """
 
     def __init__(self) -> None:
-        self.client: Final[QdrantClient] = QdrantClient(url=settings.QDRANT_URL)
-        self.collection: Final[str] = settings.QDRANT_COLLECTION
-        self.vector_size: Final[int] = settings.QDRANT_VECTOR_SIZE
-        self._initialized = False
+        super().__init__()
+        self.client: QdrantClient | None = None
+        self.collection: str | None = None
+        self.vector_size: int | None = None
 
-    def connect(self) -> None:
-        """
-        Ensure the collection exists and matches configuration.
+    def _connect_impl(self, config: dict | None) -> None:
+        if not config:
+            raise ValueError("Qdrant requires configuration")
 
-        Idempotent: safe to call repeatedly.
+        url = config.get("url")
+        collection = config.get("collection")
+        vector_size = config.get("vector_size")
 
-        Creates collection if missing using configured vector size
-        and cosine distance metric.
-        """
-        if self._initialized:
-            return
+        if not url or not collection or not vector_size:
+            raise ValueError("Qdrant config requires url, collection, vector_size")
+
+        self.client = QdrantClient(url=url)
+        self.collection = collection
+        self.vector_size = int(vector_size)
 
         existing = {c.name for c in self.client.get_collections().collections}
 
@@ -95,7 +98,6 @@ class QdrantDatastore(AbstractVectorStore):
                 ),
             )
 
-        self._initialized = True
 
     def _point_id(self, document_id: DocumentId, chunk_index: int) -> int:
         """
@@ -127,7 +129,7 @@ class QdrantDatastore(AbstractVectorStore):
 
         This operation is idempotent.
         """
-        self.connect()
+        self._ensure_connected()
 
         if not chunks:
             return
@@ -175,7 +177,7 @@ class QdrantDatastore(AbstractVectorStore):
         - Metadata and text are preserved
         - Results are deterministic for identical index state
         """
-        self.connect()
+        self._ensure_connected()
 
         response = self.client.query_points(
             collection_name=self.collection,
@@ -211,7 +213,7 @@ class QdrantDatastore(AbstractVectorStore):
 
         Returns chunks ordered by chunk_index to reconstruct document order.
         """
-        self.connect()
+        self._ensure_connected()
 
         filt = Filter(
             must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))]
@@ -266,7 +268,7 @@ class QdrantDatastore(AbstractVectorStore):
             Number of deleted chunks.
         """
 
-        self.connect()
+        self._ensure_connected()
 
         chunks = self.get_document_chunks(document_id)
         if not chunks:

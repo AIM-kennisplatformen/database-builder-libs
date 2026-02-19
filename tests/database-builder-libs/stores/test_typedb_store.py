@@ -1,3 +1,4 @@
+import os
 import pytest
 import time
 import socket
@@ -78,40 +79,46 @@ def typedb_container():
     container.stop()
 
 
+
+
+
 @pytest.fixture
-def mock_settings(typedb_container):
+def store(typedb_container):
     container, address = typedb_container
 
-    with patch("database_builder_libs.config.settings") as settings_mock:
-        settings_mock.TYPEDB_URI = address
-        settings_mock.TYPEDB_DATABASE = "integration_test_db"
-        yield settings_mock
-
-
-@pytest.fixture
-def store(mock_settings):
-    from typedb.driver import TypeDB
+    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
 
     with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
-        from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
-
         datastore = TypeDbDatastore()
-        
-        with datastore.typedb_driver.session(
-            datastore.database, SessionType.DATA
-        ) as session:
-            with session.transaction(TransactionType.WRITE) as tx:
-                tx.query.delete("match $x isa person; delete $x isa person;")
-                tx.commit()
+        schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
+        datastore.connect(
+            {
+                "uri": address,
+                "database": "integration_test_db",
+                "schema_path": schema_path,
+            }
+        )
+
+        # clean test data AFTER connect
+        with datastore._query(SessionType.DATA, TransactionType.WRITE) as tx:
+            tx.query.delete("match $x isa person; delete $x isa person;")
+
         yield datastore
 
 
 def test_initialization_creates_database_and_schema(store):
-    with store.typedb_driver.session(store.database, SessionType.SCHEMA) as session:
-        with session.transaction(TransactionType.READ) as tx:
-            person_type = tx.concepts.get_entity_type("person").resolve()
-            assert person_type is not None
-            assert person_type.get_label().name == "person"
+    with store._query(SessionType.SCHEMA, TransactionType.READ) as tx:
+        person_type = tx.concepts.get_entity_type("person").resolve()
+        assert person_type is not None
+        assert person_type.get_label().name == "person"
+
+def test_requires_connect(typedb_container):
+    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
+
+    store = TypeDbDatastore()
+
+    with pytest.raises(RuntimeError):
+        store.get_nodes("entity=person")
 
 
 def test_save_and_fetch_workflow(store):

@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 import shutil
-from typing import Any, List, Optional
+from typing import Any, List, Mapping, Optional
 from pydantic import PrivateAttr
 from pyzotero import zotero
 
@@ -44,29 +44,32 @@ class ZoteroSource(AbstractSource):
 
     _zotero: Optional[zotero.Zotero] = PrivateAttr(default=None)
 
-    def model_post_init(self, __context: Any) -> None:
-        """Called automatically by Pydantic after initialization."""
-        self.connect_to_source()
+    def _connect_impl(self, config: Mapping[str, str]) -> None:
+        """Create Zotero API client from provided config.
+           Required config keys
+           --------------------
+           library_id   : Zotero library identifier
+           library_type : "user" or "group"
+           api_key      : Zotero API key
 
-    def connect_to_source(self) -> None:
+           Example
+           -------
+           {
+               "library_id": "...",
+               "library_type": "user",
+               "api_key": "..."
+           }
         """
-        Initialize Zotero API client.
+        required = ("library_id", "library_type", "api_key")
+        missing = [k for k in required if k not in config]
 
-        Idempotent: calling multiple times does not recreate the client.
-
-        Raises
-        ------
-        RuntimeError
-            If credentials are missing or invalid.
-        """
-
-        if self._zotero is not None:
-            return  # already connected
+        if missing:
+            raise ValueError(f"Missing Zotero config keys: {missing}")
 
         self._zotero = zotero.Zotero(
-            library_id=Settings.ZOTERO_LIBRARY_ID,
-            library_type=Settings.ZOTERO_LIBRARY_TYPE,
-            api_key=Settings.ZOTERO_API_KEY,
+            library_id=config["library_id"],
+            library_type=config["library_type"],
+            api_key=config["api_key"],
         )
 
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
