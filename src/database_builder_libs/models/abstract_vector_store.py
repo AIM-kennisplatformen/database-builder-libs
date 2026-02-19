@@ -64,9 +64,10 @@ class AbstractVectorStore(ABC):
         finally:
             self._connecting = False
 
+    @abstractmethod
     def _connect_impl(self, config: dict | None) -> None:
         """Backend specific connection logic"""
-        ...
+        raise NotImplementedError
 
     def _ensure_connected(self) -> None:
         if not (self._connected or self._connecting):

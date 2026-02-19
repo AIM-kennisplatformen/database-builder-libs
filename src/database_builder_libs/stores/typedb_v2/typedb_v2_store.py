@@ -42,7 +42,7 @@ class TypeDbDatastore(AbstractStore):
 
     Identity semantics
     ------------------
-    A Node is uniquely identified by (entity_type, key_attribute, id).
+    A Node is uniquely identified by id.
 
     Storing the same node twice MUST NOT create duplicates.
     The adapter performs existence checks before insertion.
@@ -128,7 +128,7 @@ class TypeDbDatastore(AbstractStore):
             clauses.append(self._format_attribute_match(dict(attrs)))
 
         return ", ".join(clauses)
-
+    
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
         self._ensure_connected()
@@ -139,8 +139,11 @@ class TypeDbDatastore(AbstractStore):
             with session.transaction(transaction_type) as transaction:
                 try:
                     yield transaction
-                finally:
-                    if transaction.is_open() and transaction_type.is_write():
+                except Exception:
+                    # Do NOT commit — let TypeDB abort on close
+                    raise
+                else:
+                    if transaction_type.is_write() and transaction.is_open():
                         transaction.commit()
 
 
@@ -266,12 +269,12 @@ class TypeDbDatastore(AbstractStore):
 
     def store_node(self, node: Node) -> None:
         """
-        Insert or update a Node in TypeDB.
-
+        Insert a Node into TypeDB if it does not already exist, and ensure its relations exist.
+        
         Behaviour
         ---------
-        - Creates entity if it does not exist
-        - Does NOT overwrite existing attributes
+        - Creates the entity if it does not exist
+        - Leaves existing entity attributes unchanged (no merge or update of payload_data)
         - Inserts missing relations only
         - Operation is idempotent
 

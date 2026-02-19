@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Sequence, List
 from hashlib import blake2b
 
+from loguru import logger
 from qdrant_client import QdrantClient
 from qdrant_client.models import (
     Distance,
@@ -79,12 +80,14 @@ class QdrantDatastore(AbstractVectorStore):
         collection = config.get("collection")
         vector_size = config.get("vector_size")
 
-        if not url or not collection or not vector_size:
+        if url is None or collection is None or vector_size is None:
             raise ValueError("Qdrant config requires url, collection, vector_size")
 
         self.client = QdrantClient(url=url)
         self.collection = collection
         self.vector_size = int(vector_size)
+        if self.vector_size <= 0:
+            raise ValueError("vector_size must be a positive integer")
 
         existing = {c.name for c in self.client.get_collections().collections}
 
@@ -116,28 +119,32 @@ class QdrantDatastore(AbstractVectorStore):
         return int.from_bytes(digest, "big", signed=False)
 
     def store_chunks(self, chunks: List[Chunk]) -> None:
-        """
-        Insert or update chunk embeddings.
-
-        Behaviour
-        ---------
-        - Upserts vectors (overwrite if exists)
-        - Skips chunks without vectors
-        - Stores text and metadata as payload
-        - Does not remove missing chunks (handled by delete_document)
-
-        This operation is idempotent.
-        """
         self._ensure_connected()
 
         if not chunks:
             return
 
+        expected_dim = self._vector_size()
+
         points: List[PointStruct] = []
 
         for chunk in chunks:
             if not chunk.vector:
+                logger.warning(
+                    "Skipping chunk without embedding "
+                    "(doc={}, idx={}, text_len={})",
+                    chunk.document_id,
+                    chunk.chunk_index,
+                    len(chunk.text) if chunk.text else 0,
+                )
                 continue
+
+            if len(chunk.vector) != expected_dim:
+                raise ValueError(
+                    f"Invalid vector size for chunk "
+                    f"(doc={chunk.document_id}, idx={chunk.chunk_index}): "
+                    f"expected {expected_dim}, got {len(chunk.vector)}"
+                )
 
             payload = {
                 DOC_ID: chunk.document_id,
@@ -153,9 +160,12 @@ class QdrantDatastore(AbstractVectorStore):
                     payload=payload,
                 )
             )
-        if points:
-            self._client().upsert(collection_name=self._collection(), points=points)
 
+        if points:
+            self._client().upsert(
+                collection_name=self._collection(),
+                points=points,
+            )
 
     def similarity_search(
         self,
@@ -177,7 +187,11 @@ class QdrantDatastore(AbstractVectorStore):
         - Results are deterministic for identical index state
         """
         self._ensure_connected()
-
+        expected_dim = self._vector_size()
+        if len(vector) != expected_dim:
+            raise ValueError(
+                f"Query vector has wrong dimension: expected {expected_dim}, got {len(vector)}"
+            )
         response = self._client().query_points(
             collection_name=self._collection(),
             query=list(vector),
@@ -191,11 +205,15 @@ class QdrantDatastore(AbstractVectorStore):
 
         for point in response.points:
             payload = point.payload or {}
+            doc_id = payload.get(DOC_ID)
+            idx = payload.get(CHUNK_INDEX)
+            if doc_id is None or idx is None:
+                continue
 
             results.append(
                 Chunk(
-                    document_id=payload[DOC_ID],
-                    chunk_index=payload[CHUNK_INDEX],
+                    document_id=doc_id,
+                    chunk_index=idx,
                     text=payload.get(TEXT, ""),
                     vector=(),  # never return query vector
                     metadata={
@@ -236,10 +254,15 @@ class QdrantDatastore(AbstractVectorStore):
             for r in records:
                 payload = r.payload or {}
 
+                doc_id = payload.get(DOC_ID)
+                idx = payload.get(CHUNK_INDEX)
+                if doc_id is None or idx is None:
+                    continue
+
                 chunks.append(
                     Chunk(
-                        document_id=payload[DOC_ID],
-                        chunk_index=payload[CHUNK_INDEX],
+                        document_id=doc_id,
+                        chunk_index=idx,
                         text=payload.get(TEXT, ""),
                         vector=(),
                         metadata={
@@ -275,18 +298,19 @@ class QdrantDatastore(AbstractVectorStore):
         if not chunks:
             return 0
 
-        filt = Filter(
-            must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))]
-        )
+        filt = Filter(must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))])
 
-        self._client().delete(
+        result = self._client().delete(
             collection_name=self._collection(),
             points_selector=filt,
+            wait=True,
         )
 
+        if result.status != "completed":
+            raise RuntimeError(f"Qdrant delete failed: {result.status}")
 
         return len(chunks)
-
+    
     def _client(self) -> QdrantClient:
         self._ensure_connected()
         if self.client is None:
