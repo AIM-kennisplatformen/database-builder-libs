@@ -101,8 +101,7 @@ def test_vectorize_consumes_input_stream(pdf_bytes):
 
     doc1 = vectorizer.vectorize("proposal.pdf", stream)
     assert isinstance(doc1, DoclingDocument)
-
-    # Stream now empty → should still succeed because wrapper copies bytes
+    
     stream.seek(0)
     doc2 = vectorizer.vectorize("proposal.pdf", stream)
 

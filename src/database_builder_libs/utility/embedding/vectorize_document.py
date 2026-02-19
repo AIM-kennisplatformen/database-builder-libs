@@ -40,19 +40,16 @@ class Faultss:
     hashvalue: str
     path_file_document: PathLike[str]
 
-class PipelineDocumentsConversionUnsupportedError(ValueError):
-    def __init__(self, *, extension: str) -> None:
-        super().__init__(f"Raw document type not supported, based on its filename extension {extension}.")
-
-
 class PipelineDocumentsConversionFailedError(ValueError):
     def __init__(self, *, faultss: Sequence[Faultss]) -> None:
         self.faultss = faultss
+        messages = []
         for faults in self.faultss:
-            super().__init__(
+            messages.append(
                 f"Failed to convert raw document '{faults.path_file_document!s}' ({faults.hashvalue}) "
-                f"because of {len(faults.faults)} fault(s): {pformat(faults.faults)}",
+                f"because of {len(faults.faults)} fault(s): {pformat(faults.faults)}"
             )
+        super().__init__("\n".join(messages))
 
 class VectorizeDocument:
     def __init__(
