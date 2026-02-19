@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Final, Sequence, List
+from typing import Sequence, List
 from hashlib import blake2b
 
 from qdrant_client import QdrantClient
@@ -13,7 +13,6 @@ from qdrant_client.models import (
     MatchValue,
 )
 
-from database_builder_libs.config import settings
 from database_builder_libs.models.chunk import Chunk, DocumentId
 from database_builder_libs.models.abstract_vector_store import AbstractVectorStore
 
@@ -154,9 +153,9 @@ class QdrantDatastore(AbstractVectorStore):
                     payload=payload,
                 )
             )
-
         if points:
-            self.client.upsert(collection_name=self.collection, points=points)
+            self._client().upsert(collection_name=self._collection(), points=points)
+
 
     def similarity_search(
         self,
@@ -179,13 +178,14 @@ class QdrantDatastore(AbstractVectorStore):
         """
         self._ensure_connected()
 
-        response = self.client.query_points(
-            collection_name=self.collection,
+        response = self._client().query_points(
+            collection_name=self._collection(),
             query=list(vector),
             limit=limit,
             with_payload=True,
             with_vectors=False,
         )
+
 
         results: List[Chunk] = []
 
@@ -223,14 +223,15 @@ class QdrantDatastore(AbstractVectorStore):
         offset = None
 
         while True:
-            records, offset = self.client.scroll(
-                collection_name=self.collection,
+            records, offset = self._client().scroll(
+                collection_name=self._collection(),
                 scroll_filter=filt,
                 with_payload=True,
                 with_vectors=False,
                 limit=512,
                 offset=offset,
             )
+
 
             for r in records:
                 payload = r.payload or {}
@@ -278,6 +279,28 @@ class QdrantDatastore(AbstractVectorStore):
             must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))]
         )
 
-        self.client.delete(collection_name=self.collection, points_selector=filt)
+        self._client().delete(
+            collection_name=self._collection(),
+            points_selector=filt,
+        )
+
 
         return len(chunks)
+
+    def _client(self) -> QdrantClient:
+        self._ensure_connected()
+        if self.client is None:
+            raise RuntimeError("QdrantDatastore not connected: client missing")
+        return self.client
+
+    def _collection(self) -> str:
+        self._ensure_connected()
+        if self.collection is None:
+            raise RuntimeError("QdrantDatastore not connected: collection missing")
+        return self.collection
+
+    def _vector_size(self) -> int:
+        self._ensure_connected()
+        if self.vector_size is None:
+            raise RuntimeError("QdrantDatastore not connected: vector_size missing")
+        return self.vector_size

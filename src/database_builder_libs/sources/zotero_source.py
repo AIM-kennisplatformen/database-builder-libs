@@ -7,7 +7,6 @@ from pyzotero import zotero
 
 from loguru import logger
 from database_builder_libs.models.abstract_source import AbstractSource, Content
-from database_builder_libs.config import Settings
 
 
 class ZoteroSource(AbstractSource):

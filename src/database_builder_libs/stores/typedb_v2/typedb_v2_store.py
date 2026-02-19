@@ -1,4 +1,4 @@
-from typing import Final, Mapping, Optional
+from typing import Mapping, Optional
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -8,11 +8,8 @@ from typedb.driver import (
     TypeDB,
     TypeDBDriver,
     TypeDBOptions,
-    TypeDBSession,
-    TypeDBTransaction,
 )
 
-from database_builder_libs.config import settings
 from database_builder_libs.models.abstract_store import AbstractStore
 from database_builder_libs.models.node import EntityType, KeyAttribute, Node, NodeId
 from urllib.parse import parse_qs
