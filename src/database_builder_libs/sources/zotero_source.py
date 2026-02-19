@@ -2,12 +2,23 @@ from datetime import datetime
 from pathlib import Path
 import shutil
 from typing import Any, List, Mapping, Optional
-from pydantic import PrivateAttr
+from pydantic import PrivateAttr, BaseModel
 from pyzotero import zotero
 
 from loguru import logger
 from database_builder_libs.models.abstract_source import AbstractSource, Content
+from datetime import timezone
+from dateutil.parser import isoparse
 
+def _to_utc_ts(dt: datetime) -> int:
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.astimezone(timezone.utc).timestamp())
+
+class ZoteroConfig(BaseModel):
+    library_id: str
+    library_type: str
+    api_key: str
 
 class ZoteroSource(AbstractSource):
     """
@@ -38,38 +49,14 @@ class ZoteroSource(AbstractSource):
 
     Lifecycle
     ---------
-    Connection is automatically established after model initialization.
+    `connect()` must be called before using the source.
     """
 
     _zotero: Optional[zotero.Zotero] = PrivateAttr(default=None)
 
-    def _connect_impl(self, config: Mapping[str, str]) -> None:
-        """Create Zotero API client from provided config.
-           Required config keys
-           --------------------
-           library_id   : Zotero library identifier
-           library_type : "user" or "group"
-           api_key      : Zotero API key
-
-           Example
-           -------
-           {
-               "library_id": "...",
-               "library_type": "user",
-               "api_key": "..."
-           }
-        """
-        required = ("library_id", "library_type", "api_key")
-        missing = [k for k in required if k not in config]
-
-        if missing:
-            raise ValueError(f"Missing Zotero config keys: {missing}")
-
-        self._zotero = zotero.Zotero(
-            library_id=config["library_id"],
-            library_type=config["library_type"],
-            api_key=config["api_key"],
-        )
+    def _connect_impl(self, config: Mapping[str, Any]) -> None:
+        zotero_config = ZoteroConfig(**config)
+        self._zotero = zotero.Zotero(**zotero_config.model_dump())
 
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection
@@ -88,8 +75,8 @@ class ZoteroSource(AbstractSource):
             The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
-        if self._zotero is None:
-            raise RuntimeError("Zotero client not initialized")
+        self._ensure_connected()
+        assert self._zotero is not None
 
         return self._zotero.everything(
             self._zotero.collection_items_top(collection_id, limit=None)
@@ -110,31 +97,32 @@ class ZoteroSource(AbstractSource):
            `item_id`: The specific item_id of the item to get the attachment/pdf from (`key` attribute from above mentioned zotero dict)
            `download_path`: The folder to download the item to, the file_path will be -> <download_path>/<item_id>.pdf
         """
-        if self._zotero is None:
-            raise RuntimeError("Zotero client not initialized")
+        self._ensure_connected()
+        assert self._zotero is not None
 
-        logger.debug("Fetching File: %s", item_id)
+        logger.debug("Fetching File: {}", item_id)
 
         children = self._zotero.children(item_id)
         if not children:
-            logger.warning("No child attachments found for item %s", item_id)
+            logger.warning("No child attachments found for item {}", item_id)
             return
 
         attachments = [
             c for c in children if c.get("data", {}).get("itemType") == "attachment"
         ]
         if not attachments:
-            logger.warning("No attachment-type children for item %s", item_id)
+            logger.warning("No attachment-type children for item {}", item_id)
             return
 
         attachment = attachments[0]
         data = attachment.get("data", {})
         local_path = data.get("path")
 
-        target = Path(download_path) / f"{item_id}.pdf"
-
+        download_dir = Path(download_path)
+        download_dir.mkdir(parents=True, exist_ok=True)
+        target = download_dir / f"{item_id}.pdf"
         if local_path and Path(local_path).exists():
-            logger.info("Copying local attachment from %s", local_path)
+            logger.info("Copying local attachment from {}", local_path)
             shutil.copy(local_path, target)
             return
 
@@ -173,14 +161,16 @@ class ZoteroSource(AbstractSource):
         -----
         Zotero `since` uses server modification time, not file change time.
         """
-        if self._zotero is None:
-            raise RuntimeError("Zotero client not initialized")
+        self._ensure_connected()
+        assert self._zotero is not None
 
-        items = self._zotero.everything(
-            self._zotero.items(since=int(last_synced.timestamp()))
+        items_iter = (
+            self._zotero.items(since=_to_utc_ts(last_synced))
             if last_synced
             else self._zotero.items()
         )
+
+        items = list(self._zotero.everything(items_iter))
 
         artefacts: list[tuple[str, datetime]] = []
 
@@ -195,10 +185,9 @@ class ZoteroSource(AbstractSource):
             artefacts.append(
                 (
                     key,
-                    datetime.fromisoformat(modified.replace("Z", "+00:00")),
+                    isoparse(modified).astimezone(timezone.utc),
                 )
             )
-
         return artefacts
 
     def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
@@ -210,18 +199,21 @@ class ZoteroSource(AbstractSource):
         Guarantees
         ----------
         - One Content object per artefact
-        - Content.date matches modification timestamp from list phase
+        - Content.date reflects the modification timestamp observed during listing.
+        - Content.content may represent a newer revision if the item changed during retrieval.
         - Content.content contains raw Zotero `data` field
 
         This method does not download attachments.
         """
-        if self._zotero is None:
-            raise RuntimeError("Zotero client not initialized")
+        self._ensure_connected()
+        assert self._zotero is not None
 
         contents: list[Content] = []
 
         for item_key, modified in artefacts:
             item = self._zotero.item(item_key)
+            if not item:
+                continue
             data = item.get("data", {})
 
             contents.append(

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Mapping, Optional
+from typing import Mapping, Optional, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 
 class Content(BaseModel):
@@ -29,6 +29,7 @@ class Content(BaseModel):
     date: datetime
     id_: str
     content: dict
+
 
 
 class AbstractSource(ABC, BaseModel):
@@ -58,8 +59,8 @@ class AbstractSource(ABC, BaseModel):
     """
 
 
-    _connected: bool = False
-    _config: Mapping[str, str] | None = None
+    _connected: bool = PrivateAttr(default=False)
+    _config: Mapping[str, str] | None = PrivateAttr(default=None)
     """
         Configuration
     -------------
@@ -82,7 +83,7 @@ class AbstractSource(ABC, BaseModel):
     - Deterministic content serialization
     """
     
-    def connect(self, config: Mapping[str, str] | None = None) -> None:
+    def connect(self, config: Mapping[str, Any] | None = None) -> None:
         """
         Establish connection to the external source.
 
@@ -97,14 +98,15 @@ class AbstractSource(ABC, BaseModel):
         if self._connected:
             return
 
-        self._connect_impl(config or {})
-        self._config = config
+        cfg = config or {}
+        self._connect_impl(cfg)
+        self._config = cfg
         self._connected = True
 
     @abstractmethod
-    def _connect_impl(self, config: Mapping[str, str]) -> None:
+    def _connect_impl(self, config: Mapping[str, Any]) -> None:
         """Backend-specific connection logic."""
-        ...
+        raise NotImplementedError
 
     def _ensure_connected(self) -> None:
         """Raise if the source is used before connect()."""
@@ -142,7 +144,8 @@ class AbstractSource(ABC, BaseModel):
         RuntimeError
             If called before connect_to_source().
         """
-
+        raise NotImplementedError
+    
     @abstractmethod
     def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
         """
@@ -175,3 +178,4 @@ class AbstractSource(ABC, BaseModel):
         KeyError
             If an artefact no longer exists.
         """
+        raise NotImplementedError
