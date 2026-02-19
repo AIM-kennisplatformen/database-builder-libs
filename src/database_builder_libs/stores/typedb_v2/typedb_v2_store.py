@@ -12,9 +12,9 @@ from typedb.driver import (
     TypeDBTransaction,
 )
 
-from backend.config import settings
-from backend.models.abstract_store import AbstractStore
-from backend.models.node import EntityType, KeyAttribute, Node, NodeId
+from database_builder_libs.config import settings
+from database_builder_libs.models.abstract_store import AbstractStore
+from database_builder_libs.models.node import EntityType, KeyAttribute, Node, NodeId
 from urllib.parse import parse_qs
 from typing import TypedDict, cast
 
@@ -31,13 +31,57 @@ class RelationData(TypedDict, total=False):
 
 class TypeDbDatastore(AbstractStore):
     """
-    TypeDbDatastore is a concrete implementation of the Datastore abstract base class for
-    interacting with a TypeDB database.
+    TypeDB-backed implementation of the AbstractStore knowledge persistence layer.
 
-    Data in TypeDB can be inserted, queried, and managed using TypeDB's schema and query language.
+    This adapter maps canonical `Node` objects onto a TypeDB schema.
 
-    Due to the implementation of the typedb-driver for TypeDB 2.x this datastore needs separate
-    methods for inserting, fetching, deleting, and updating data.
+    Mapping rules
+    -------------
+    Node → TypeDB Entity
+        node.entity_type      → entity type
+        node.id               → key_attribute value
+        node.payload_data     → attributes
+        node.relations        → relations
+
+    Identity semantics
+    ------------------
+    A Node is uniquely identified by (entity_type, key_attribute, id).
+
+    Storing the same node twice MUST NOT create duplicates.
+    The adapter performs existence checks before insertion.
+
+    Filter language
+    ---------------
+    All read and delete operations use a URL-query style filter string:
+
+        "entity=<type>&<attribute>=<value>&<attribute>=<value>"
+
+    Examples
+        entity=person&email=a@b.com
+        entity=document&title=Report.pdf
+
+    Behaviour
+    ---------
+    - get_nodes() returns normalized Node objects reconstructed from TypeDB
+    - store_node() performs upsert semantics
+    - remove_node() deletes exactly one node (safety enforced)
+    - remove_nodes() allows bulk deletion when explicitly enabled
+
+    Safety guarantees
+    -----------------
+    - Refuses full-entity deletion without explicit permission
+    - Deduplicates overlapping attribute matches
+    - Ensures relations are not duplicated
+    - Schema is automatically applied at initialization
+
+    Transactions
+    ------------
+    Each operation runs in its own transaction.
+    Writes are committed automatically when successful.
+
+    Notes
+    -----
+    This adapter assumes the schema defines a key attribute for each entity type.
     """
 
     def __init__(self) -> None:
@@ -69,6 +113,14 @@ class TypeDbDatastore(AbstractStore):
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
+        """
+        Open a TypeDB transaction context.
+
+        Commits automatically for WRITE transactions if no exception occurs.
+        READ transactions are never committed.
+
+        This method is the single transaction boundary for all database operations.
+        """
         session: TypeDBSession
         transaction: TypeDBTransaction
         with self.typedb_driver.session(self.database, session_type) as session:
@@ -204,6 +256,24 @@ class TypeDbDatastore(AbstractStore):
         self.save(query)
 
     def store_node(self, node: Node) -> None:
+        """
+        Insert or update a Node in TypeDB.
+
+        Behaviour
+        ---------
+        - Creates entity if it does not exist
+        - Does NOT overwrite existing attributes
+        - Inserts missing relations only
+        - Operation is idempotent
+
+        Identity rule
+        -------------
+        A node is considered existing if an entity with
+        (entity_type, key_attribute, id) exists.
+
+        Relations are inserted only if not already present.
+        """
+
         if not self._entity_exists(
             node.entity_type,
             node.key_attribute,
@@ -269,7 +339,33 @@ class TypeDbDatastore(AbstractStore):
         results = self.get(query)
         return sorted({r["a"].get_label().name for r in results})
     
-    def get_nodes(self, filter: str | Sequence[float] | None) -> list[Node]:
+    def get_nodes(self, filter: str | None) -> list[Node]:
+        """
+        Retrieve nodes using a filter query.
+
+        Filter syntax
+        -------------
+        URL query string:
+
+            entity=<entity_type>&<attr>=<value>&...
+
+        Example
+            entity=person&email=john@doe.com
+
+        Behaviour
+        ---------
+        - Returns normalized Node objects
+        - Deduplicates overlapping matches
+        - Automatically infers key_attribute from schema
+
+        Raises
+        ------
+        TypeError
+            If filter is not a string
+        ValueError
+            If filter missing required entity parameter
+        """
+
         if not isinstance(filter, str):
             raise TypeError("TypeDB datastore requires string filter")
 
@@ -326,8 +422,7 @@ class TypeDbDatastore(AbstractStore):
                     entity_type=EntityType(entity_type),
                     key_attribute=KeyAttribute(key_attr),
                     payload_data=payload,
-                    relations=(),
-                    embedding_model="typedb",
+                    relations=()
                 )
 
                 merged = False
@@ -364,6 +459,22 @@ class TypeDbDatastore(AbstractStore):
 
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
+        """
+        Delete nodes matching the filter.
+
+        Safety rules
+        ------------
+        - Refuses deleting entire entity type unless allow_multiple=True
+        - Requires at least one attribute filter by default
+
+        Returns
+        -------
+        int
+            Number of deleted nodes
+
+        This operation is irreversible.
+        """
+
         if not filter:
             raise ValueError("TypeDB datastore requires a keyed filter string")
 
@@ -402,8 +513,14 @@ class TypeDbDatastore(AbstractStore):
     
     def remove_node(self, filter: str) -> Node:
         """
-        Remove exactly one node and return it.
-        Adapter around remove_nodes() to satisfy AbstractStore.
+        Delete exactly one node and return it.
+
+        Raises
+        ------
+        ValueError
+            No match or multiple matches
+        RuntimeError
+            Deletion inconsistency detected
         """
 
         nodes = self.get_nodes(filter)

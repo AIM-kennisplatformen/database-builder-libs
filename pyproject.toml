@@ -36,7 +36,7 @@ build-backend = "hatchling.build"
 requires = ["hatchling"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/backend"]
+packages = ["src/database_builder_libs"]
 
 [tool.pixi.workspace]
 channels = ["https://fast.prefix.dev/conda-forge",
@@ -55,7 +55,7 @@ database_builder = { path = ".", editable = true }
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 addopts = ["--import-mode=importlib"]
-testpaths = ["tests/backend"]
+testpaths = ["tests/database_builder_libs"]
 filterwarnings = [
     "ignore:datetime.datetime.utcnow.*:DeprecationWarning"
 ]

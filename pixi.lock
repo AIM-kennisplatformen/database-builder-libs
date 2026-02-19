@@ -1969,7 +1969,7 @@ packages:
 - pypi: .
   name: database-builder
   version: 0.1.0
-  sha256: 7e568b46e83d3f23cfeec35aa715c56d57dd9f268688613535b0bba14ad8f510
+  sha256: c990efc65d1d5894c7784fce30701a54037447445c88657dd6926011a6a8c54b
   requires_dist:
   - typedb-driver==2.29.2
   - fastapi>=0.128.0

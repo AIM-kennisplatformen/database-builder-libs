@@ -6,11 +6,42 @@ from pydantic import PrivateAttr
 from pyzotero import zotero
 
 from loguru import logger
-from backend.models.abstract_source import AbstractSource, Content
-from backend.config import Settings
+from database_builder_libs.models.abstract_source import AbstractSource, Content
+from database_builder_libs.config import Settings
 
 
 class ZoteroSource(AbstractSource):
+    """
+    Zotero implementation of AbstractSource.
+
+    Provides incremental synchronization of a Zotero library and exposes items
+    as canonical `Content` objects.
+
+    Mapping
+    -------
+    Zotero item            → Content
+    item.key               → Content.id_
+    item.data              → Content.content
+    item.dateModified      → Content.date
+
+    Synchronization semantics
+    -------------------------
+    - get_list_artefacts() performs incremental sync using Zotero `since`
+    - Returned timestamps are UTC
+    - Identifiers are stable across runs
+    - Deleted items are NOT reported (Zotero API limitation)
+
+    Attachment handling
+    -------------------
+    download_zotero_item() retrieves the first attachment:
+    - Prefers local Zotero storage when available
+    - Falls back to API download
+
+    Lifecycle
+    ---------
+    Connection is automatically established after model initialization.
+    """
+
     _zotero: Optional[zotero.Zotero] = PrivateAttr(default=None)
 
     def model_post_init(self, __context: Any) -> None:
@@ -18,6 +49,17 @@ class ZoteroSource(AbstractSource):
         self.connect_to_source()
 
     def connect_to_source(self) -> None:
+        """
+        Initialize Zotero API client.
+
+        Idempotent: calling multiple times does not recreate the client.
+
+        Raises
+        ------
+        RuntimeError
+            If credentials are missing or invalid.
+        """
+
         if self._zotero is not None:
             return  # already connected
 
@@ -105,6 +147,30 @@ class ZoteroSource(AbstractSource):
     def get_list_artefacts(
         self, last_synced: Optional[datetime]
     ) -> list[tuple[str, datetime]]:
+        """
+        Return Zotero items modified after `last_synced`.
+
+        Parameters
+        ----------
+        last_synced : datetime | None
+            UTC timestamp of last successful sync.
+            If None, all items are returned.
+
+        Returns
+        -------
+        list[(item_key, modified_time)]
+
+        Sync guarantees
+        ---------------
+        - item_key is stable across runs
+        - timestamps are timezone-aware UTC
+        - includes newly created and modified items
+        - DOES NOT include deleted items (Zotero limitation)
+
+        Notes
+        -----
+        Zotero `since` uses server modification time, not file change time.
+        """
         if self._zotero is None:
             raise RuntimeError("Zotero client not initialized")
 
@@ -133,9 +199,20 @@ class ZoteroSource(AbstractSource):
 
         return artefacts
 
-    def get_content(
-        self, artefacts: list[tuple[str, datetime]]
-    ) -> list[Content]:
+    def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
+        """
+        Fetch normalized content for Zotero items.
+
+        Each artefact is retrieved individually and converted to `Content`.
+
+        Guarantees
+        ----------
+        - One Content object per artefact
+        - Content.date matches modification timestamp from list phase
+        - Content.content contains raw Zotero `data` field
+
+        This method does not download attachments.
+        """
         if self._zotero is None:
             raise RuntimeError("Zotero client not initialized")
 
