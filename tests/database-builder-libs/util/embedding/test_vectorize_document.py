@@ -3,9 +3,9 @@ import pytest
 from io import BytesIO
 from unittest.mock import MagicMock
 from docling_core.types.doc import DoclingDocument
-from backend.utility.embedding.vectorize_document import PipelineDocumentsConversionFailedError, VectorizeDocument
+from database_builder_libs.utility.embedding.vectorize_document import PipelineDocumentsConversionFailedError, VectorizeDocument
 
-from backend.utility.embedding.vectorize_document import Faultss
+from database_builder_libs.utility.embedding.vectorize_document import Faultss
 from docling.datamodel.document import ErrorItem
 
 def make_failure():

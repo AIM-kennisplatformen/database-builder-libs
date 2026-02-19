@@ -5,7 +5,7 @@ from unittest.mock import patch, mock_open
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import LogMessageWaitStrategy
 from typedb.driver import TypeDB, SessionType, TransactionType
-from backend.models.node import Node
+from database_builder_libs.models.node import Node
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
@@ -82,7 +82,7 @@ def typedb_container():
 def mock_settings(typedb_container):
     container, address = typedb_container
 
-    with patch("backend.config.settings") as settings_mock:
+    with patch("database_builder_libs.config.settings") as settings_mock:
         settings_mock.TYPEDB_URI = address
         settings_mock.TYPEDB_DATABASE = "integration_test_db"
         yield settings_mock
@@ -93,7 +93,7 @@ def store(mock_settings):
     from typedb.driver import TypeDB
 
     with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
-        from backend.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
+        from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
 
         datastore = TypeDbDatastore()
         
@@ -259,8 +259,7 @@ def test_store_node_inserts_entity(store):
             "email": "alice@test.com",
             "age": 25,
         },
-        relations=(),
-        embedding_model="typedb",
+        relations=()
     )
 
     store.store_node(node)

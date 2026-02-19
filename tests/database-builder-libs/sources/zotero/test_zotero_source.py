@@ -10,7 +10,7 @@ from loguru import logger
 from datetime import datetime, timezone
 
 
-from backend.sources.zotero_source import ZoteroSource
+from database_builder_libs.sources.zotero_source import ZoteroSource
 
 
 class ZoteroTests(unittest.TestCase):

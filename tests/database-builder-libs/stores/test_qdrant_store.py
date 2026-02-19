@@ -6,7 +6,7 @@ import pytest
 from qdrant_client import QdrantClient
 from testcontainers.core.container import DockerContainer
 
-from backend.models.chunk import Chunk
+from database_builder_libs.models.chunk import Chunk
 
 
 # -----------------------------------------------------------
@@ -70,7 +70,7 @@ def qdrant_container():
 @pytest.fixture
 def mock_settings(qdrant_container):
     _, url = qdrant_container
-    with patch("backend.config.settings") as settings_mock:
+    with patch("database_builder_libs.config.settings") as settings_mock:
         settings_mock.QDRANT_URL = url
         settings_mock.QDRANT_COLLECTION = "test_collection_chunks"
         settings_mock.QDRANT_VECTOR_SIZE = 4
@@ -79,7 +79,7 @@ def mock_settings(qdrant_container):
 
 @pytest.fixture
 def store(mock_settings):
-    from backend.stores.qdrant.qdrant_store import QdrantDatastore
+    from database_builder_libs.stores.qdrant.qdrant_store import QdrantDatastore
     return QdrantDatastore()
 
 
