@@ -1,4 +1,4 @@
-from typing import Final, Mapping, Optional, Sequence
+from typing import Final, Mapping, Optional
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any

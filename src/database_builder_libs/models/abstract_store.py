@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Sequence, List
+from typing import List
 from database_builder_libs.models.node import Node
 
 
