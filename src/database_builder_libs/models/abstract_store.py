@@ -60,7 +60,7 @@ class AbstractStore(ABC):
     @abstractmethod
     def _connect_impl(self, config: dict | None) -> None:
         """Backend-specific connection logic."""
-        ...
+        raise NotImplementedError
 
     def _ensure_connected(self) -> None:
         if not (self._connected or self._connecting):
@@ -90,40 +90,44 @@ class AbstractStore(ABC):
         ValueError
             If the node is invalid for this backend.
         """
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def get_nodes(self, filter: str | None) -> List[Node]:
         """
-        Retrieve nodes matching a query filter.
+        Retrieve nodes from the store.
 
-        Parameters
-        ----------
-        filter : str | Sequence[float] | None
-            Query selector defining retrieval mode:
+        Retrieval Modes
+        ---------------
+        filter is interpreted as:
 
-            - str → keyword / identifier / query string search
-            - None → return all stored nodes
+        - str  → Selection query
+            Returns nodes that directly match stored records.
+            Multiple results representing different stored entities
+            MUST be preserved (no merging/deduplication).
+
+        - None → Reconstruction query
+            Returns the canonical set of nodes represented by the backend.
+            Implementations MUST merge overlapping representations and
+            return a normalized, duplicate-free set of Nodes.
 
         Returns
         -------
         List[Node]
-            Matching nodes ordered by relevance:
-            - text search → relevance score descending
-            - vector search → similarity descending
-            - None → implementation-defined but deterministic ordering
+            Deterministically ordered list of nodes.
 
         Guarantees
         ----------
-        - No duplicate nodes returned
-        - Same query produces stable ordering if backend unchanged
+        - Stable ordering for identical queries if backend unchanged
+        - filter=None returns a duplicate-free canonical node set
+        - filter=str preserves multiplicity of stored entities
 
         Raises
         ------
         RuntimeError
-            If called before connect_to_source().
+            If called before connect().
         """
-        ...
+        raise NotImplementedError
 
     @abstractmethod
     def remove_node(self, filter: str) -> Node:
@@ -149,7 +153,7 @@ class AbstractStore(ABC):
         ------
         KeyError
             If no node matches the filter.
-        RuntimeError
-            If more than one node matches.
+        ValueError
+            If multiple nodes match the filter.
         """
-        ...
+        raise NotImplementedError
