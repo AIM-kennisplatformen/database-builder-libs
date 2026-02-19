@@ -281,3 +281,19 @@ def test_store_node_inserts_entity(store):
     assert person["name"][0]["value"] == "Alice"
     assert person["email"][0]["value"] == "alice@test.com"
     assert person["age"][0]["value"] == 25
+
+def test_get_nodes_none_returns_all_nodes(store):
+    # Arrange
+    store.save('insert $p isa person, has name "Alice";')
+    store.save('insert $p isa person, has name "Bob";')
+    store.save('insert $p isa person, has name "Charlie";')
+
+    # Act
+    results = store.get_nodes(None)
+
+    # Assert
+    assert isinstance(results, list)
+    assert len(results) == 3
+
+    names = sorted(n.payload_data["name"] for n in results)
+    assert names == ["Alice", "Bob", "Charlie"]

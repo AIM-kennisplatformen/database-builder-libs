@@ -84,7 +84,10 @@ class TypeDbDatastore(AbstractStore):
         super().__init__()
         self.typedb_driver: TypeDBDriver | None = None
         self.database: str | None = None
-   
+        self._entity_attr_cache: dict[str, list[str]] = {}
+        self._all_attr_cache: list[str] | None = None
+        self._key_attr_cache: dict[str, str | None] = {}
+        
     def _connect_impl(self, config: dict | None) -> None:
         if not config:
             raise ValueError("TypeDB requires configuration")
@@ -113,6 +116,18 @@ class TypeDbDatastore(AbstractStore):
             self.typedb_driver.close()
             self.typedb_driver = TypeDB.core_driver(address=uri)
 
+    def _build_match(self, entity_type: str | None, attrs: Mapping[str, str] | None) -> str:
+        clauses = []
+
+        if entity_type:
+            clauses.append(f"$e isa {entity_type}")
+        else:
+            clauses.append("$e isa entity")
+
+        if attrs:
+            clauses.append(self._format_attribute_match(dict(attrs)))
+
+        return ", ".join(clauses)
 
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
@@ -178,7 +193,7 @@ class TypeDbDatastore(AbstractStore):
         match
             $e isa {entity_type},
             has {key_attr} "{key_value}";
-        fetch $e : name;
+        fetch $e;
         """
         return bool(self.fetch(query))
     def _insert_entity(
@@ -308,31 +323,138 @@ class TypeDbDatastore(AbstractStore):
             clauses.append(f'has {attr} "{value}"')
 
         return ",\n       ".join(clauses)
-    def _unwrap_value(self, v: Any) -> Any:
-        # Most common: list of value dicts
-        if isinstance(v, list) and v:
-            first = v[0]
-            if isinstance(first, dict) and "value" in first:
-                return first["value"]
-            return first
 
-        # Sometimes already a dict
-        if isinstance(v, dict) and "value" in v:
-            return v["value"]
+    def _get_key_attribute(self, entity_type: str, payload: Mapping[str, object]) -> str:
+        # cached?
+        if entity_type in self._key_attr_cache:
+            key = self._key_attr_cache[entity_type]
+            return key if key else sorted(payload.keys())[0]
 
-        # Fallback: already a primitive
-        return v
+        query = f"""
+        match
+            $t type {entity_type};
+            $t owns $a @key;
+        get $a;
+        """
+        result = self.get(query)
+
+        if result:
+            key = result[0]["a"].get_label().name
+            self._key_attr_cache[entity_type] = key
+            return key
+
+        # remember: no schema key
+        self._key_attr_cache[entity_type] = None
+        return sorted(payload.keys())[0]
+    
+    def _fetch_to_nodes(self, query: str) -> list[Node]:
+        nodes: list[Node] = []
+
+        with self._query(SessionType.DATA, TransactionType.READ) as tx:
+            for res in tx.query.fetch(query):
+                entity_data = res["e"]
+
+                # discover actual entity type from result
+                entity_type = entity_data["type"]["label"]
+
+                payload: dict[str, object] = {}
+                for attr_name, values in entity_data.items():
+                    if attr_name == "type" or not values:
+                        continue
+                    payload[attr_name] = values[0]["value"]
+
+                if not payload:
+                    continue
+
+                key_attr = self._get_key_attribute(entity_type, payload)
+                key_val = payload[key_attr]
+
+                nodes.append(
+                    Node(
+                        id=NodeId(str(key_val)),
+                        entity_type=EntityType(entity_type),
+                        key_attribute=KeyAttribute(key_attr),
+                        payload_data=payload,
+                        relations=(),
+                    )
+                )
+
+        return nodes
+        
+    def _deduplicate(self, nodes: list[Node]) -> list[Node]:
+        """Merge overlapping nodes based on payload subset semantics."""
+
+        merged: list[Node] = []
+
+        def is_subset(a: Mapping[str, object], b: Mapping[str, object]) -> bool:
+            return all(k in b and b[k] == v for k, v in a.items())
+
+        for new in nodes:
+            replaced = False
+            for i, existing in enumerate(merged):
+                if is_subset(new.payload_data, existing.payload_data):
+                    replaced = True
+                    break
+
+                if is_subset(existing.payload_data, new.payload_data):
+                    merged[i] = new
+                    replaced = True
+                    break
+
+            if not replaced:
+                merged.append(new)
+
+        return merged
+    
+    def _get_all_attribute_labels(self) -> list[str]:
+        if self._all_attr_cache is not None:
+            return self._all_attr_cache
+
+        query = """
+        match
+            $t sub entity;
+            $t owns $a;
+        get $a;
+        """
+
+        results = self.get(query)
+        self._all_attr_cache = sorted({r["a"].get_label().name for r in results})
+        return self._all_attr_cache
+
+    def _get_all_nodes(self) -> list[Node]:
+        self._ensure_connected()
+
+        attr_labels = self._get_all_attribute_labels()
+        if not attr_labels:
+            return []
+
+        fetch_block = ", ".join(attr_labels)
+
+        query = f"""
+        match
+            $e isa entity;
+        fetch
+            $e: {fetch_block};
+        """
+
+        return self._deduplicate(self._fetch_to_nodes(query))
+    
     def _get_entity_attribute_labels(self, entity_type: str) -> list[str]:
+        if entity_type in self._entity_attr_cache:
+            return self._entity_attr_cache[entity_type]
+
         query = f"""
         match
             $t type {entity_type};
             $t owns $a;
-        get
-            $a;
+        get $a;
         """
+
         results = self.get(query)
-        return sorted({r["a"].get_label().name for r in results})
-    
+        labels = sorted({r["a"].get_label().name for r in results})
+        self._entity_attr_cache[entity_type] = labels
+        return labels
+
     def get_nodes(self, filter: str | None) -> list[Node]:
         """
         Retrieve nodes using a filter query.
@@ -360,11 +482,14 @@ class TypeDbDatastore(AbstractStore):
             If filter missing required entity parameter
         """
 
+        if filter is None:
+            return self._get_all_nodes()
+
         if not isinstance(filter, str):
-            raise TypeError("TypeDB datastore requires string filter")
+            raise TypeError("filter must be a string or None")
 
         if not filter:
-            raise ValueError("TypeDB datastore requires a keyed filter string")
+            raise ValueError("filter cannot be empty; use None to fetch all nodes")
         
         self._ensure_connected()
 
@@ -372,11 +497,7 @@ class TypeDbDatastore(AbstractStore):
         entity_type = parsed["entity_type"]
         attrs = parsed["attributes"]
 
-        match_clauses = [f"$e isa {entity_type}"]
-        if attrs:
-            match_clauses.append(self._format_attribute_match(attrs))
-
-        match_block = ", ".join(match_clauses)
+        match_block = self._build_match(entity_type, attrs)
 
         attr_labels = self._get_entity_attribute_labels(entity_type)
         if not attr_labels:
@@ -389,69 +510,9 @@ class TypeDbDatastore(AbstractStore):
             {match_block};
         fetch
             $e: {fetch_block};
-        """
+        """    
 
-        nodes: list[Node] = []
-
-        def is_subset(a: Mapping[str, object], b: Mapping[str, object]) -> bool:
-            return all(k in b and b[k] == v for k, v in a.items())
-
-        with self._query(SessionType.DATA, TransactionType.READ) as tx:
-            for res in tx.query.fetch(query):
-                entity_data = res["e"]
-
-                payload: dict[str, object] = {}
-                for attr_name, values in entity_data.items():
-                    if attr_name == "type" or not values:
-                        continue
-                    payload[attr_name] = values[0]["value"]
-
-                # derive key attribute (first attribute)
-                if not payload:
-                    continue
-
-                key_attr = next(iter(payload))
-                key_val = payload[key_attr]
-
-                new_node = Node(
-                    id=NodeId(str(key_val)),
-                    entity_type=EntityType(entity_type),
-                    key_attribute=KeyAttribute(key_attr),
-                    payload_data=payload,
-                    relations=()
-                )
-
-                merged = False
-                for i, existing in enumerate(nodes):
-                    if is_subset(payload, existing.payload_data):
-                        merged = True
-                        break
-
-                    if is_subset(existing.payload_data, payload):
-                        nodes[i] = new_node
-                        merged = True
-                        break
-
-                if not merged:
-                    nodes.append(new_node)
-
-        return nodes
-    
-    def _ensure_safe_delete(
-        self,
-        entity_type: str,
-        attrs: dict[str, str],
-        allow_multiple: bool,
-    ) -> None:
-        if allow_multiple:
-            return
-
-        # Require at least one attribute filter (ideally @key)
-        if not attrs:
-            raise ValueError(
-                f"Refusing to delete all instances of '{entity_type}'. "
-                "Provide a keyed filter or set allow_multiple=True."
-            )
+        return self._fetch_to_nodes(query)
 
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
@@ -485,10 +546,7 @@ class TypeDbDatastore(AbstractStore):
                 "Provide a keyed filter or set allow_multiple=True."
             )
 
-        match_clauses = [f"$e isa {entity_type}"]
-        if attrs:
-            match_clauses.append(self._format_attribute_match(attrs))
-        match_block = ",\n       ".join(match_clauses)
+        match_block = self._build_match(entity_type, attrs)
 
         delete_query = f"""
         match
