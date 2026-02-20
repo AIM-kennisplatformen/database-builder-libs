@@ -16,7 +16,10 @@ dependencies = [
     "torchvision",
     "testcontainers",
     "qdrant-client",
-    "docling>=2.73.0,<3"
+    "docling>=2.73.0,<3",
+    "mkdocs-material",
+    "mkdocs",
+    "mkdocstrings[python]>=0.18",
   ]
 
 [dependency-groups]
@@ -49,6 +52,7 @@ platforms = ["linux-64","osx-arm64", "win-64"]
 # Dotenv is for reading .env files
 compilers = ">=1.9.0"
 pkg-config = ">=0.29.2"
+pip = "*"
 
 [tool.pixi.pypi-dependencies]
 database_builder = { path = ".", editable = true }
