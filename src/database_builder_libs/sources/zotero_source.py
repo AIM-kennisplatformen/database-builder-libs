@@ -19,6 +19,7 @@ class ZoteroConfig(BaseModel):
     library_id: str
     library_type: str
     api_key: str
+    collection: str | None = None
 
 class ZoteroSource(AbstractSource):
     """
@@ -53,10 +54,11 @@ class ZoteroSource(AbstractSource):
     """
 
     _zotero: Optional[zotero.Zotero] = PrivateAttr(default=None)
+    _config: Optional[ZoteroConfig] = PrivateAttr(default=None)
 
     def _connect_impl(self, config: Mapping[str, Any]) -> None:
-        zotero_config = ZoteroConfig(**config)
-        self._zotero = zotero.Zotero(**zotero_config.model_dump())
+        self._config = ZoteroConfig(**config)
+        self._zotero = zotero.Zotero(**self._config.model_dump(exclude={"collection"}))
 
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection
@@ -163,31 +165,35 @@ class ZoteroSource(AbstractSource):
         """
         self._ensure_connected()
         assert self._zotero is not None
+        assert self._config is not None
 
-        items_iter = (
-            self._zotero.items(since=_to_utc_ts(last_synced))
-            if last_synced
-            else self._zotero.items()
-        )
+        if self._config.collection:
+            items_iter = self._zotero.collection_items_top(self._config.collection, limit=None)
+        else:
+            items_iter = self._zotero.items()
 
         items = list(self._zotero.everything(items_iter))
 
         artefacts: list[tuple[str, datetime]] = []
 
+        # If no cursor → epoch
+        if last_synced is None:
+            last_synced = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
         for item in items:
             data = item.get("data", {})
             key = data.get("key")
-            modified = data.get("dateModified")
 
-            if not key or not modified:
+            # Zotero reality: sometimes only dateAdded exists
+            modified_str = data.get("dateModified") or data.get("dateAdded")
+            if not key or not modified_str:
                 continue
 
-            artefacts.append(
-                (
-                    key,
-                    isoparse(modified).astimezone(timezone.utc),
-                )
-            )
+            modified = isoparse(modified_str).astimezone(timezone.utc)
+
+            if modified > last_synced:
+                artefacts.append((key, modified))
+
         return artefacts
 
     def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
