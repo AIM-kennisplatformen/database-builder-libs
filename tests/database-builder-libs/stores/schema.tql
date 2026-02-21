@@ -1,0 +1,8 @@
+define
+    person sub entity,
+        owns name,
+        owns email,
+        owns age;
+    name sub attribute, value string;
+    email sub attribute, value string;
+    age sub attribute, value long;

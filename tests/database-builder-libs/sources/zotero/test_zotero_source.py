@@ -7,18 +7,30 @@ import tempfile
 import httpretty
 from httpretty import HTTPretty
 from loguru import logger
+from datetime import datetime, timezone
 
-from backend.sources.zotero_source import ZoteroSource
+
+from database_builder_libs.sources.zotero_source import ZoteroSource
 
 
 class ZoteroTests(unittest.TestCase):
     """Tests for ZoteroSource"""
 
     cwd = os.path.dirname(os.path.realpath(__file__))
+    def connect_source(self) -> ZoteroSource:
+        src = ZoteroSource()
+        src.connect(
+            {
+                "library_id": "myuserid",
+                "library_type": "user",
+                "api_key": "fakekey",
+            }
+        )
+        return src
 
     def get_doc(self, doc_name):
         with open(
-            os.path.join(self.cwd, "web_api_mocks/zotero_api_responses", doc_name)
+            os.path.join(self.cwd, "zotero_api_responses", doc_name)
         ) as f:
             return f.read()
 
@@ -33,7 +45,7 @@ class ZoteroTests(unittest.TestCase):
         This test verifies both the underlying pyzotero and zotero source methods by mocking the zotero API
         using HTTPretty. It provides some troubleshooting and regression insights beyond testing the functionality of methods.
         """
-        zot = ZoteroSource()
+        zot = self.connect_source()
 
         HTTPretty.register_uri(
             HTTPretty.GET,
@@ -67,7 +79,7 @@ class ZoteroTests(unittest.TestCase):
         fake_zotero = MagicMock()
         fake_zotero.children.return_value = fake_children
 
-        source = ZoteroSource.__new__(ZoteroSource)
+        source = self.connect_source()
         source._zotero = fake_zotero
 
         source.download_zotero_item(
@@ -81,6 +93,57 @@ class ZoteroTests(unittest.TestCase):
             filename="ITEM123.pdf",
             path="/tmp",
         )
+    @httpretty.activate
+    def test_list_artefacts_str_ids_http(self):
+        """Ensure Zotero item keys are returned as stable string identifiers"""
+
+        zot = self.connect_source()
+        BASE = "https://api.zotero.org/users/myuserid"
+
+        # prevent accidental real HTTP
+        httpretty.enable(allow_net_connect=False)
+
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            f"{BASE}/items",
+            content_type="application/json",
+            adding_headers={"Link": '<>; rel="last"'},
+            body=json.dumps(
+                [
+                    {
+                        "key": "ABCD1234",
+                        "data": {
+                            "key": "ABCD1234",
+                            "dateModified": "2024-05-10T12:30:00Z",
+                        },
+                    },
+                    {
+                        "key": "XYZ98765",
+                        "data": {
+                            "key": "XYZ98765",
+                            "dateModified": "2023-01-01T00:00:00Z",
+                        },
+                    },
+                ]
+            ),
+        )
+
+        artefacts = zot.get_list_artefacts(None)
+        # -----------------------
+        # Assertions
+        # -----------------------
+        assert len(artefacts) == 2
+
+        # IDs must be str, not UUID
+        assert isinstance(artefacts[0][0], str)
+
+        # exact Zotero keys preserved
+        assert artefacts[0][0] == "ABCD1234"
+        assert artefacts[1][0] == "XYZ98765"
+
+        # datetime parsed correctly
+        assert artefacts[0][1].isoformat() == "2024-05-10T12:30:00+00:00"
+        assert artefacts[1][1].isoformat() == "2023-01-01T00:00:00+00:00"
 
     @httpretty.activate
     def test_download_zotero_item_http(self):
@@ -89,7 +152,7 @@ class ZoteroTests(unittest.TestCase):
         This test verifies both the underlying pyzotero and zotero source methods by mocking the zotero API
         using HTTPretty. It provides some troubleshooting and regression insights beyond testing the functionality of methods.
         """
-        zot = ZoteroSource()
+        zot = self.connect_source()
 
         HTTPretty.register_uri(
             HTTPretty.GET,
@@ -116,7 +179,6 @@ class ZoteroTests(unittest.TestCase):
             content_type="application/pdf",
             body=self.item_file,
         )
-
         with tempfile.TemporaryDirectory() as tmpdir:
             zot.download_zotero_item(
                 item_id="myitemid",
@@ -153,7 +215,7 @@ class ZoteroTests(unittest.TestCase):
         fake_zotero.collection_items_top.return_value = fake_iterator
         fake_zotero.everything.return_value = expected_items
 
-        source = ZoteroSource.__new__(ZoteroSource)
+        source = self.connect_source()
         source._zotero = fake_zotero
 
         result = source.get_all_documents_metadata("COLL123")
@@ -165,6 +227,78 @@ class ZoteroTests(unittest.TestCase):
         fake_zotero.everything.assert_called_once_with(fake_iterator)
         assert result == expected_items
 
+    @httpretty.activate
+    def test_get_content_http(self):
+        """Verify get_content fetches items using string Zotero IDs"""
+
+        zot = self.connect_source()
+        BASE = "https://api.zotero.org/users/myuserid"
+
+        # Block real internet
+        httpretty.enable(allow_net_connect=False)
+
+        # ---------------------------
+        # Mock item metadata
+        # ---------------------------
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            f"{BASE}/items/ABCD1234",
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "key": "ABCD1234",
+                    "data": {
+                        "key": "ABCD1234",
+                        "title": "Test Paper",
+                        "itemType": "journalArticle",
+                    },
+                }
+            ),
+        )
+
+        HTTPretty.register_uri(
+            HTTPretty.GET,
+            f"{BASE}/items/XYZ98765",
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "key": "XYZ98765",
+                    "data": {
+                        "key": "XYZ98765",
+                        "title": "Another Paper",
+                        "itemType": "book",
+                    },
+                }
+            ),
+        )
+
+        # ---------------------------
+        # Input artefacts (from list step)
+        # ---------------------------
+        artefacts = [
+            ("ABCD1234", datetime(2024, 5, 10, 12, 30, tzinfo=timezone.utc)),
+            ("XYZ98765", datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc)),
+        ]
+
+
+        contents = zot.get_content(artefacts)
+
+        # ---------------------------
+        # Assertions
+        # ---------------------------
+        assert len(contents) == 2
+
+        # IDs preserved exactly
+        assert contents[0].id_ == "ABCD1234"
+        assert contents[1].id_ == "XYZ98765"
+
+        # Metadata retrieved
+        assert contents[0].content["title"] == "Test Paper"
+        assert contents[1].content["title"] == "Another Paper"
+
+        # Date comes from artefacts (important!)
+        assert contents[0].date == artefacts[0][1]
+        assert contents[1].date == artefacts[1][1]
 
 if __name__ == "__main__":
     unittest.main()
