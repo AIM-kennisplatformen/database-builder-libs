@@ -10,11 +10,6 @@ from database_builder_libs.models.abstract_source import AbstractSource, Content
 from datetime import timezone
 from dateutil.parser import isoparse
 
-def _to_utc_ts(dt: datetime) -> int:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return int(dt.astimezone(timezone.utc).timestamp())
-
 class ZoteroConfig(BaseModel):
     library_id: str
     library_type: str
