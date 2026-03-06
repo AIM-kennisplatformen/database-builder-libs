@@ -65,7 +65,6 @@ class VectorizeDocument:
         PDF, Microsoft Word, HTML, Markdown, Microsoft PowerPoint, and Microsoft Excel document conversion.
 
         Args:
-            configuration: Global configuration.
             path_dir_artifacts: Optional path from which to source predictive models.
         """
         pdfpipelineoptions = PdfPipelineOptions(
@@ -108,7 +107,6 @@ class VectorizeDocument:
             raises_on_error=False,
         )
         return next(self._process_conversionresults(conversionresults=(conversionresult,),))
-
     
     def _process_conversionresults(self, *, conversionresults):
         for result in conversionresults:

@@ -1,4 +1,4 @@
-# Learn the basics
+# Getting started with development on this library
 
 ## Overview
 

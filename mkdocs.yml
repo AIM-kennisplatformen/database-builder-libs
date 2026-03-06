@@ -1,12 +1,45 @@
-site_name: My Docs
+site_name: Database-builder-libs
 theme:
   name: material
+  features:
+  - content.tabs.link
+  - navigation.tabs
+  - content.tabs.link
+  - navigation.tabs
+  - navigation.sections
+  - navigation.expand
+  - navigation.path
+  - navigation.top
+  - search.suggest
+  - search.highlight
+  - content.code.copy
+  - content.code.annotate
 markdown_extensions:
+- pymdownx.emoji
+- pymdownx.highlight
+- pymdownx.inlinehilite
+- pymdownx.snippets
+- pymdownx.keys
+- pymdownx.mark
+- pymdownx.tilde
+- pymdownx.betterem
+- def_list
+- pymdownx.tasklist:
+    custom_checkbox: true
+- toc:
+    permalink: true
 - pymdownx.superfences:
     custom_fences:
     - name: mermaid
       class: mermaid
       format: !!python/name:pymdownx.superfences.fence_code_format ""
+- pymdownx.tabbed:
+    alternate_style: true
+- attr_list
+- md_in_html
+- admonition
+- pymdownx.details
+
 plugins:
 - mkdocstrings:
     handlers:
@@ -110,15 +143,20 @@ nav:
 - Getting Started:
   - getting_started/00_getting_started.md
   - getting_started/01_learn_the_basics.md
+  - getting_started/02_examples.md
 - Main modules:
   - main_modules/00_overview.md
   - Sources:
     - main_modules/01_abstract_source.md
     - main_modules/04_zotero_source.md
-  - Stores:
+  - Graph Stores:
     - main_modules/02_stores.md
     - main_modules/05_typedb_v2_store.md
+  - Vector Stores:
+    - main_modules/06_vector_stores.md
+    - main_modules/07_qdrant_store.md
   - Utilities:
     - main_modules/03_embedding_utilities.md
+
 - Contributing:
   - contributing/rules.md
