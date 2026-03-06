@@ -30,7 +30,6 @@ The AbstractVectorStore supports three main interaction patterns:
 * **Embedding Consistency**: All vectors in an index must use the same model and dimensionality
 * **Distance Metric**: Implementations must specify and validate the distance metric (cosine, euclidean, etc.)
 * **Batch Operations**: Support efficient batch insertion for large documents
-* **Memory Safety**: Never return stored embeddings in search results to prevent memory issues
 
 ## Docstring abstract chunk
 
