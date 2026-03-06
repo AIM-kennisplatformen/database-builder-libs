@@ -24,15 +24,17 @@ from docling.document_converter import (
 from docling_core.types.doc import DoclingDocument 
 from pathlib import Path
 
-_ALLOWED_EXTENSIONS = {
-    ".csv",
-    ".docx",
-    ".html",
-    ".md",
-    ".pdf",
-    ".pptx",
-    ".xlsx",
-}
+_ALLOWED_FORMATS = [
+    InputFormat.CSV,
+    InputFormat.DOCX,
+    InputFormat.HTML,
+    InputFormat.MD,
+    InputFormat.PDF,
+    InputFormat.PPTX,
+    InputFormat.XLSX,
+]
+
+_ALLOWED_EXTENSIONS = {f".{fmt.value}" for fmt in _ALLOWED_FORMATS}
 
 @dataclass
 class Faultss:
@@ -74,15 +76,7 @@ class VectorizeDocument:
         )
         pipelineoptions = PipelineOptions(document_timeout=180)
         self.documentconverter = DocumentConverter(
-            allowed_formats=[
-                InputFormat.CSV,
-                InputFormat.DOCX,
-                InputFormat.HTML,
-                InputFormat.MD,
-                InputFormat.PDF,
-                InputFormat.PPTX,
-                InputFormat.XLSX,
-            ],
+            allowed_formats=_ALLOWED_FORMATS,
             format_options={
                 InputFormat.CSV: CsvFormatOption(pipeline_options=pipelineoptions),
                 InputFormat.DOCX: WordFormatOption(pipeline_options=pipelineoptions),

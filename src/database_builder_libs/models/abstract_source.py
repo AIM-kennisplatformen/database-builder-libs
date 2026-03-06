@@ -98,9 +98,7 @@ class AbstractSource(ABC, BaseModel):
         if self._connected:
             return
 
-        cfg = config or {}
-        self._connect_impl(cfg)
-        self._config = cfg
+        self._connect_impl(config or {})
         self._connected = True
 
     @abstractmethod
