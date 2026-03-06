@@ -14,6 +14,8 @@ from database_builder_libs.models.abstract_store import AbstractStore
 from database_builder_libs.models.node import EntityType, KeyAttribute, Node, NodeId
 from urllib.parse import parse_qs
 from typing import TypedDict, cast
+from dataclasses import replace
+
 
 class RelationRef(TypedDict):
     entity_type: str
@@ -192,13 +194,16 @@ class TypeDbDatastore(AbstractStore):
         return ", ".join(clauses)
 
     def _entity_exists(self, entity_type: str, key_attr: str, key_value: str) -> bool:
+
         query = f"""
         match
             $e isa {entity_type},
-            has {key_attr} "{key_value}";
-        fetch $e;
+                has {key_attr} "{key_value}";
+        get $e;
+        limit 1;
         """
-        return bool(self.fetch(query))
+
+        return bool(self.get(query))
     def _insert_entity(
         self,
         entity_type: str,
@@ -233,10 +238,9 @@ class TypeDbDatastore(AbstractStore):
         match
             {''.join(match_roles)}
             ({', '.join(f'{r}: ${r}' for r in role_map)}) isa {rel_type};
-        fetch;
+        get;
         """
-
-        return bool(self.fetch(query))
+        return bool(self.get(query))
 
 
     def _insert_relation(self, rel: RelationData) -> None:
@@ -350,17 +354,212 @@ class TypeDbDatastore(AbstractStore):
         self._key_attr_cache[entity_type] = None
         return sorted(payload.keys())[0]
     
-    def _fetch_to_nodes(self, query: str) -> list[Node]:
+    def _get_key_attr_for_type(self, entity_type: str) -> str | None:
+
+        if entity_type in self._key_attr_cache:
+            return self._key_attr_cache[entity_type]
+
+        query = f"""
+        match
+            $t type {entity_type};
+            $t owns $a @key;
+        get $a;
+        """
+
+        result = self.get(query)
+
+        if result:
+            key = result[0]["a"].get_label().name
+            self._key_attr_cache[entity_type] = key
+            return key
+
+        self._key_attr_cache[entity_type] = None
+        return None
+
+    def _get_entity_key_value(self, entity_type: str, key_attr: str, thing) -> str:
+        # best effort: read all attributes and pick the key_attr
+        for a in thing.get_has():
+            if a.get_type().get_label().name == key_attr:
+                return str(a.get_value())
+        # fallback: re-query by iid if needed, but usually not necessary
+        return ""
+    def _get_relations_for_entity(
+        self,
+        tx,
+        entity_type: str,
+        key_attr: str,
+        key_value: str,
+    ) -> list[RelationData]:
+
+        relations: list[RelationData] = []
+
+        query = f"""
+        match
+            $e isa {entity_type},
+                has {key_attr} "{key_value}";
+            $r ($role: $e, $other_role: $x) isa $rel_type;
+        get $r, $x, $rel_type;
+        """
+        seen_relations: set[str] = set()
+        for result in tx.query.get(query):
+            mapping = result.map
+            rel = mapping["r"]
+
+            rel_id = rel.get_iid()
+
+            if rel_id in seen_relations:
+                continue
+
+            seen_relations.add(rel_id)
+            rel_type = rel.get_type().get_label().name
+
+            role_players = rel.get_players(tx)
+
+            roles: dict[str, RelationRef] = {}
+
+            for role_type, players in role_players.items():
+                role_name = role_type.get_label().name
+
+                for player in players:
+                    player_type = player.get_type().get_label().name
+
+                    key_attr_name = self._get_key_attr_for_type(player_type)
+
+                    if key_attr_name is None:
+                        continue
+
+                    key_val = None
+
+                    for attr in player.get_has(tx):
+                        if attr.get_type().get_label().name == key_attr_name:
+                            key_val = attr.get_value()
+                            break
+
+                    if key_val is None:
+                        continue
+
+                    roles[role_name] = {
+                        "entity_type": player_type,
+                        "key_attr": key_attr_name,
+                        "key": str(key_val),
+                    }
+
+            attributes: dict[str, object] = {}
+
+            for attr in rel.get_has(tx):
+                attr_name = attr.get_type().get_label().name
+                attributes[attr_name] = attr.get_value()
+
+            relations.append(
+                RelationData(
+                    type=rel_type,
+                    roles=roles,
+                    attributes=attributes,
+                )
+            )
+
+        return relations
+    
+    def _load_relations_batch(
+        self,
+        tx,
+        nodes: list[Node],
+    ) -> dict[str, list[RelationData]]:
+        """
+        Load relations for nodes.
+
+        Simpler and safer than complex batch queries.
+        """
+
+        relations_by_node: dict[str, list[RelationData]] = {}
+    
+        for node in nodes:
+            query = f"""
+            match
+                $e isa {node.entity_type},
+                    has {node.key_attribute} "{node.id}";
+                $r ($role: $e, $other: $x);
+            get $r, $x;
+            """
+            seen: set[str] = set()
+
+            for res in tx.query.get(query):
+
+                rel = res.map["r"]
+                rel_id = rel.get_iid()
+
+                if rel_id in seen:
+                    continue
+                seen.add(rel_id)
+
+                rel_type = rel.get_type().get_label().name
+
+                roles: dict[str, RelationRef] = {}
+
+                role_players = rel.get_players(tx)
+
+                for role_type, players in role_players.items():
+
+                    role_name = role_type.get_label().name
+
+                    for player in players:
+
+                        player_type = player.get_type().get_label().name
+                        key_attr = self._get_key_attr_for_type(player_type)
+                        key_val = None
+
+                        if key_attr:
+                            for attr in player.get_has(tx):
+                                if attr.get_type().get_label().name == key_attr:
+                                    key_val = attr.get_value()
+                                    break
+
+                        if key_val is None:
+                            for attr in player.get_has(tx):
+                                key_attr = attr.get_type().get_label().name
+                                key_val = attr.get_value()
+                                break
+
+                        if key_val is None:
+                            continue
+
+                        assert key_attr is not None
+
+                        roles[role_name] = {
+                            "entity_type": player_type,
+                            "key_attr": key_attr,
+                            "key": str(key_val),
+                        }
+                attributes: dict[str, object] = {}
+
+                for attr in rel.get_has(tx):
+                    attr_name = attr.get_type().get_label().name
+                    attributes[attr_name] = attr.get_value()
+
+                relations_by_node.setdefault(str(node.id), []).append(
+                    {
+                        "type": rel_type,
+                        "roles": roles,
+                        "attributes": attributes,
+                    }
+                )
+
+        return relations_by_node
+    
+    def _fetch_to_nodes(self, query: str, include_relations: bool = False) -> list[Node]:
         nodes: list[Node] = []
 
         with self._query(SessionType.DATA, TransactionType.READ) as tx:
+
+            raw_nodes = []
+
             for res in tx.query.fetch(query):
                 entity_data = res["e"]
 
-                # discover actual entity type from result
                 entity_type = entity_data["type"]["label"]
 
-                payload: dict[str, object] = {}
+                payload = {}
+
                 for attr_name, values in entity_data.items():
                     if attr_name == "type" or not values:
                         continue
@@ -372,7 +571,7 @@ class TypeDbDatastore(AbstractStore):
                 key_attr = self._get_key_attribute(entity_type, payload)
                 key_val = payload[key_attr]
 
-                nodes.append(
+                raw_nodes.append(
                     Node(
                         id=NodeId(str(key_val)),
                         entity_type=EntityType(entity_type),
@@ -382,8 +581,23 @@ class TypeDbDatastore(AbstractStore):
                     )
                 )
 
+            if include_relations:
+
+                relations_map = self._load_relations_batch(tx, raw_nodes)
+
+                nodes = [
+                    replace(
+                        node,
+                        relations=tuple(relations_map.get(node.id, [])),
+                    )
+                    for node in raw_nodes
+                ]
+
+            else:
+                nodes = raw_nodes
+
         return nodes
-        
+                
     def _deduplicate(self, nodes: list[Node]) -> list[Node]:
         """Merge overlapping nodes based on payload subset semantics."""
 
@@ -499,6 +713,7 @@ class TypeDbDatastore(AbstractStore):
         parsed = self._parse_filter(filter)
         entity_type = parsed["entity_type"]
         attrs = parsed["attributes"]
+        include_relations = parsed["include_relations"]
 
         match_block = self._build_match(entity_type, attrs)
 
@@ -515,7 +730,7 @@ class TypeDbDatastore(AbstractStore):
             $e: {fetch_block};
         """    
 
-        return self._fetch_to_nodes(query)
+        return self._fetch_to_nodes(query, include_relations=include_relations)
 
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
@@ -594,7 +809,6 @@ class TypeDbDatastore(AbstractStore):
 
         removed = nodes[0]
 
-        # perform actual deletion using your existing logic
         deleted_count = self.remove_nodes(filter, allow_multiple=False)
 
         if deleted_count != 1:
