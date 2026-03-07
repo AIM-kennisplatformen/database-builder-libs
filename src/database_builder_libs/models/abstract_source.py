@@ -26,10 +26,10 @@ class Content(BaseModel):
         The structure is implementation specific but must be JSON-serializable
         and deterministic: identical source state must produce identical dict.
     """
+
     date: datetime
     id_: str
     content: dict
-
 
 
 class AbstractSource(ABC, BaseModel):
@@ -58,7 +58,6 @@ class AbstractSource(ABC, BaseModel):
     SharePoint, Zotero, REST APIs, file repositories, databases.
     """
 
-
     _connected: bool = PrivateAttr(default=False)
     _config: Mapping[str, str] | None = PrivateAttr(default=None)
     """
@@ -82,7 +81,7 @@ class AbstractSource(ABC, BaseModel):
     - Monotonic modification timestamps
     - Deterministic content serialization
     """
-    
+
     def connect(self, config: Mapping[str, Any] | None = None) -> None:
         """
         Establish connection to the external source.
@@ -143,7 +142,7 @@ class AbstractSource(ABC, BaseModel):
             If called before connect_to_source().
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def get_content(self, artefacts: list[tuple[str, datetime]]) -> list[Content]:
         """

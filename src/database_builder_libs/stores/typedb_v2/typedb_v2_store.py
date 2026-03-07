@@ -22,6 +22,7 @@ class RelationRef(TypedDict):
     key_attr: str
     key: str
 
+
 class RelationData(TypedDict, total=False):
     type: str
     roles: Mapping[str, RelationRef]
@@ -82,6 +83,7 @@ class TypeDbDatastore(AbstractStore):
     -----
     This adapter assumes the schema defines a key attribute for each entity type.
     """
+
     def __init__(self) -> None:
         super().__init__()
         self.typedb_driver: TypeDBDriver | None = None
@@ -89,7 +91,7 @@ class TypeDbDatastore(AbstractStore):
         self._entity_attr_cache: dict[str, list[str]] = {}
         self._all_attr_cache: list[str] | None = None
         self._key_attr_cache: dict[str, str | None] = {}
-        
+
     def _connect_impl(self, config: dict | None) -> None:
         if not config:
             raise ValueError("TypeDB requires configuration")
@@ -118,7 +120,9 @@ class TypeDbDatastore(AbstractStore):
             self.typedb_driver.close()
             self.typedb_driver = TypeDB.core_driver(address=uri)
 
-    def _build_match(self, entity_type: str | None, attrs: Mapping[str, str] | None) -> str:
+    def _build_match(
+        self, entity_type: str | None, attrs: Mapping[str, str] | None
+    ) -> str:
         clauses = []
 
         if entity_type:
@@ -130,7 +134,7 @@ class TypeDbDatastore(AbstractStore):
             clauses.append(self._format_attribute_match(dict(attrs)))
 
         return ", ".join(clauses)
-    
+
     @contextmanager
     def _query(self, session_type: SessionType, transaction_type: TransactionType):
         self._ensure_connected()
@@ -147,7 +151,6 @@ class TypeDbDatastore(AbstractStore):
                 else:
                     if transaction_type.is_write() and transaction.is_open():
                         transaction.commit()
-
 
     def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
         with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
@@ -189,7 +192,9 @@ class TypeDbDatastore(AbstractStore):
             elif isinstance(value, float):
                 clauses.append(f"has {attr} {value}")
             else:
-                raise TypeError(f"Unsupported value for attribute {attr}: {type(value)}")
+                raise TypeError(
+                    f"Unsupported value for attribute {attr}: {type(value)}"
+                )
 
         return ", ".join(clauses)
 
@@ -204,6 +209,7 @@ class TypeDbDatastore(AbstractStore):
         """
 
         return bool(self.get(query))
+
     def _insert_entity(
         self,
         entity_type: str,
@@ -221,9 +227,10 @@ class TypeDbDatastore(AbstractStore):
         """
 
         self.save(query)
-    
 
-    def _relation_exists(self, rel_type: str, role_map: Mapping[str, RelationRef]) -> bool:
+    def _relation_exists(
+        self, rel_type: str, role_map: Mapping[str, RelationRef]
+    ) -> bool:
         match_roles = []
 
         for role, ref in role_map.items():
@@ -236,12 +243,11 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            {''.join(match_roles)}
-            ({', '.join(f'{r}: ${r}' for r in role_map)}) isa {rel_type};
+            {"".join(match_roles)}
+            ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel_type};
         get;
         """
         return bool(self.get(query))
-
 
     def _insert_relation(self, rel: RelationData) -> None:
         if self._relation_exists(rel["type"], rel["roles"]):
@@ -263,9 +269,9 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            {''.join(match_roles)}
+            {"".join(match_roles)}
         insert
-            ({', '.join(insert_roles)}) isa {rel["type"]}
+            ({", ".join(insert_roles)}) isa {rel["type"]}
             {", " if attrs else ""}{attrs};
         """
 
@@ -274,7 +280,7 @@ class TypeDbDatastore(AbstractStore):
     def store_node(self, node: Node) -> None:
         """
         Insert a Node into TypeDB if it does not already exist, and ensure its relations exist.
-        
+
         Behaviour
         ---------
         - Creates the entity if it does not exist
@@ -304,7 +310,7 @@ class TypeDbDatastore(AbstractStore):
 
         for rel in node.relations:
             self._insert_relation(cast(RelationData, rel))
-    
+
     def _parse_filter(self, filter: str) -> dict:
         parsed = parse_qs(filter, keep_blank_values=False)
 
@@ -331,7 +337,9 @@ class TypeDbDatastore(AbstractStore):
 
         return ",\n       ".join(clauses)
 
-    def _get_key_attribute(self, entity_type: str, payload: Mapping[str, object]) -> str:
+    def _get_key_attribute(
+        self, entity_type: str, payload: Mapping[str, object]
+    ) -> str:
         # cached?
         if entity_type in self._key_attr_cache:
             key = self._key_attr_cache[entity_type]
@@ -353,7 +361,7 @@ class TypeDbDatastore(AbstractStore):
         # remember: no schema key
         self._key_attr_cache[entity_type] = None
         return sorted(payload.keys())[0]
-    
+
     def _get_key_attr_for_type(self, entity_type: str) -> str | None:
 
         if entity_type in self._key_attr_cache:
@@ -383,6 +391,7 @@ class TypeDbDatastore(AbstractStore):
                 return str(a.get_value())
         # fallback: re-query by iid if needed, but usually not necessary
         return ""
+
     def _get_relations_for_entity(
         self,
         tx,
@@ -459,7 +468,7 @@ class TypeDbDatastore(AbstractStore):
             )
 
         return relations
-    
+
     def _load_relations_batch(
         self,
         tx,
@@ -472,7 +481,7 @@ class TypeDbDatastore(AbstractStore):
         """
 
         relations_by_node: dict[str, list[RelationData]] = {}
-    
+
         for node in nodes:
             query = f"""
             match
@@ -484,7 +493,6 @@ class TypeDbDatastore(AbstractStore):
             seen: set[str] = set()
 
             for res in tx.query.get(query):
-
                 rel = res.map["r"]
                 rel_id = rel.get_iid()
 
@@ -499,11 +507,9 @@ class TypeDbDatastore(AbstractStore):
                 role_players = rel.get_players(tx)
 
                 for role_type, players in role_players.items():
-
                     role_name = role_type.get_label().name
 
                     for player in players:
-
                         player_type = player.get_type().get_label().name
                         key_attr = self._get_key_attr_for_type(player_type)
                         key_val = None
@@ -545,12 +551,13 @@ class TypeDbDatastore(AbstractStore):
                 )
 
         return relations_by_node
-    
-    def _fetch_to_nodes(self, query: str, include_relations: bool = False) -> list[Node]:
+
+    def _fetch_to_nodes(
+        self, query: str, include_relations: bool = False
+    ) -> list[Node]:
         nodes: list[Node] = []
 
         with self._query(SessionType.DATA, TransactionType.READ) as tx:
-
             raw_nodes = []
 
             for res in tx.query.fetch(query):
@@ -582,7 +589,6 @@ class TypeDbDatastore(AbstractStore):
                 )
 
             if include_relations:
-
                 relations_map = self._load_relations_batch(tx, raw_nodes)
 
                 nodes = [
@@ -597,7 +603,7 @@ class TypeDbDatastore(AbstractStore):
                 nodes = raw_nodes
 
         return nodes
-                
+
     def _deduplicate(self, nodes: list[Node]) -> list[Node]:
         """Merge overlapping nodes based on payload subset semantics."""
 
@@ -622,7 +628,7 @@ class TypeDbDatastore(AbstractStore):
                 merged.append(new)
 
         return merged
-    
+
     def _get_all_attribute_labels(self) -> list[str]:
         if self._all_attr_cache is not None:
             return self._all_attr_cache
@@ -655,7 +661,7 @@ class TypeDbDatastore(AbstractStore):
         """
 
         return self._deduplicate(self._fetch_to_nodes(query))
-    
+
     def _get_entity_attribute_labels(self, entity_type: str) -> list[str]:
         if entity_type in self._entity_attr_cache:
             return self._entity_attr_cache[entity_type]
@@ -707,7 +713,7 @@ class TypeDbDatastore(AbstractStore):
 
         if not filter:
             raise ValueError("filter cannot be empty; use None to fetch all nodes")
-        
+
         self._ensure_connected()
 
         parsed = self._parse_filter(filter)
@@ -728,10 +734,9 @@ class TypeDbDatastore(AbstractStore):
             {match_block};
         fetch
             $e: {fetch_block};
-        """    
+        """
 
         return self._fetch_to_nodes(query, include_relations=include_relations)
-
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
         """
@@ -783,7 +788,7 @@ class TypeDbDatastore(AbstractStore):
             tx.query.delete(delete_query)
 
         return count
-    
+
     def remove_node(self, filter: str) -> Node:
         """
         Delete exactly one node and return it.

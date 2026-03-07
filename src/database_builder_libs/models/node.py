@@ -151,6 +151,7 @@ class Node:
         (e.g., "email", "title", "name").
 
     """
+
     id: NodeId
     payload_data: Payload = field(default_factory=dict)
     relations: Sequence[Relation] = field(default_factory=tuple)
