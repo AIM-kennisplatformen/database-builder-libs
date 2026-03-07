@@ -100,7 +100,6 @@ class QdrantDatastore(AbstractVectorStore):
                 ),
             )
 
-
     def _point_id(self, document_id: DocumentId, chunk_index: int) -> int:
         """
         Deterministically map a chunk identity to a Qdrant point id.
@@ -131,8 +130,7 @@ class QdrantDatastore(AbstractVectorStore):
         for chunk in chunks:
             if not chunk.vector:
                 logger.warning(
-                    "Skipping chunk without embedding "
-                    "(doc={}, idx={}, text_len={})",
+                    "Skipping chunk without embedding (doc={}, idx={}, text_len={})",
                     chunk.document_id,
                     chunk.chunk_index,
                     len(chunk.text) if chunk.text else 0,
@@ -200,7 +198,6 @@ class QdrantDatastore(AbstractVectorStore):
             with_vectors=False,
         )
 
-
         results: List[Chunk] = []
 
         for point in response.points:
@@ -217,7 +214,8 @@ class QdrantDatastore(AbstractVectorStore):
                     text=payload.get(TEXT, ""),
                     vector=(),  # never return query vector
                     metadata={
-                        k: v for k, v in payload.items()
+                        k: v
+                        for k, v in payload.items()
                         if k not in (DOC_ID, CHUNK_INDEX, TEXT)
                     },
                 )
@@ -250,7 +248,6 @@ class QdrantDatastore(AbstractVectorStore):
                 offset=offset,
             )
 
-
             for r in records:
                 payload = r.payload or {}
 
@@ -266,7 +263,8 @@ class QdrantDatastore(AbstractVectorStore):
                         text=payload.get(TEXT, ""),
                         vector=(),
                         metadata={
-                            k: v for k, v in payload.items()
+                            k: v
+                            for k, v in payload.items()
                             if k not in (DOC_ID, CHUNK_INDEX, TEXT)
                         },
                     )
@@ -298,7 +296,9 @@ class QdrantDatastore(AbstractVectorStore):
         if not chunks:
             return 0
 
-        filt = Filter(must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))])
+        filt = Filter(
+            must=[FieldCondition(key=DOC_ID, match=MatchValue(value=document_id))]
+        )
 
         result = self._client().delete(
             collection_name=self._collection(),
@@ -310,7 +310,7 @@ class QdrantDatastore(AbstractVectorStore):
             raise RuntimeError(f"Qdrant delete failed: {result.status}")
 
         return len(chunks)
-    
+
     def _client(self) -> QdrantClient:
         self._ensure_connected()
         if self.client is None:

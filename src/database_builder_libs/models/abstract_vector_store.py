@@ -34,6 +34,7 @@ class AbstractVectorStore(ABC):
 
     Mixing embedding models in one index is forbidden.
     """
+
     def __init__(self) -> None:
         self._connected: bool = False
         self._connecting: bool = False
@@ -74,7 +75,7 @@ class AbstractVectorStore(ABC):
             raise RuntimeError(
                 f"{self.__class__.__name__} used before connect() was called"
             )
-        
+
     @abstractmethod
     def store_chunks(self, chunks: List[Chunk]) -> None:
         """

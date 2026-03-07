@@ -27,36 +27,35 @@ class AbstractStore(ABC):
     def __init__(self) -> None:
         self._connected: bool = False
         self._connecting: bool = False
-    
+
     def connect(self, config: dict | None = None) -> None:
-            """
-            Establish connection to the backend.
+        """
+        Establish connection to the backend.
 
-            This method is idempotent. Calling it multiple times must be safe.
+        This method is idempotent. Calling it multiple times must be safe.
 
-            Parameters
-            ----------
-            config : Any | None
-                Backend-specific configuration object.
+        Parameters
+        ----------
+        config : Any | None
+            Backend-specific configuration object.
 
-            Raises
-            ------
-            ConnectionError
-                Backend unreachable.
-            RuntimeError
-                Backend misconfigured.
-            """
-            if self._connected:
-                return
+        Raises
+        ------
+        ConnectionError
+            Backend unreachable.
+        RuntimeError
+            Backend misconfigured.
+        """
+        if self._connected:
+            return
 
-            self._connecting = True
-            try:
-                self._connect_impl(config)
-                self._connected = True
-            finally:
-                self._connecting = False
+        self._connecting = True
+        try:
+            self._connect_impl(config)
+            self._connected = True
+        finally:
+            self._connecting = False
 
-    
     @abstractmethod
     def _connect_impl(self, config: dict | None) -> None:
         """Backend-specific connection logic."""

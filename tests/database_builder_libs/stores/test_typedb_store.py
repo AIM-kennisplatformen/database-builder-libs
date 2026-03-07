@@ -79,9 +79,6 @@ def typedb_container():
     container.stop()
 
 
-
-
-
 @pytest.fixture
 def store(typedb_container):
     container, address = typedb_container
@@ -171,6 +168,7 @@ def test_delete_workflow(store):
 
     results = store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')
     assert len(results) == 0
+
 
 def test_get_nodes_by_keyed_filter(store):
     # Arrange
@@ -297,3 +295,232 @@ def test_get_nodes_none_returns_all_nodes(store):
 
     names = sorted(n.payload_data["name"] for n in results)
     assert names == ["Alice", "Bob", "Charlie"]
+
+
+def test_store_node_inserts_relation(store):
+    alice = Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
+        relations=(),
+    )
+
+    bob = Node(
+        id="bob@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
+        relations=(
+            {
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "alice@test.com",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "bob@test.com",
+                    },
+                },
+            },
+        ),
+    )
+
+    # add schema relation
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        friendship sub relation,
+            relates friend,
+            relates friend_of;
+        """)
+
+    store.store_node(alice)
+    store.store_node(bob)
+
+    results = store.get(
+        """
+        match
+            $a isa person, has email "alice@test.com";
+            $b isa person, has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship;
+        get;
+        """
+    )
+
+    assert len(results) == 1
+
+
+def test_store_node_inserts_relation(store):
+    alice = Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
+        relations=(),
+    )
+
+    bob = Node(
+        id="bob@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
+        relations=(
+            {
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "alice@test.com",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "bob@test.com",
+                    },
+                },
+            },
+        ),
+    )
+
+    # add schema relation
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        friendship sub relation,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    store.store_node(alice)
+    store.store_node(bob)
+
+    results = store.get(
+        """
+        match
+            $a isa person, has email "alice@test.com";
+            $b isa person, has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship;
+        get;
+        """
+    )
+
+    assert len(results) == 1
+
+
+def test_get_nodes_with_relations(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        friendship sub relation,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    store.save(
+        """
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship;
+        """
+    )
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes) == 1
+    node = nodes[0]
+
+    assert len(node.relations) == 1
+    assert node.relations[0]["type"] == "friendship"
+
+
+def test_key_inference_from_schema(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        username sub attribute, value string;
+
+        account sub entity,
+            owns username @key,
+            owns email;
+        """)
+    store.save(
+        'insert $a isa account, has username "u1", has email "u1@test.com";'
+    )
+
+    results = store.get_nodes("entity=account")
+
+    assert len(results) == 1
+    node = results[0]
+
+    assert node.key_attribute == "username"
+    assert node.id == "u1"
+
+
+def test_schema_evolution_new_attribute(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        nickname sub attribute, value string;
+
+        person owns nickname;
+        """)
+
+    store.save(
+        """
+        insert
+            $p isa person,
+            has name "Alice",
+            has email "alice@test.com",
+            has nickname "Al";
+        """
+    )
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com")
+
+    assert len(nodes) == 1
+    node = nodes[0]
+
+    assert node.payload_data["nickname"] == "Al"
+
+
+def test_relation_with_attributes(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        friendship sub relation,
+            relates friend,
+            relates friend_of,
+            owns since;
+
+        since sub attribute, value long;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+    store.save(
+        """
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship, has since 2024;
+        """
+    )
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    rel = nodes[0].relations[0]
+
+    assert rel["type"] == "friendship"
+    assert rel["attributes"]["since"] == 2024

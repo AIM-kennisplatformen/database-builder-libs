@@ -10,11 +10,13 @@ from database_builder_libs.models.abstract_source import AbstractSource, Content
 from datetime import timezone
 from dateutil.parser import isoparse
 
+
 class ZoteroConfig(BaseModel):
     library_id: str
     library_type: str
     api_key: str
     collection: str | None = None
+
 
 class ZoteroSource(AbstractSource):
     """
@@ -163,7 +165,9 @@ class ZoteroSource(AbstractSource):
         assert self._config is not None
 
         if self._config.collection:
-            items_iter = self._zotero.collection_items_top(self._config.collection, limit=None)
+            items_iter = self._zotero.collection_items_top(
+                self._config.collection, limit=None
+            )
         else:
             items_iter = self._zotero.items()
 
@@ -219,11 +223,10 @@ class ZoteroSource(AbstractSource):
 
             contents.append(
                 Content(
-                    id_=item_key, 
+                    id_=item_key,
                     date=modified,
                     content=data,
                 )
             )
 
         return contents
-

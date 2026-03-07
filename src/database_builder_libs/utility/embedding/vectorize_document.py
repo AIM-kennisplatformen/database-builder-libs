@@ -5,11 +5,12 @@ from pprint import pformat
 from typing import IO, Sequence
 from docling.backend.pypdfium2_backend import PyPdfiumDocumentBackend
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.document import (
-    DocumentStream,
-    ErrorItem
+from docling.datamodel.document import DocumentStream, ErrorItem
+from docling.datamodel.pipeline_options import (
+    EasyOcrOptions,
+    PdfPipelineOptions,
+    PipelineOptions,
 )
-from docling.datamodel.pipeline_options import EasyOcrOptions, PdfPipelineOptions, PipelineOptions
 from docling.document_converter import (
     CsvFormatOption,
     DocumentConverter,
@@ -21,7 +22,7 @@ from docling.document_converter import (
     WordFormatOption,
 )
 
-from docling_core.types.doc import DoclingDocument 
+from docling_core.types.doc import DoclingDocument
 from pathlib import Path
 
 _ALLOWED_FORMATS = [
@@ -36,11 +37,13 @@ _ALLOWED_FORMATS = [
 
 _ALLOWED_EXTENSIONS = {f".{fmt.value}" for fmt in _ALLOWED_FORMATS}
 
+
 @dataclass
 class Faultss:
     faults: Sequence[ErrorItem]
     hashvalue: str
     path_file_document: PathLike[str]
+
 
 class PipelineDocumentsConversionFailedError(ValueError):
     def __init__(self, *, faultss: Sequence[Faultss]) -> None:
@@ -52,6 +55,7 @@ class PipelineDocumentsConversionFailedError(ValueError):
                 f"because of {len(faults.faults)} fault(s): {pformat(faults.faults)}"
             )
         super().__init__("\n".join(messages))
+
 
 class VectorizeDocument:
     def __init__(
@@ -86,12 +90,16 @@ class VectorizeDocument:
                     pipeline_options=pdfpipelineoptions,
                     backend=PyPdfiumDocumentBackend,
                 ),
-                InputFormat.PPTX: PowerpointFormatOption(pipeline_options=pipelineoptions),
+                InputFormat.PPTX: PowerpointFormatOption(
+                    pipeline_options=pipelineoptions
+                ),
                 InputFormat.XLSX: ExcelFormatOption(pipeline_options=pipelineoptions),
             },
         )
-    
-    def vectorize(self, name_document: str, data_document: IO[bytes]) -> DoclingDocument | PipelineDocumentsConversionFailedError:
+
+    def vectorize(
+        self, name_document: str, data_document: IO[bytes]
+    ) -> DoclingDocument | PipelineDocumentsConversionFailedError:
         suffix = Path(name_document).suffix.lower()
 
         if suffix not in _ALLOWED_EXTENSIONS:
@@ -104,12 +112,17 @@ class VectorizeDocument:
 
         conversionresult = self.documentconverter.convert(
             max_file_size=67_108_864,
-            source=DocumentStream(name=name_document, stream=BytesIO(data_document.read())),
+            source=DocumentStream(
+                name=name_document, stream=BytesIO(data_document.read())
+            ),
             raises_on_error=False,
         )
-        return next(self._process_conversionresults(conversionresults=(conversionresult,),))
+        return next(
+            self._process_conversionresults(
+                conversionresults=(conversionresult,),
+            )
+        )
 
-    
     def _process_conversionresults(self, *, conversionresults):
         for result in conversionresults:
             # Docling always returns a document object
@@ -117,9 +130,7 @@ class VectorizeDocument:
             errors = getattr(result, "errors", None)
 
             # Failure conditions
-            is_empty = not doc or (
-                hasattr(doc, "pages") and len(doc.pages) == 0
-            )
+            is_empty = not doc or (hasattr(doc, "pages") and len(doc.pages) == 0)
 
             if errors or is_empty:
                 fault = Faultss(

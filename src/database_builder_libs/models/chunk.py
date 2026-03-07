@@ -55,6 +55,7 @@ class Chunk:
         - Must NOT affect chunk identity
         - Safe to drop without breaking retrieval correctness
     """
+
     document_id: DocumentId
     chunk_index: int
     text: str
