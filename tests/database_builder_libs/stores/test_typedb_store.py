@@ -2,6 +2,7 @@ import os
 import pytest
 import time
 import socket
+import uuid
 from testcontainers.core.container import DockerContainer
 from typedb.driver import ConceptRowIterator, Credentials, DriverOptions, QueryAnswer, Transaction, TypeDB, TransactionType
 from database_builder_libs.models.node import Node
@@ -76,10 +77,11 @@ def store(typedb_container):
 
     datastore = TypeDbDatastore()
     schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
+    db_name = f"test_db_{uuid.uuid4().hex}"
     datastore.connect(
         {
             "uri": address,
-            "database": "integration_test_db",
+            "database": db_name,
             "schema_path": schema_path,
             "username": "admin",
             "password": "password",
@@ -87,10 +89,17 @@ def store(typedb_container):
         }
     )
 
-    # clean test data AFTER connect
-    datastore.query_write("match $x isa person; delete $x;")
-
     yield datastore
+
+    datastore._entity_attr_cache = {}
+    datastore._all_attr_cache = None
+    datastore._key_attr_cache = {}
+
+    if datastore.typedb_driver and datastore.typedb_driver.is_open():
+        try:
+            datastore.typedb_driver.databases.get(db_name).delete()
+        except Exception as e:
+            print(f"Failed to delete test db {db_name}: {e}")
 
 
 def test_initialization_creates_database_and_schema(store: TypeDbDatastore):
@@ -119,7 +128,7 @@ def test_save_and_fetch_workflow(store: TypeDbDatastore):
             "name_key": $p.name_key,
             "email": $p.email
         };
-    """)
+    """).as_concept_documents()
 
     results = list(rows)
     assert len(results) == 1
@@ -268,16 +277,19 @@ def test_store_node_inserts_entity(store: TypeDbDatastore):
 
     store.store_node(node)
 
-    results = store.query_read(
-        'match $p isa person, has email "alice@test.com"; fetch $p: name_key, email, age;'
-    )
+    results = store.query_read("""
+        match $p isa person, has email "alice@test.com"; 
+        fetch { $p.* };
+    """).as_concept_documents()
 
-    assert len(results) == 1
-    person = results[0]["p"]
+    rows = list(results)
 
-    assert person["name_key"][0]["value"] == "Alice"
-    assert person["email"][0]["value"] == "alice@test.com"
-    assert person["age"][0]["value"] == 25
+    assert len(rows) == 1
+    person = rows[0]
+
+    assert person["name_key"] == "Alice"
+    assert person["email"] == "alice@test.com"
+    assert person["age"] == 25
 
 def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     # Arrange
@@ -330,66 +342,9 @@ def test_store_node_inserts_relation(store: TypeDbDatastore):
     )
 
     # add schema relation
-    store.query_write("""
-            define
-            friendship sub relation,
-                relates friend,
-                relates friend_of;
-        """)
-
-    store.store_node(alice)
-    store.store_node(bob)
-
-    results = store.query_read(
-        """
-        match
-            $a isa person, has email "alice@test.com";
-            $b isa person, has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-        get;
-        """
-    )
-
-    assert len(results) == 1
-
-
-def test_store_node_inserts_relation(store: TypeDbDatastore):
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Alice", "email": "alice@test.com", "age": 25},
-        relations=(),
-    )
-
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Bob", "email": "bob@test.com", "age": 30},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
-
-    # add schema relation
-    store.query_write("""
+    store.query_schema("""
         define
-        friendship sub relation,
+        relation friendship,
             relates friend,
             relates friend_of;
 
@@ -400,23 +355,22 @@ def test_store_node_inserts_relation(store: TypeDbDatastore):
     store.store_node(alice)
     store.store_node(bob)
 
-    results = store.query(
+    results = store.query_read(
         """
         match
             $a isa person, has email "alice@test.com";
             $b isa person, has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-        get;
+            $f isa friendship, links (friend: $a, friend_of: $b);
         """
-    )
+    ).as_concept_rows()
 
-    assert len(results) == 1
+    assert len(list(results)) == 1
 
 
 def test_get_nodes_with_relations(store: TypeDbDatastore):
-    store.query_write("""
+    store.query_schema("""
         define
-        friendship sub relation,
+        relation friendship,
             relates friend,
             relates friend_of;
 
@@ -429,7 +383,7 @@ def test_get_nodes_with_relations(store: TypeDbDatastore):
         insert
             $a isa person, has name_key "Alice", has email "alice@test.com";
             $b isa person, has name_key "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
+            $f isa friendship, links (friend: $a, friend_of: $b);
         """
     )
 
@@ -443,11 +397,11 @@ def test_get_nodes_with_relations(store: TypeDbDatastore):
 
 
 def test_key_inference_from_schema(store: TypeDbDatastore):
-    store.query_write("""
+    store.query_schema("""
         define
-        username_key sub attribute, value string;
+        attribute username_key sub key, value string;
 
-        account sub entity,
+        entity account,
             owns username_key @key,
             owns email;
         """)
@@ -465,9 +419,9 @@ def test_key_inference_from_schema(store: TypeDbDatastore):
 
 
 def test_schema_evolution_new_attribute(store: TypeDbDatastore):
-    store.query_write("""
+    store.query_schema("""
         define
-        nickname_key sub attribute, value string;
+        attribute nickname_key, value string;
 
         person owns nickname_key;
         """)
@@ -491,14 +445,14 @@ def test_schema_evolution_new_attribute(store: TypeDbDatastore):
 
 
 def test_relation_with_attributes(store: TypeDbDatastore):
-    store.query_write("""
+    tx = store.query_schema("""
         define
-        friendship sub relation,
+        relation friendship,
             relates friend,
             relates friend_of,
             owns since;
 
-        since sub attribute, value long;
+        attribute since, value integer;
 
         person plays friendship:friend;
         person plays friendship:friend_of;
@@ -509,7 +463,7 @@ def test_relation_with_attributes(store: TypeDbDatastore):
         insert
             $a isa person, has name_key "Alice", has email "alice@test.com";
             $b isa person, has name_key "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship, has since 2024;
+            $f isa friendship, links (friend: $a, friend_of: $b), has since 2024;
         """
     )
 
