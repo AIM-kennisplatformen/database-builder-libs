@@ -3,13 +3,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from typedb.driver import (
-    ConceptDocumentIterator,
     ConceptRow,
     Credentials,
     Driver,
     DriverOptions,
     QueryAnswer,
-    RelationType,
     Transaction,
     TransactionType,
     TypeDB,
@@ -528,76 +526,77 @@ class TypeDbDatastore(AbstractStore):
         Simpler and safer than complex batch queries.
         """
 
+
         relations_by_node: dict[str, list[RelationData]] = {}
 
         for node in nodes:
+            node_relations: list[RelationData] = relations_by_node.get(str(node.id), [])
+            type_lookup = {r["type"]: r for r in node_relations}
+
             query = f"""
             match
-                $e isa {node.entity_type},
-                    has {node.key_attribute} "{node.id}";
-                $r links ($role: $e, $other: $x);
-            select $r, $e, $x;
+                $e isa person, has name_key 'Alice';
+                $other isa $other_type;
+                $rel isa $rel_type, links ($e, $other_role: $other);
+            fetch {{
+                "other": {{
+                    'type': $other_type,
+                    'role': $other_role,
+                    'data': {{ $other.* }}
+                }},
+                "relation": {{
+                    'type': $rel_type,
+                    'data': {{ $rel.* }}
+                }},
+            }};
             """
-            seen: set[str] = set()
 
-            for row in tx.query(query).resolve().as_concept_rows():
-                rel: RelationType = row.get("r").as_relation()
-                rel_id = rel.get_iid()
+            for row in tx.query(query).resolve().as_concept_documents():
+                rel_type = row.get("relation").get('type').get('label')
+                rel_data = row.get("relation").get('data')
 
-                if rel_id in seen:
+                other_type = row.get("other").get('type').get('label')
+                other_role = row.get("other").get('role').get('label')
+                other_data = row.get("other").get('data')
+
+                key_attr = self._get_key_attr_for_type(other_type)
+                key_val = None
+
+                for other_attr, other_attr_val in other_data.items():
+                    if other_attr == key_attr:
+                        key_val = other_attr_val
+                        break
+
+                if key_val is None:
                     continue
-                seen.add(rel_id)
 
-                rel_type: RelationType = rel.get_type()
-                rel_name = rel_type.get_label()
+                if rel_type not in type_lookup:
+                    roles = {other_role: RelationRef(
+                        entity_type=other_type,
+                        key_attr=key_attr,
+                        key=str(key_val),
+                    )}
 
-                roles: dict[str, RelationRef] = {}
+                    rel_attributes = {}
 
-                role_players = rel.get_players(tx)
+                    for rel_attr, rel_attr_val in rel_data.items():
+                       rel_attributes[rel_attr] = rel_attr_val
 
-                for role_type, players in role_players.items():
-                    role_name = role_type.get_label().name
+                    entry = RelationData(type=rel_type, roles=roles, attributes=rel_attributes)
 
-                    for player in players:
-                        player_type = player.get_type().get_label().name
-                        key_attr = self._get_key_attr_for_type(player_type)
-                        key_val = None
+                    node_relations.append(entry)
+                    type_lookup[rel_type] = entry
+                else:
+                    existing = type_lookup[rel_type]
 
-                        if key_attr:
-                            for attr in player.get_has(tx):
-                                if attr.get_type().get_label().name == key_attr:
-                                    key_val = attr.get_value()
-                                    break
-
-                        if key_val is None:
-                            for attr in player.get_has(tx):
-                                key_attr = attr.get_type().get_label().name
-                                key_val = attr.get_value()
-                                break
-
-                        if key_val is None:
-                            continue
-
-                        assert key_attr is not None
-
-                        roles[role_name] = {
-                            "entity_type": player_type,
-                            "key_attr": key_attr,
-                            "key": str(key_val),
-                        }
-                attributes: dict[str, object] = {}
-
-                for attr in rel.get_has(tx):
-                    attr_name = attr.get_type().get_label().name
-                    attributes[attr_name] = attr.get_value()
-
-                relations_by_node.setdefault(str(node.id), []).append(
-                    {
-                        "type": rel_name,
-                        "roles": roles,
-                        "attributes": attributes,
-                    }
-                )
+                    roles = existing["roles"]
+                    roles[other_role] = RelationRef(
+                        entity_type=other_type,
+                        key_attr=key_attr,
+                        key=str(key_val),
+                    )
+            
+            relations_by_node[str(node.id)] = node_relations
 
         return relations_by_node
 
