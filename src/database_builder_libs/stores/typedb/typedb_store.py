@@ -1,13 +1,14 @@
-from typing import Mapping, Optional
+from typing import Generator, Mapping, Optional
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 from typedb.driver import (
-    SessionType,
+    Credentials,
+    Driver,
+    DriverOptions,
+    Transaction,
     TransactionType,
     TypeDB,
-    TypeDBDriver,
-    TypeDBOptions,
 )
 
 from database_builder_libs.models.abstract_store import AbstractStore
@@ -86,7 +87,7 @@ class TypeDbDatastore(AbstractStore):
 
     def __init__(self) -> None:
         super().__init__()
-        self.typedb_driver: TypeDBDriver | None = None
+        self.typedb_driver: Driver | None = None
         self.database: str | None = None
         self._entity_attr_cache: dict[str, list[str]] = {}
         self._all_attr_cache: list[str] | None = None
@@ -103,7 +104,10 @@ class TypeDbDatastore(AbstractStore):
         if not uri or not database:
             raise ValueError("TypeDB config requires 'uri' and 'database'")
 
-        self.typedb_driver = TypeDB.core_driver(address=uri)
+        credentials = Credentials(config.get("username"), config.get("password"))
+        driver_options = DriverOptions(is_tls_enabled=config.get("tls"))
+
+        self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
         self.database = database
 
         # create database if missing
@@ -113,12 +117,13 @@ class TypeDbDatastore(AbstractStore):
         # apply schema if provided
         if schema_path:
             path = Path(schema_path)
-            with self._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-                tx.query.define(path.read_text(encoding="utf-8"))
+            with self._query(TransactionType.SCHEMA) as tx:
+                tx.query(path.read_text(encoding="utf-8")).resolve()
+                tx.commit()
 
             # required by TypeDB after schema change
             self.typedb_driver.close()
-            self.typedb_driver = TypeDB.core_driver(address=uri)
+            self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
 
     def _build_match(
         self, entity_type: str | None, attrs: Mapping[str, str] | None
@@ -136,44 +141,41 @@ class TypeDbDatastore(AbstractStore):
         return ", ".join(clauses)
 
     @contextmanager
-    def _query(self, session_type: SessionType, transaction_type: TransactionType):
+    def _query(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
         self._ensure_connected()
-        assert self.typedb_driver is not None
-        assert self.database is not None
 
-        with self.typedb_driver.session(self.database, session_type) as session:
-            with session.transaction(transaction_type) as transaction:
-                try:
-                    yield transaction
-                except Exception:
-                    # Do NOT commit — let TypeDB abort on close
-                    raise
-                else:
-                    if transaction_type.is_write() and transaction.is_open():
-                        transaction.commit()
+        with self.typedb_driver.transaction(database_name=self.database, transaction_type=transaction_type) as transaction:
+            try:
+                yield transaction
+            except Exception:
+                # Do NOT commit — let TypeDB abort on close
+                raise
+            else:
+                if transaction_type.is_write() and transaction.is_open():
+                    transaction.commit()
 
-    def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
+    def save(self, query: str, options: Optional[DriverOptions] = None) -> None:
+        with self._query(TransactionType.WRITE) as transaction:
             transaction.query.insert(query, options)
 
-    def delete(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
+    def delete(self, query: str, options: Optional[DriverOptions] = None) -> None:
+        with self._query(TransactionType.WRITE) as transaction:
             transaction.query.delete(query, options)
 
-    def fetch(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
-        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
+    def fetch(self, query: str, options: Optional[DriverOptions] = None) -> list[Any]:
+        with self._query(TransactionType.READ) as transaction:
             iterator = transaction.query.fetch(query, options)
             results = list(iterator)
             return results
 
-    def get(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
-        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
+    def get(self, query: str, options: Optional[DriverOptions] = None) -> list[Any]:
+        with self._query(TransactionType.READ) as transaction:
             iterator = transaction.query.get(query, options)
             results = [result.map for result in iterator]
             return results
 
-    def update(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
+    def update(self, query: str, options: Optional[DriverOptions] = None) -> None:
+        with self._query(TransactionType.WRITE) as transaction:
             transaction.query.update(query, options)
 
     def _format_attributes(self, payload: Mapping[str, object]) -> str:
@@ -557,7 +559,7 @@ class TypeDbDatastore(AbstractStore):
     ) -> list[Node]:
         nodes: list[Node] = []
 
-        with self._query(SessionType.DATA, TransactionType.READ) as tx:
+        with self._query(TransactionType.READ) as tx:
             raw_nodes = []
 
             for res in tx.query.fetch(query):
@@ -784,7 +786,7 @@ class TypeDbDatastore(AbstractStore):
         if count == 0:
             return 0
 
-        with self._query(SessionType.DATA, TransactionType.WRITE) as tx:
+        with self._query(TransactionType.WRITE) as tx:
             tx.query.delete(delete_query)
 
         return count

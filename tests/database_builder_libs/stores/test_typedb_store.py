@@ -2,11 +2,11 @@ import os
 import pytest
 import time
 import socket
-from unittest.mock import patch, mock_open
 from testcontainers.core.container import DockerContainer
-from testcontainers.core.wait_strategies import LogMessageWaitStrategy
-from typedb.driver import TypeDB, SessionType, TransactionType
+from typedb.driver import ConceptRowIterator, Credentials, DriverOptions, QueryAnswer, Transaction, TypeDB, TransactionType
 from database_builder_libs.models.node import Node
+from database_builder_libs.stores.typedb.typedb_store import TypeDbDatastore
+
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
@@ -25,25 +25,13 @@ def wait_for_port(host: str, port: int, timeout: float = 60.0):
             time.sleep(0.5)
 
 
-TEST_SCHEMA = """
-define
-    person sub entity,
-        owns name,
-        owns email,
-        owns age;
-    name sub attribute, value string;
-    email sub attribute, value string;
-    age sub attribute, value long;
-"""
-
-
 @pytest.fixture(scope="module")
 def typedb_container():
     """
     Starts a TypeDB 2.29 container and waits for the driver to be ready.
     """
     container = (
-        DockerContainer("vaticle/typedb:2.29.0")
+        DockerContainer("typedb/typedb:3.8.0")
         .with_exposed_ports(1729)
         .with_env("JAVA_TOOL_OPTIONS", "-Xmx1g")
     )
@@ -52,6 +40,8 @@ def typedb_container():
     host = "127.0.0.1"
     port = container.get_exposed_port(1729)
     address = f"{host}:{port}"
+    credentials = Credentials("admin", "password")
+    driver_options = DriverOptions(is_tls_enabled=False)
 
     try:
         print(f"   [DEBUG] Waiting for TCP port {address}...")
@@ -60,10 +50,11 @@ def typedb_container():
         max_retries = 30
         for _ in range(max_retries):
             try:
-                with TypeDB.core_driver(address) as driver:
+                with TypeDB.driver(address, credentials, driver_options) as driver:
                     driver.databases.all()
                     break
-            except Exception:
+            except Exception as e:
+                print(f"   [DEBUG] Driver connection failed: {e}. Retrying...")
                 time.sleep(1)
         else:
             raise RuntimeError("Driver could not connect to TypeDB.")
@@ -75,43 +66,46 @@ def typedb_container():
         print(stderr.decode())
         raise e
 
-    yield container, address
+    yield address
     container.stop()
 
 
 @pytest.fixture
 def store(typedb_container):
-    container, address = typedb_container
+    address = typedb_container
 
-    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
+    datastore = TypeDbDatastore()
+    schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
+    datastore.connect(
+        {
+            "uri": address,
+            "database": "integration_test_db",
+            "schema_path": schema_path,
+            "username": "admin",
+            "password": "password",
+            "tls": False,
+        }
+    )
 
-    with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
-        datastore = TypeDbDatastore()
-        schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
-        datastore.connect(
-            {
-                "uri": address,
-                "database": "integration_test_db",
-                "schema_path": schema_path,
-            }
-        )
+    # clean test data AFTER connect
+    with datastore._query(TransactionType.WRITE) as tx:
+        tx.query("match $x isa person; delete $x isa person;")
 
-        # clean test data AFTER connect
-        with datastore._query(SessionType.DATA, TransactionType.WRITE) as tx:
-            tx.query.delete("match $x isa person; delete $x isa person;")
-
-        yield datastore
+    yield datastore
 
 
 def test_initialization_creates_database_and_schema(store):
-    with store._query(SessionType.SCHEMA, TransactionType.READ) as tx:
-        person_type = tx.concepts.get_entity_type("person").resolve()
+    tx: Transaction
+    with store._query(TransactionType.READ) as tx:
+        rows: ConceptRowIterator = tx.query("match entity $t sub person;").resolve().as_concept_rows()
+        row = next(rows, None)
+        assert row is not None
+        person_type = row.get("t")
+
         assert person_type is not None
-        assert person_type.get_label().name == "person"
+        assert person_type.get_label() == "person"
 
 def test_requires_connect(typedb_container):
-    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
-
     store = TypeDbDatastore()
 
     with pytest.raises(RuntimeError):
@@ -331,11 +325,12 @@ def test_store_node_inserts_relation(store):
     )
 
     # add schema relation
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
-        friendship sub relation,
-            relates friend,
-            relates friend_of;
+    with store._query(TransactionType.WRITE) as tx:
+        tx.query("""
+            define
+            friendship sub relation,
+                relates friend,
+                relates friend_of;
         """)
 
     store.store_node(alice)
@@ -388,7 +383,7 @@ def test_store_node_inserts_relation(store):
     )
 
     # add schema relation
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+    with store._query(TransactionType.WRITE) as tx:
         tx.query.define("""
         define
         friendship sub relation,
@@ -416,7 +411,7 @@ def test_store_node_inserts_relation(store):
 
 
 def test_get_nodes_with_relations(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+    with store._query(TransactionType.WRITE) as tx:
         tx.query.define("""
         define
         friendship sub relation,
@@ -446,7 +441,7 @@ def test_get_nodes_with_relations(store):
 
 
 def test_key_inference_from_schema(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+    with store._query(TransactionType.WRITE) as tx:
         tx.query.define("""
         define
         username sub attribute, value string;
@@ -469,7 +464,7 @@ def test_key_inference_from_schema(store):
 
 
 def test_schema_evolution_new_attribute(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+    with store._query(TransactionType.WRITE) as tx:
         tx.query.define("""
         define
         nickname sub attribute, value string;
@@ -496,7 +491,7 @@ def test_schema_evolution_new_attribute(store):
 
 
 def test_relation_with_attributes(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+    with store._query(TransactionType.WRITE) as tx:
         tx.query.define("""
         define
         friendship sub relation,
