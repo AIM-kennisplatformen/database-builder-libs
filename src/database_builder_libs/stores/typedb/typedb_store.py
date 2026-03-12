@@ -1,7 +1,6 @@
-from typing import Generator, Mapping, Optional
+from typing import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
 from typedb.driver import (
     ConceptRow,
     Credentials,
@@ -535,7 +534,7 @@ class TypeDbDatastore(AbstractStore):
 
             query = f"""
             match
-                $e isa person, has name_key 'Alice';
+                $e isa {node.entity_type }, has {node.key_attribute} "{node.id}";
                 $other isa $other_type;
                 $rel isa $rel_type, links ($e, $other_role: $other);
             fetch {{
@@ -699,12 +698,12 @@ class TypeDbDatastore(AbstractStore):
         if not attr_labels:
             return []
 
-        query = f"""
+        query = """
         match
             entity $e;
-        fetch {{
+        fetch {
             'e': $e,
-        }};
+        };
         """
 
         entity_rows = self.query_read(query).as_concept_documents()
