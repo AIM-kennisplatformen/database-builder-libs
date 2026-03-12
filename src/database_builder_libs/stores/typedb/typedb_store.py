@@ -1,13 +1,15 @@
-from typing import Mapping, Optional
+from typing import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
 from typedb.driver import (
-    SessionType,
+    ConceptRow,
+    Credentials,
+    Driver,
+    DriverOptions,
+    QueryAnswer,
+    Transaction,
     TransactionType,
     TypeDB,
-    TypeDBDriver,
-    TypeDBOptions,
 )
 
 from database_builder_libs.models.abstract_store import AbstractStore
@@ -27,6 +29,44 @@ class RelationData(TypedDict, total=False):
     type: str
     roles: Mapping[str, RelationRef]
     attributes: Mapping[str, object]
+
+
+class EagerQueryAnswer:
+    """
+    Eagerly evaluates a TypeDB QueryAnswer to prevent 'concurrent transaction close' errors
+    when evaluating iterator wrappers outside of the transaction block.
+    """
+    def __init__(self, answer: QueryAnswer):
+        self._is_docs = answer.is_concept_documents()
+        self._is_rows = answer.is_concept_rows()
+        if self._is_docs:
+            self._docs = list(answer.as_concept_documents())
+        elif self._is_rows:
+            self._rows = list(answer.as_concept_rows())
+        else:
+            self._answer = answer
+
+    def as_concept_documents(self):
+        if not self._is_docs:
+            raise TypeError("Query did not return concept documents")
+        return iter(self._docs)
+
+    def as_concept_rows(self):
+        if not self._is_rows:
+            raise TypeError("Query did not return concept rows")
+        return iter(self._rows)
+
+    def as_raw(self):
+        if not self._answer:
+            raise TypeError("Query is already evaluated as documents or rows")
+        return self._answer
+
+    def __iter__(self):
+        if self._is_docs:
+            return iter(self._docs)
+        if self._is_rows:
+            return iter(self._rows)
+        return iter([])
 
 
 class TypeDbDatastore(AbstractStore):
@@ -86,7 +126,7 @@ class TypeDbDatastore(AbstractStore):
 
     def __init__(self) -> None:
         super().__init__()
-        self.typedb_driver: TypeDBDriver | None = None
+        self.typedb_driver: Driver | None = None
         self.database: str | None = None
         self._entity_attr_cache: dict[str, list[str]] = {}
         self._all_attr_cache: list[str] | None = None
@@ -103,7 +143,10 @@ class TypeDbDatastore(AbstractStore):
         if not uri or not database:
             raise ValueError("TypeDB config requires 'uri' and 'database'")
 
-        self.typedb_driver = TypeDB.core_driver(address=uri)
+        credentials = Credentials(config.get("username"), config.get("password"))
+        driver_options = DriverOptions(is_tls_enabled=config.get("tls"))
+
+        self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
         self.database = database
 
         # create database if missing
@@ -113,12 +156,13 @@ class TypeDbDatastore(AbstractStore):
         # apply schema if provided
         if schema_path:
             path = Path(schema_path)
-            with self._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-                tx.query.define(path.read_text(encoding="utf-8"))
+            with self.transaction(TransactionType.SCHEMA) as tx:
+                tx.query(path.read_text(encoding="utf-8")).resolve()
+                tx.commit()
 
             # required by TypeDB after schema change
             self.typedb_driver.close()
-            self.typedb_driver = TypeDB.core_driver(address=uri)
+            self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
 
     def _build_match(
         self, entity_type: str | None, attrs: Mapping[str, str] | None
@@ -136,45 +180,30 @@ class TypeDbDatastore(AbstractStore):
         return ", ".join(clauses)
 
     @contextmanager
-    def _query(self, session_type: SessionType, transaction_type: TransactionType):
+    def transaction(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
         self._ensure_connected()
-        assert self.typedb_driver is not None
-        assert self.database is not None
 
-        with self.typedb_driver.session(self.database, session_type) as session:
-            with session.transaction(transaction_type) as transaction:
-                try:
-                    yield transaction
-                except Exception:
-                    # Do NOT commit — let TypeDB abort on close
-                    raise
-                else:
-                    if transaction_type.is_write() and transaction.is_open():
-                        transaction.commit()
+        with self.typedb_driver.transaction(database_name=self.database, transaction_type=transaction_type) as transaction:
+            try:
+                yield transaction
+            except Exception:
+                # Do NOT commit — let TypeDB abort on close
+                raise
+            else:
+                if (transaction_type.is_write() or transaction_type.is_schema()) and transaction.is_open():
+                    transaction.commit()
 
-    def save(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
-            transaction.query.insert(query, options)
+    def query_read(self, query: str) -> EagerQueryAnswer:
+        with self.transaction(TransactionType.READ) as tx:
+            return EagerQueryAnswer(tx.query(query).resolve())
 
-    def delete(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
-            transaction.query.delete(query, options)
+    def query_write(self, query: str) -> EagerQueryAnswer:
+        with self.transaction(TransactionType.WRITE) as tx:
+            return EagerQueryAnswer(tx.query(query).resolve())
 
-    def fetch(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
-        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
-            iterator = transaction.query.fetch(query, options)
-            results = list(iterator)
-            return results
-
-    def get(self, query: str, options: Optional[TypeDBOptions] = None) -> list[Any]:
-        with self._query(SessionType.DATA, TransactionType.READ) as transaction:
-            iterator = transaction.query.get(query, options)
-            results = [result.map for result in iterator]
-            return results
-
-    def update(self, query: str, options: Optional[TypeDBOptions] = None) -> None:
-        with self._query(SessionType.DATA, TransactionType.WRITE) as transaction:
-            transaction.query.update(query, options)
+    def query_schema(self, query: str) -> EagerQueryAnswer:
+        with self.transaction(TransactionType.SCHEMA) as tx:
+            return EagerQueryAnswer(tx.query(query).resolve())
 
     def _format_attributes(self, payload: Mapping[str, object]) -> str:
         clauses = []
@@ -204,11 +233,12 @@ class TypeDbDatastore(AbstractStore):
         match
             $e isa {entity_type},
                 has {key_attr} "{key_value}";
-        get $e;
         limit 1;
         """
 
-        return bool(self.get(query))
+        result = self.query_read(query).as_concept_rows()
+
+        return bool(len(list(result)) == 1)
 
     def _insert_entity(
         self,
@@ -226,7 +256,7 @@ class TypeDbDatastore(AbstractStore):
             {", " if attrs else ""}{attrs};
         """
 
-        self.save(query)
+        self.query_write(query)
 
     def _relation_exists(
         self, rel_type: str, role_map: Mapping[str, RelationRef]
@@ -241,13 +271,23 @@ class TypeDbDatastore(AbstractStore):
                 """
             )
 
+        match_statements = [
+            f"${role} isa {data['entity_type']}, has {data['key_attr']} '{data['key']}';"
+            for role, data in role_map.items()
+        ]
+
+        # Generate the relation line
+        role_bindings = ", ".join([f"{role}: ${role}" for role in role_map.keys()])
+
         query = f"""
         match
-            {"".join(match_roles)}
-            ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel_type};
-        get;
+            {" ".join(match_statements)}
+            ({role_bindings});
         """
-        return bool(self.get(query))
+
+        rows = self.query_read(query).as_concept_rows()
+
+        return bool(len(list(rows)) > 0)
 
     def _insert_relation(self, rel: RelationData) -> None:
         if self._relation_exists(rel["type"], rel["roles"]):
@@ -275,7 +315,7 @@ class TypeDbDatastore(AbstractStore):
             {", " if attrs else ""}{attrs};
         """
 
-        self.save(query)
+        self.query_write(query)
 
     def store_node(self, node: Node) -> None:
         """
@@ -347,14 +387,17 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a @key;
-        get $a;
+            {entity_type} owns $a;
+            $a sub key;
+        fetch {{
+            'a': $a
+        }};
         """
-        result = self.get(query)
+        rows = self.query_read(query).as_concept_documents()
+        result = list(rows)
 
         if result:
-            key = result[0]["a"].get_label().name
+            key = result[0]["a"].get("label")
             self._key_attr_cache[entity_type] = key
             return key
 
@@ -369,12 +412,14 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a @key;
-        get $a;
+            {entity_type} owns $a;
+            $a sub key;
+        fetch {{
+            'a': $a
+        }};
         """
 
-        result = self.get(query)
+        result = self.query_read(query)
 
         if result:
             key = result[0]["a"].get_label().name
@@ -480,97 +525,98 @@ class TypeDbDatastore(AbstractStore):
         Simpler and safer than complex batch queries.
         """
 
+
         relations_by_node: dict[str, list[RelationData]] = {}
 
         for node in nodes:
+            node_relations: list[RelationData] = relations_by_node.get(str(node.id), [])
+            type_lookup = {r["type"]: r for r in node_relations}
+
             query = f"""
             match
-                $e isa {node.entity_type},
-                    has {node.key_attribute} "{node.id}";
-                $r ($role: $e, $other: $x);
-            get $r, $x;
+                $e isa {node.entity_type }, has {node.key_attribute} "{node.id}";
+                $other isa $other_type;
+                $rel isa $rel_type, links ($e, $other_role: $other);
+            fetch {{
+                "other": {{
+                    'type': $other_type,
+                    'role': $other_role,
+                    'data': {{ $other.* }}
+                }},
+                "relation": {{
+                    'type': $rel_type,
+                    'data': {{ $rel.* }}
+                }},
+            }};
             """
-            seen: set[str] = set()
 
-            for res in tx.query.get(query):
-                rel = res.map["r"]
-                rel_id = rel.get_iid()
+            for row in tx.query(query).resolve().as_concept_documents():
+                rel_type = row.get("relation").get('type').get('label')
+                rel_data = row.get("relation").get('data')
 
-                if rel_id in seen:
+                other_type = row.get("other").get('type').get('label')
+                other_role = row.get("other").get('role').get('label')
+                other_data = row.get("other").get('data')
+
+                key_attr = self._get_key_attr_for_type(other_type)
+                key_val = None
+
+                for other_attr, other_attr_val in other_data.items():
+                    if other_attr == key_attr:
+                        key_val = other_attr_val
+                        break
+
+                if key_val is None:
                     continue
-                seen.add(rel_id)
 
-                rel_type = rel.get_type().get_label().name
+                if rel_type not in type_lookup:
+                    roles = {other_role: RelationRef(
+                        entity_type=other_type,
+                        key_attr=key_attr,
+                        key=str(key_val),
+                    )}
 
-                roles: dict[str, RelationRef] = {}
+                    rel_attributes = {}
 
-                role_players = rel.get_players(tx)
+                    for rel_attr, rel_attr_val in rel_data.items():
+                       rel_attributes[rel_attr] = rel_attr_val
 
-                for role_type, players in role_players.items():
-                    role_name = role_type.get_label().name
+                    entry = RelationData(type=rel_type, roles=roles, attributes=rel_attributes)
 
-                    for player in players:
-                        player_type = player.get_type().get_label().name
-                        key_attr = self._get_key_attr_for_type(player_type)
-                        key_val = None
+                    node_relations.append(entry)
+                    type_lookup[rel_type] = entry
+                else:
+                    existing = type_lookup[rel_type]
 
-                        if key_attr:
-                            for attr in player.get_has(tx):
-                                if attr.get_type().get_label().name == key_attr:
-                                    key_val = attr.get_value()
-                                    break
-
-                        if key_val is None:
-                            for attr in player.get_has(tx):
-                                key_attr = attr.get_type().get_label().name
-                                key_val = attr.get_value()
-                                break
-
-                        if key_val is None:
-                            continue
-
-                        assert key_attr is not None
-
-                        roles[role_name] = {
-                            "entity_type": player_type,
-                            "key_attr": key_attr,
-                            "key": str(key_val),
-                        }
-                attributes: dict[str, object] = {}
-
-                for attr in rel.get_has(tx):
-                    attr_name = attr.get_type().get_label().name
-                    attributes[attr_name] = attr.get_value()
-
-                relations_by_node.setdefault(str(node.id), []).append(
-                    {
-                        "type": rel_type,
-                        "roles": roles,
-                        "attributes": attributes,
-                    }
-                )
+                    roles = existing["roles"]
+                    roles[other_role] = RelationRef(
+                        entity_type=other_type,
+                        key_attr=key_attr,
+                        key=str(key_val),
+                    )
+            
+            relations_by_node[str(node.id)] = node_relations
 
         return relations_by_node
 
     def _fetch_to_nodes(
-        self, query: str, include_relations: bool = False
+        self, rows: list[ConceptRow], include_relations: bool = False
     ) -> list[Node]:
         nodes: list[Node] = []
 
-        with self._query(SessionType.DATA, TransactionType.READ) as tx:
+        with self.transaction(TransactionType.READ) as tx:
             raw_nodes = []
 
-            for res in tx.query.fetch(query):
-                entity_data = res["e"]
-
-                entity_type = entity_data["type"]["label"]
+            for row in rows:
+                entity_type = row.get("entity_type", {})
+                entity_data = row.get("data", {})
 
                 payload = {}
 
                 for attr_name, values in entity_data.items():
                     if attr_name == "type" or not values:
                         continue
-                    payload[attr_name] = values[0]["value"]
+                    payload[attr_name] = values[0]["value"] if isinstance(values, list) else values
 
                 if not payload:
                     continue
@@ -635,13 +681,14 @@ class TypeDbDatastore(AbstractStore):
 
         query = """
         match
-            $t sub entity;
-            $t owns $a;
-        get $a;
+            $p owns $a;
+        fetch {
+            "a": $a
+        };
         """
 
-        results = self.get(query)
-        self._all_attr_cache = sorted({r["a"].get_label().name for r in results})
+        rows = self.query_read(query).as_concept_documents()
+        self._all_attr_cache = sorted({r.get("a").get('label') for r in list(rows)})
         return self._all_attr_cache
 
     def _get_all_nodes(self) -> list[Node]:
@@ -651,16 +698,34 @@ class TypeDbDatastore(AbstractStore):
         if not attr_labels:
             return []
 
-        fetch_block = ", ".join(attr_labels)
-
-        query = f"""
+        query = """
         match
-            $e isa entity;
-        fetch
-            $e: {fetch_block};
+            entity $e;
+        fetch {
+            'e': $e,
+        };
         """
 
-        return self._deduplicate(self._fetch_to_nodes(query))
+        entity_rows = self.query_read(query).as_concept_documents()
+        result = list(entity_rows)
+
+        rows = []
+
+        for row in result:
+            entity_label = row.get("e").get("label")
+
+            query = f"""
+            match
+                $e isa {entity_label};
+            fetch {{
+                'data': {{ $e.* }},
+                'entity_type': '{entity_label}',
+            }};
+            """
+
+            rows.extend(list(self.query_read(query).as_concept_documents()))
+
+        return self._deduplicate(self._fetch_to_nodes(rows))
 
     def _get_entity_attribute_labels(self, entity_type: str) -> list[str]:
         if entity_type in self._entity_attr_cache:
@@ -668,13 +733,14 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a;
-        get $a;
+            {entity_type} owns $a;
+        fetch {{
+            "a": $a
+        }};
         """
 
-        results = self.get(query)
-        labels = sorted({r["a"].get_label().name for r in results})
+        results = self.query_read(query)
+        labels = sorted({r["a"]["label"] for r in results})
         self._entity_attr_cache[entity_type] = labels
         return labels
 
@@ -727,16 +793,18 @@ class TypeDbDatastore(AbstractStore):
         if not attr_labels:
             return []
 
-        fetch_block = ", ".join(attr_labels)
-
         query = f"""
         match
             {match_block};
-        fetch
-            $e: {fetch_block};
+        fetch {{
+            'data': {{$e.*}},
+            'entity_type': '{entity_type}',
+        }};
         """
 
-        return self._fetch_to_nodes(query, include_relations=include_relations)
+        rows = self.query_read(query).as_concept_documents()
+
+        return self._fetch_to_nodes(list(rows), include_relations=include_relations)
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
         """
@@ -775,7 +843,7 @@ class TypeDbDatastore(AbstractStore):
         match
             {match_block};
         delete
-            $e isa {entity_type};
+            $e;
         """
 
         nodes = self.get_nodes(filter)
@@ -784,8 +852,7 @@ class TypeDbDatastore(AbstractStore):
         if count == 0:
             return 0
 
-        with self._query(SessionType.DATA, TransactionType.WRITE) as tx:
-            tx.query.delete(delete_query)
+        self.query_write(delete_query)
 
         return count
 
