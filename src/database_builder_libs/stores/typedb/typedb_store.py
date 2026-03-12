@@ -199,7 +199,7 @@ class TypeDbDatastore(AbstractStore):
         limit 1;
         """
 
-        return bool(self.get(query))
+        return bool(self.query_read(query))
 
     def _insert_entity(
         self,
@@ -238,7 +238,7 @@ class TypeDbDatastore(AbstractStore):
             ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel_type};
         get;
         """
-        return bool(self.get(query))
+        return bool(self.query_read(query))
 
     def _insert_relation(self, rel: RelationData) -> None:
         if self._relation_exists(rel["type"], rel["roles"]):
@@ -338,14 +338,17 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a @key;
-        get $a;
+            {entity_type} owns $a;
+            $a sub key;
+        fetch {{
+            'a': $a
+        }};
         """
-        result = self.get(query)
+        rows = self.query_read(query).as_concept_documents()
+        result = list(rows)
 
         if result:
-            key = result[0]["a"].get_label().name
+            key = result[0]["a"].get("label")
             self._key_attr_cache[entity_type] = key
             return key
 
@@ -360,12 +363,11 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a @key;
+            {entity_type} owns $a @key;
         get $a;
         """
 
-        result = self.get(query)
+        result = self.query_read(query)
 
         if result:
             key = result[0]["a"].get_label().name
@@ -551,17 +553,18 @@ class TypeDbDatastore(AbstractStore):
         with self.transaction(TransactionType.READ) as tx:
             raw_nodes = []
 
-            for res in tx.query.fetch(query):
-                entity_data = res["e"]
-
-                entity_type = entity_data["type"]["label"]
+            rows = tx.query(query).resolve().as_concept_documents()
+            rows = list(rows)  # exhaust generator for debug visibility; ideally should stream
+            for row in rows:
+                entity_type = row.get("entity_type", {})
+                entity_data = row.get("data", {})
 
                 payload = {}
 
                 for attr_name, values in entity_data.items():
                     if attr_name == "type" or not values:
                         continue
-                    payload[attr_name] = values[0]["value"]
+                    payload[attr_name] = values[0]["value"] if isinstance(values, list) else values
 
                 if not payload:
                     continue
@@ -626,12 +629,11 @@ class TypeDbDatastore(AbstractStore):
 
         query = """
         match
-            $t sub entity;
-            $t owns $a;
+            entity owns $a;
         get $a;
         """
 
-        results = self.get(query)
+        results = self.query_read(query)
         self._all_attr_cache = sorted({r["a"].get_label().name for r in results})
         return self._all_attr_cache
 
@@ -659,13 +661,14 @@ class TypeDbDatastore(AbstractStore):
 
         query = f"""
         match
-            $t type {entity_type};
-            $t owns $a;
-        get $a;
+            {entity_type} owns $a;
+        fetch {{
+            "a": $a
+        }};
         """
 
-        results = self.get(query)
-        labels = sorted({r["a"].get_label().name for r in results})
+        results = self.query_read(query)
+        labels = sorted({r["a"]["label"] for r in results})
         self._entity_attr_cache[entity_type] = labels
         return labels
 
@@ -718,13 +721,13 @@ class TypeDbDatastore(AbstractStore):
         if not attr_labels:
             return []
 
-        fetch_block = ", ".join(attr_labels)
-
         query = f"""
         match
             {match_block};
-        fetch
-            $e: {fetch_block};
+        fetch {{
+            'data': {{$e.*}},
+            'entity_type': '{entity_type}',
+        }};
         """
 
         return self._fetch_to_nodes(query, include_relations=include_relations)
