@@ -6,6 +6,7 @@ from typedb.driver import (
     Credentials,
     Driver,
     DriverOptions,
+    QueryAnswer,
     Transaction,
     TransactionType,
     TypeDB,
@@ -117,7 +118,7 @@ class TypeDbDatastore(AbstractStore):
         # apply schema if provided
         if schema_path:
             path = Path(schema_path)
-            with self._query(TransactionType.SCHEMA) as tx:
+            with self.transaction(TransactionType.SCHEMA) as tx:
                 tx.query(path.read_text(encoding="utf-8")).resolve()
                 tx.commit()
 
@@ -141,7 +142,7 @@ class TypeDbDatastore(AbstractStore):
         return ", ".join(clauses)
 
     @contextmanager
-    def _query(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
+    def transaction(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
         self._ensure_connected()
 
         with self.typedb_driver.transaction(database_name=self.database, transaction_type=transaction_type) as transaction:
@@ -154,29 +155,17 @@ class TypeDbDatastore(AbstractStore):
                 if transaction_type.is_write() and transaction.is_open():
                     transaction.commit()
 
-    def save(self, query: str, options: Optional[DriverOptions] = None) -> None:
-        with self._query(TransactionType.WRITE) as transaction:
-            transaction.query.insert(query, options)
+    def query_read(self, query: str) -> QueryAnswer:
+        with self.transaction(TransactionType.READ) as tx:
+            return tx.query(query).resolve()
 
-    def delete(self, query: str, options: Optional[DriverOptions] = None) -> None:
-        with self._query(TransactionType.WRITE) as transaction:
-            transaction.query.delete(query, options)
-
-    def fetch(self, query: str, options: Optional[DriverOptions] = None) -> list[Any]:
-        with self._query(TransactionType.READ) as transaction:
-            iterator = transaction.query.fetch(query, options)
-            results = list(iterator)
-            return results
-
-    def get(self, query: str, options: Optional[DriverOptions] = None) -> list[Any]:
-        with self._query(TransactionType.READ) as transaction:
-            iterator = transaction.query.get(query, options)
-            results = [result.map for result in iterator]
-            return results
-
-    def update(self, query: str, options: Optional[DriverOptions] = None) -> None:
-        with self._query(TransactionType.WRITE) as transaction:
-            transaction.query.update(query, options)
+    def query_write(self, query: str) -> QueryAnswer:
+        with self.transaction(TransactionType.WRITE) as tx:
+            return tx.query(query).resolve()
+        
+    def query_schema(self, query: str) -> QueryAnswer:
+        with self.transaction(TransactionType.SCHEMA) as tx:
+            return tx.query(query).resolve()
 
     def _format_attributes(self, payload: Mapping[str, object]) -> str:
         clauses = []
@@ -559,7 +548,7 @@ class TypeDbDatastore(AbstractStore):
     ) -> list[Node]:
         nodes: list[Node] = []
 
-        with self._query(TransactionType.READ) as tx:
+        with self.transaction(TransactionType.READ) as tx:
             raw_nodes = []
 
             for res in tx.query.fetch(query):
@@ -786,7 +775,7 @@ class TypeDbDatastore(AbstractStore):
         if count == 0:
             return 0
 
-        with self._query(TransactionType.WRITE) as tx:
+        with self.transaction(TransactionType.WRITE) as tx:
             tx.query.delete(delete_query)
 
         return count

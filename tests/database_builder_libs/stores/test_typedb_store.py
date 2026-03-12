@@ -88,22 +88,19 @@ def store(typedb_container):
     )
 
     # clean test data AFTER connect
-    with datastore._query(TransactionType.WRITE) as tx:
-        tx.query("match $x isa person; delete $x isa person;")
+    datastore.query_write("match $x isa person; delete $x;")
 
     yield datastore
 
 
-def test_initialization_creates_database_and_schema(store):
-    tx: Transaction
-    with store._query(TransactionType.READ) as tx:
-        rows: ConceptRowIterator = tx.query("match entity $t sub person;").resolve().as_concept_rows()
-        row = next(rows, None)
-        assert row is not None
-        person_type = row.get("t")
+def test_initialization_creates_database_and_schema(store: TypeDbDatastore):
+    rows: ConceptRowIterator = store.query_read("match entity $t sub person;").as_concept_rows()
+    row = next(rows, None)
+    assert row is not None
+    person_type = row.get("t")
 
-        assert person_type is not None
-        assert person_type.get_label() == "person"
+    assert person_type is not None
+    assert person_type.get_label() == "person"
 
 def test_requires_connect(typedb_container):
     store = TypeDbDatastore()
@@ -112,29 +109,36 @@ def test_requires_connect(typedb_container):
         store.get_nodes("entity=person")
 
 
-def test_save_and_fetch_workflow(store):
-    store.save('insert $p isa person, has name "Alice", has email "alice@test.com";')
+def test_save_and_fetch_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Alice", has email "alice@test.com";')
 
-    results = store.fetch(
-        'match $p isa person, has name "Alice"; fetch $p: name, email;'
-    )
+    rows = store.query_read("""
+        match 
+        $p isa person, has name "Alice"; 
+        fetch {
+            "name": $p.name,
+            "email": $p.email
+        };
+    """)
 
+    results = list(rows)
     assert len(results) == 1
-    data = results[0]["p"]
 
-    assert data["name"][0]["value"] == "Alice"
-    assert data["email"][0]["value"] == "alice@test.com"
+    assert results[0]["name"] == "Alice"
+    assert results[0]["email"] == "alice@test.com"
 
 
-def test_get_workflow(store):
-    store.save('insert $p isa person, has name "Bob", has age 30;')
-    results = store.get('match $p isa person, has name "Bob"; get $p;')
+def test_get_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Bob", has age 30;')
+    rows = store.query_read('match $p isa person, has name "Bob";').as_concept_rows()
+
+    results = list(rows)
 
     assert len(results) > 0
 
 
-def test_update_workflow(store):
-    store.save('insert $p isa person, has name "Charlie", has age 20;')
+def test_update_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Charlie", has age 20;')
 
     update_query = """
     match 
@@ -145,28 +149,28 @@ def test_update_workflow(store):
     insert 
         $p has age 21;
     """
-    store.update(update_query)
+    store.query_write(update_query)
 
-    results = store.fetch('match $p isa person, has name "Charlie"; fetch $p: age;')
+    results = store.query_read('match $p isa person, has name "Charlie"; fetch $p: age;')
 
     assert results[0]["p"]["age"][0]["value"] == 21
 
 
-def test_delete_workflow(store):
-    store.save('insert $p isa person, has name "Dave";')
+def test_delete_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Dave";')
     assert (
-        len(store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')) == 1
+        len(store.query_read('match $p isa person, has name "Dave"; fetch $p: name;')) == 1
     )
 
-    store.delete('match $p isa person, has name "Dave"; delete $p isa person;')
+    store.query_write('match $p isa person, has name "Dave"; delete $p isa person;')
 
-    results = store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')
+    results = store.query_read('match $p isa person, has name "Dave"; fetch $p: name;')
     assert len(results) == 0
 
 
-def test_get_nodes_by_keyed_filter(store):
+def test_get_nodes_by_keyed_filter(store: TypeDbDatastore):
     # Arrange
-    store.save(
+    store.query_write(
         'insert $p isa person, has name "Alice", has email "alice@test.com", has age 25;'
     )
 
@@ -182,14 +186,14 @@ def test_get_nodes_by_keyed_filter(store):
     assert node.payload_data["age"] == 25
 
 
-def test_get_nodes_returns_empty_when_no_match(store):
+def test_get_nodes_returns_empty_when_no_match(store: TypeDbDatastore):
     results = store.get_nodes("entity=person&name=Nonexistent")
     assert results == []
 
 
-def test_get_nodes_multiple_matches(store):
-    store.save('insert $p isa person, has name "Bob", has age 30;')
-    store.save('insert $p isa person, has name "Bob", has age 40;')
+def test_get_nodes_multiple_matches(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Bob", has age 30;')
+    store.query_write('insert $p isa person, has name "Bob", has age 40;')
 
     results = store.get_nodes("entity=person&name=Bob")
 
@@ -198,8 +202,8 @@ def test_get_nodes_multiple_matches(store):
     assert ages == [30, 40]
 
 
-def test_remove_single_node_by_keyed_filter(store):
-    store.save(
+def test_remove_single_node_by_keyed_filter(store: TypeDbDatastore):
+    store.query_write(
         'insert $p isa person, has name "Charlie", has email "charlie@test.com";'
     )
 
@@ -211,17 +215,17 @@ def test_remove_single_node_by_keyed_filter(store):
     assert store.get_nodes("entity=person&name=Charlie") == []
 
 
-def test_remove_nodes_refuses_bulk_delete_by_default(store):
-    store.save('insert $p isa person, has name "Dave";')
-    store.save('insert $p isa person, has name "Eve";')
+def test_remove_nodes_refuses_bulk_delete_by_default(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Dave";')
+    store.query_write('insert $p isa person, has name "Eve";')
 
     with pytest.raises(ValueError):
         store.remove_nodes("entity=person")
 
 
-def test_remove_nodes_bulk_delete_with_explicit_flag(store):
-    store.save('insert $p isa person, has name "Frank";')
-    store.save('insert $p isa person, has name "Grace";')
+def test_remove_nodes_bulk_delete_with_explicit_flag(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Frank";')
+    store.query_write('insert $p isa person, has name "Grace";')
 
     deleted_count = store.remove_nodes(
         "entity=person",
@@ -232,11 +236,11 @@ def test_remove_nodes_bulk_delete_with_explicit_flag(store):
     assert store.get_nodes("entity=person") == []
 
 
-def test_remove_nodes_only_affects_target_entities(store):
-    store.save('insert $p isa person, has name "Henry";')
-    store.save('insert $p isa person, has name "Ivy";')
+def test_remove_nodes_only_affects_target_entities(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Henry";')
+    store.query_write('insert $p isa person, has name "Ivy";')
 
-    store.save(
+    store.query_write(
         'insert $p isa person, has name "Jack";'
     )
 
@@ -248,7 +252,7 @@ def test_remove_nodes_only_affects_target_entities(store):
     assert names == ["Henry", "Ivy"]
 
 
-def test_store_node_inserts_entity(store):
+def test_store_node_inserts_entity(store: TypeDbDatastore):
     node = Node(
         id="alice@test.com",
         entity_type="person",
@@ -263,7 +267,7 @@ def test_store_node_inserts_entity(store):
 
     store.store_node(node)
 
-    results = store.fetch(
+    results = store.query_read(
         'match $p isa person, has email "alice@test.com"; fetch $p: name, email, age;'
     )
 
@@ -274,11 +278,11 @@ def test_store_node_inserts_entity(store):
     assert person["email"][0]["value"] == "alice@test.com"
     assert person["age"][0]["value"] == 25
 
-def test_get_nodes_none_returns_all_nodes(store):
+def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     # Arrange
-    store.save('insert $p isa person, has name "Alice";')
-    store.save('insert $p isa person, has name "Bob";')
-    store.save('insert $p isa person, has name "Charlie";')
+    store.query_write('insert $p isa person, has name "Alice";')
+    store.query_write('insert $p isa person, has name "Bob";')
+    store.query_write('insert $p isa person, has name "Charlie";')
 
     # Act
     results = store.get_nodes(None)
@@ -291,7 +295,7 @@ def test_get_nodes_none_returns_all_nodes(store):
     assert names == ["Alice", "Bob", "Charlie"]
 
 
-def test_store_node_inserts_relation(store):
+def test_store_node_inserts_relation(store: TypeDbDatastore):
     alice = Node(
         id="alice@test.com",
         entity_type="person",
@@ -325,8 +329,7 @@ def test_store_node_inserts_relation(store):
     )
 
     # add schema relation
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query("""
+    store.query_write("""
             define
             friendship sub relation,
                 relates friend,
@@ -336,7 +339,7 @@ def test_store_node_inserts_relation(store):
     store.store_node(alice)
     store.store_node(bob)
 
-    results = store.get(
+    results = store.query_read(
         """
         match
             $a isa person, has email "alice@test.com";
@@ -349,7 +352,7 @@ def test_store_node_inserts_relation(store):
     assert len(results) == 1
 
 
-def test_store_node_inserts_relation(store):
+def test_store_node_inserts_relation(store: TypeDbDatastore):
     alice = Node(
         id="alice@test.com",
         entity_type="person",
@@ -383,8 +386,7 @@ def test_store_node_inserts_relation(store):
     )
 
     # add schema relation
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query.define("""
+    store.query_write("""
         define
         friendship sub relation,
             relates friend,
@@ -397,7 +399,7 @@ def test_store_node_inserts_relation(store):
     store.store_node(alice)
     store.store_node(bob)
 
-    results = store.get(
+    results = store.query(
         """
         match
             $a isa person, has email "alice@test.com";
@@ -410,9 +412,8 @@ def test_store_node_inserts_relation(store):
     assert len(results) == 1
 
 
-def test_get_nodes_with_relations(store):
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_get_nodes_with_relations(store: TypeDbDatastore):
+    store.query_write("""
         define
         friendship sub relation,
             relates friend,
@@ -422,7 +423,7 @@ def test_get_nodes_with_relations(store):
         person plays friendship:friend_of;
         """)
 
-    store.save(
+    store.query_write(
         """
         insert
             $a isa person, has name "Alice", has email "alice@test.com";
@@ -440,9 +441,8 @@ def test_get_nodes_with_relations(store):
     assert node.relations[0]["type"] == "friendship"
 
 
-def test_key_inference_from_schema(store):
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_key_inference_from_schema(store: TypeDbDatastore):
+    store.query_write("""
         define
         username sub attribute, value string;
 
@@ -450,7 +450,7 @@ def test_key_inference_from_schema(store):
             owns username @key,
             owns email;
         """)
-    store.save(
+    store.query_write(
         'insert $a isa account, has username "u1", has email "u1@test.com";'
     )
 
@@ -463,16 +463,15 @@ def test_key_inference_from_schema(store):
     assert node.id == "u1"
 
 
-def test_schema_evolution_new_attribute(store):
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_schema_evolution_new_attribute(store: TypeDbDatastore):
+    store.query_write("""
         define
         nickname sub attribute, value string;
 
         person owns nickname;
         """)
 
-    store.save(
+    store.query_write(
         """
         insert
             $p isa person,
@@ -490,9 +489,8 @@ def test_schema_evolution_new_attribute(store):
     assert node.payload_data["nickname"] == "Al"
 
 
-def test_relation_with_attributes(store):
-    with store._query(TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_relation_with_attributes(store: TypeDbDatastore):
+    store.query_write("""
         define
         friendship sub relation,
             relates friend,
@@ -504,7 +502,8 @@ def test_relation_with_attributes(store):
         person plays friendship:friend;
         person plays friendship:friend_of;
         """)
-    store.save(
+    
+    store.query_write(
         """
         insert
             $a isa person, has name "Alice", has email "alice@test.com";
