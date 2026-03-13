@@ -229,8 +229,12 @@ class TypeDbDatastore(AbstractStore):
         self.save(query)
 
     def _relation_exists(
-        self, rel_type: str, role_map: Mapping[str, RelationRef]
+        self,
+        rel_type: str,
+        role_map: Mapping[str, RelationRef],
+        attributes: Mapping[str, object] | None = None,
     ) -> bool:
+
         match_roles = []
 
         for role, ref in role_map.items():
@@ -241,16 +245,27 @@ class TypeDbDatastore(AbstractStore):
                 """
             )
 
+        attr_match = ""
+
+        if attributes:
+            attr_match = ", " + self._format_attributes(attributes)
+
         query = f"""
         match
             {"".join(match_roles)}
-            ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel_type};
-        get;
+            $r ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel_type}
+            {attr_match};
+        get $r;
+        limit 1;
         """
+
         return bool(self.get(query))
 
     def _insert_relation(self, rel: RelationData) -> None:
-        if self._relation_exists(rel["type"], rel["roles"]):
+
+        attributes = rel.get("attributes", {})
+
+        if self._relation_exists(rel["type"], rel["roles"], attributes):
             return
 
         match_roles = []
@@ -265,14 +280,14 @@ class TypeDbDatastore(AbstractStore):
             )
             insert_roles.append(f"{role}: ${role}")
 
-        attrs = self._format_attributes(rel.get("attributes", {}))
+        attrs = self._format_attributes(attributes)
 
         query = f"""
         match
             {"".join(match_roles)}
         insert
             ({", ".join(insert_roles)}) isa {rel["type"]}
-            {", " if attrs else ""}{attrs};
+            {", " + attrs if attrs else ""};
         """
 
         self.save(query)
@@ -477,7 +492,7 @@ class TypeDbDatastore(AbstractStore):
         """
         Load relations for nodes.
 
-        Simpler and safer than complex batch queries.
+        Works with relations of any number of role players.
         """
 
         relations_by_node: dict[str, list[RelationData]] = {}
@@ -487,9 +502,10 @@ class TypeDbDatastore(AbstractStore):
             match
                 $e isa {node.entity_type},
                     has {node.key_attribute} "{node.id}";
-                $r ($role: $e, $other: $x);
-            get $r, $x;
+                $r ($role: $e);
+            get $r;
             """
+
             seen: set[str] = set()
 
             for res in tx.query.get(query):
@@ -511,6 +527,7 @@ class TypeDbDatastore(AbstractStore):
 
                     for player in players:
                         player_type = player.get_type().get_label().name
+
                         key_attr = self._get_key_attr_for_type(player_type)
                         key_val = None
 
@@ -520,6 +537,7 @@ class TypeDbDatastore(AbstractStore):
                                     key_val = attr.get_value()
                                     break
 
+                        # fallback if key attribute unknown
                         if key_val is None:
                             for attr in player.get_has(tx):
                                 key_attr = attr.get_type().get_label().name
@@ -536,6 +554,7 @@ class TypeDbDatastore(AbstractStore):
                             "key_attr": key_attr,
                             "key": str(key_val),
                         }
+
                 attributes: dict[str, object] = {}
 
                 for attr in rel.get_has(tx):
@@ -551,7 +570,6 @@ class TypeDbDatastore(AbstractStore):
                 )
 
         return relations_by_node
-
     def _fetch_to_nodes(
         self, query: str, include_relations: bool = False
     ) -> list[Node]:

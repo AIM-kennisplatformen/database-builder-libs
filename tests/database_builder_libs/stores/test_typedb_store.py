@@ -333,63 +333,6 @@ def test_store_node_inserts_relation(store):
     # add schema relation
     with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
         tx.query.define("""
-        friendship sub relation,
-            relates friend,
-            relates friend_of;
-        """)
-
-    store.store_node(alice)
-    store.store_node(bob)
-
-    results = store.get(
-        """
-        match
-            $a isa person, has email "alice@test.com";
-            $b isa person, has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-        get;
-        """
-    )
-
-    assert len(results) == 1
-
-
-def test_store_node_inserts_relation(store):
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
-        relations=(),
-    )
-
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
-
-    # add schema relation
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
         define
         friendship sub relation,
             relates friend,
@@ -524,3 +467,133 @@ def test_relation_with_attributes(store):
 
     assert rel["type"] == "friendship"
     assert rel["attributes"]["since"] == 2024
+
+
+def test_relation_single_role_player_is_loaded(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        tagged sub relation,
+            relates item;
+
+        person plays tagged:item;
+        """)
+
+    store.save("""
+        insert
+            $p isa person, has name "Alice", has email "alice@test.com";
+            (item: $p) isa tagged;
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes) == 1
+    node = nodes[0]
+
+    assert len(node.relations) == 1
+    assert node.relations[0]["type"] == "tagged"
+
+def test_relation_attributes_are_loaded(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        collaboration sub relation,
+            relates contributor,
+            relates project,
+            owns role;
+
+        role sub attribute, value string;
+
+        person plays collaboration:contributor;
+        person plays collaboration:project;
+        """)
+
+    store.save("""
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            (contributor: $a, project: $b) isa collaboration, has role "author";
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    rel = nodes[0].relations[0]
+
+    assert rel["attributes"]["role"] == "author"
+
+def test_relations_not_duplicated(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        friendship sub relation,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    store.save("""
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship;
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
+
+def test_store_node_relation_idempotent(store):
+    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
+        tx.query.define("""
+        define
+        friendship sub relation,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    alice = Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Alice", "email": "alice@test.com"},
+        relations=(),
+    )
+
+    bob = Node(
+        id="bob@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name": "Bob", "email": "bob@test.com"},
+        relations=(
+            {
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "alice@test.com",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "bob@test.com",
+                    },
+                },
+            },
+        ),
+    )
+
+    store.store_node(alice)
+    store.store_node(bob)
+
+    # insert again
+    store.store_node(bob)
+
+    nodes = store.get_nodes("entity=person&email=bob@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
