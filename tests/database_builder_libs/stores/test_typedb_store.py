@@ -545,6 +545,11 @@ def test_relations_not_duplicated(store):
     assert len(nodes[0].relations) == 1
 
 def test_store_node_relation_idempotent(store):
+    """
+    Store the same node again to verify that the operation is idempotent.
+    Re-inserting an existing node should not create duplicates or duplicate relations. 
+    This ensures that calling `store_node` multiple times with the same data leaves the graph in the same state.
+    """
     with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
         tx.query.define("""
         define

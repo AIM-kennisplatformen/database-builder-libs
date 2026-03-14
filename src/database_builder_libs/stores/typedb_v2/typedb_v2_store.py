@@ -209,7 +209,11 @@ class TypeDbDatastore(AbstractStore):
         """
 
         return bool(self.get(query))
-
+    def _match_relation_ref(self, role: str, ref: RelationRef) -> str:
+        return f"""
+            ${role} isa {ref["entity_type"]},
+                has {ref["key_attr"]} "{ref["key"]}";
+        """
     def _insert_entity(
         self,
         entity_type: str,
@@ -235,16 +239,10 @@ class TypeDbDatastore(AbstractStore):
         attributes: Mapping[str, object] | None = None,
     ) -> bool:
 
-        match_roles = []
-
-        for role, ref in role_map.items():
-            match_roles.append(
-                f"""
-                ${role} isa {ref["entity_type"]},
-                    has {ref["key_attr"]} "{ref["key"]}";
-                """
-            )
-
+        match_roles = [
+            self._match_relation_ref(role, ref)
+            for role, ref in role_map.items()
+        ]
         attr_match = ""
 
         if attributes:
@@ -268,17 +266,12 @@ class TypeDbDatastore(AbstractStore):
         if self._relation_exists(rel["type"], rel["roles"], attributes):
             return
 
-        match_roles = []
-        insert_roles = []
+        match_roles = [
+            self._match_relation_ref(role, ref)
+            for role, ref in rel["roles"].items()
+        ]
 
-        for role, ref in rel["roles"].items():
-            match_roles.append(
-                f"""
-                ${role} isa {ref["entity_type"]},
-                    has {ref["key_attr"]} "{ref["key"]}";
-                """
-            )
-            insert_roles.append(f"{role}: ${role}")
+        insert_roles = [f"{role}: ${role}" for role in rel["roles"]]
 
         attrs = self._format_attributes(attributes)
 
