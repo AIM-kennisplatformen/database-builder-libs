@@ -69,7 +69,6 @@ class VectorizeDocument:
         PDF, Microsoft Word, HTML, Markdown, Microsoft PowerPoint, and Microsoft Excel document conversion.
 
         Args:
-            configuration: Global configuration.
             path_dir_artifacts: Optional path from which to source predictive models.
         """
         pdfpipelineoptions = PdfPipelineOptions(
