@@ -16,7 +16,8 @@ dependencies = [
     "torchvision",
     "testcontainers",
     "qdrant-client",
-    "docling>=2.73.0,<3"
+    "docling>=2.73.0,<3",
+    "pypdf>=4.0.0"
   ]
 
 [dependency-groups]
