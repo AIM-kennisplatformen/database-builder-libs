@@ -10,11 +10,7 @@ from database_builder_libs.models.chunk import Chunk
 RawSection = tuple[str, str, list[Any]]
 
 
-# --------------------------------------------------------------------------- #
-# Interface                                                                    #
-# --------------------------------------------------------------------------- #
-
-class ChunkingStrategy(ABC):
+class AbstractChunkingStrategy(ABC):
     """
     Interface for all chunking strategies.
 

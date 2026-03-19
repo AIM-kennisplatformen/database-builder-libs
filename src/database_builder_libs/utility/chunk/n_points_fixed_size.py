@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import Sequence
  
 from database_builder_libs.models.chunk import Chunk
-from database_builder_libs.models.chunk_strategy import ChunkingStrategy, RawSection
+from database_builder_libs.models.chunk_strategy import AbstractChunkingStrategy, RawSection
 
 @dataclass(slots=True)
-class FixedSizeChunkingStrategy(ChunkingStrategy):
+class FixedSizeChunkingStrategy(AbstractChunkingStrategy):
     """
     Splits section text into non-overlapping fixed-size character windows.
 

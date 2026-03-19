@@ -20,9 +20,6 @@ from docling_core.types.doc import (
     PictureItem, SectionHeaderItem, TableItem, TextItem,
 )
 
-# --------------------------------------------------------------------------- #
-# Formats                                                                      #
-# --------------------------------------------------------------------------- #
 
 _ALLOWED_FORMATS = [
     InputFormat.CSV, InputFormat.DOCX, InputFormat.HTML, InputFormat.MD,
@@ -30,9 +27,6 @@ _ALLOWED_FORMATS = [
 ]
 _ALLOWED_EXTENSIONS = {f".{fmt.value}" for fmt in _ALLOWED_FORMATS}
 
-# --------------------------------------------------------------------------- #
-# Errors                                                                       #
-# --------------------------------------------------------------------------- #
 
 @dataclass(slots=True)
 class ConversionFault:
@@ -61,10 +55,6 @@ class DocumentConversionError(ValueError):
             f"{len(f.faults)} fault(s): {pformat(f.faults)}"
             for f in faults
         ))
-
-# --------------------------------------------------------------------------- #
-# Extracted item types                                                         #
-# --------------------------------------------------------------------------- #
 
 # (section_title, body_text, tables_in_section)
 RawSection = Tuple[str, str, List[DataFrame]]
@@ -109,9 +99,6 @@ class ExtractedFurniture(NamedTuple):
     text: str
     kind: str  # "header" | "footer"
 
-# --------------------------------------------------------------------------- #
-# Output                                                                       #
-# --------------------------------------------------------------------------- #
 
 @dataclass(frozen=True)
 class ParsedDocument:
@@ -160,10 +147,6 @@ class ParsedDocument:
     list_blocks: List[ExtractedListBlock]
     footnotes: List[ExtractedFootnote]
     furniture: List[ExtractedFurniture]
-
-# --------------------------------------------------------------------------- #
-# Parser                                                                       #
-# --------------------------------------------------------------------------- #
 
 class DocumentParserDocling:
     """

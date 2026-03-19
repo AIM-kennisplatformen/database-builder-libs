@@ -40,15 +40,16 @@ def _stub_converter(parser: DocumentParserDocling, doc: MagicMock) -> None:
     parser._converter.convert.return_value = fake_result
 
 
-# --------------------------------------------------------------------------- #
-# Fixtures                                                                     #
-# --------------------------------------------------------------------------- #
-
 @pytest.fixture
 def parser():
     instance = DocumentParserDocling()
     instance._converter = MagicMock()
     return instance
+
+
+@pytest.fixture
+def docling_doc():
+    return MagicMock(spec=DoclingDocument)
 
 
 @pytest.fixture(scope="session")
@@ -57,22 +58,18 @@ def pdf_bytes():
     return pdf.read_bytes()
 
 
-# --------------------------------------------------------------------------- #
-# Unit tests (mocked converter)                                                #
-# --------------------------------------------------------------------------- #
-
-def test_parse_stream_returns_parsed_document(parser):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_stream_returns_parsed_document(parser, docling_doc):
+    """A successful conversion returns a ParsedDocument instance."""
+    _stub_converter(parser, docling_doc)
 
     result = parser.parse_stream(name="test.pdf", stream=BytesIO(b"fake pdf"))
 
     assert isinstance(result, ParsedDocument)
 
 
-def test_parse_stream_passes_correct_arguments(parser):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_stream_passes_correct_arguments(parser, docling_doc):
+    """The converter is called with the correct file size cap, error flag, and stream name."""
+    _stub_converter(parser, docling_doc)
 
     parser.parse_stream(name="invoice.pdf", stream=BytesIO(b"123"))
 
@@ -82,9 +79,9 @@ def test_parse_stream_passes_correct_arguments(parser):
     assert call_kwargs["source"].name == "invoice.pdf"
 
 
-def test_parse_stream_carries_correct_name(parser):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_stream_carries_correct_name(parser, docling_doc):
+    """The name passed to parse_stream is preserved on the returned ParsedDocument."""
+    _stub_converter(parser, docling_doc)
 
     result = parser.parse_stream(name="report.pdf", stream=BytesIO(b"x"))
 
@@ -92,11 +89,13 @@ def test_parse_stream_carries_correct_name(parser):
 
 
 def test_parse_stream_invalid_extension_raises_value_error(parser):
+    """An unsupported file extension raises a ValueError before conversion is attempted."""
     with pytest.raises(ValueError, match="Unsupported file extension"):
         parser.parse_stream(name="proposal.xyz", stream=BytesIO(b"x"))
 
 
 def test_parse_stream_empty_document_raises_conversion_error(parser):
+    """A conversion result with no pages raises a DocumentConversionError."""
     fake_result = MagicMock()
     fake_result.document = MagicMock()
     fake_result.document.pages = []
@@ -109,6 +108,7 @@ def test_parse_stream_empty_document_raises_conversion_error(parser):
 
 
 def test_parse_stream_conversion_error_faults_populated(parser):
+    """Errors reported by the converter are wrapped into faults on the raised DocumentConversionError."""
     fake_result = MagicMock()
     fake_result.document = MagicMock()
     fake_result.document.pages = []
@@ -130,14 +130,15 @@ def test_parse_stream_conversion_error_faults_populated(parser):
 
 
 def test_parse_file_not_found_raises(tmp_path):
+    """Parsing a path that does not exist raises a FileNotFoundError."""
     p = DocumentParserDocling()
     with pytest.raises(FileNotFoundError):
         p.parse(str(tmp_path / "missing.pdf"))
 
 
-def test_parse_file_on_disk_returns_parsed_document(parser, tmp_path):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_file_on_disk_returns_parsed_document(parser, docling_doc, tmp_path):
+    """A valid file on disk is parsed and its filename is reflected in the result."""
+    _stub_converter(parser, docling_doc)
 
     pdf = tmp_path / "dummy.pdf"
     pdf.write_bytes(b"fake")
@@ -148,18 +149,18 @@ def test_parse_file_on_disk_returns_parsed_document(parser, tmp_path):
     assert result.name == "dummy.pdf"
 
 
-def test_parse_stream_exposes_doc(parser):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_stream_exposes_doc(parser, docling_doc):
+    """The underlying DoclingDocument is accessible via result.doc."""
+    _stub_converter(parser, docling_doc)
 
     result = parser.parse_stream(name="test.pdf", stream=BytesIO(b"x"))
 
-    assert result.doc is fake_doc
+    assert result.doc is docling_doc
 
 
-def test_parse_stream_empty_doc_has_empty_collections(parser):
-    fake_doc = MagicMock(spec=DoclingDocument)
-    _stub_converter(parser, fake_doc)
+def test_parse_stream_empty_doc_has_empty_collections(parser, docling_doc):
+    """A document with no items produces empty lists for all content collections."""
+    _stub_converter(parser, docling_doc)
 
     result = parser.parse_stream(name="empty.pdf", stream=BytesIO(b"x"))
 
@@ -173,6 +174,7 @@ def test_parse_stream_empty_doc_has_empty_collections(parser):
 
 
 def test_conversion_fault_fields_accessible():
+    """ConversionFault exposes hashvalue, path_file_document, and faults as expected."""
     error = ErrorItem(
         component_type="pipeline",
         module_name="test",
@@ -189,6 +191,7 @@ def test_conversion_fault_fields_accessible():
 
 
 def test_document_conversion_error_message_contains_path():
+    """The string representation of a DocumentConversionError includes the offending file path."""
     fault = ConversionFault(
         faults=[],
         hashvalue="xyz",
@@ -199,33 +202,34 @@ def test_document_conversion_error_message_contains_path():
 
 
 def test_document_conversion_error_faults_attribute():
+    """The faults list passed at construction is preserved on the exception."""
     fault = ConversionFault(faults=[], hashvalue="xyz", path_file_document=Path("bad.pdf"))
     err = DocumentConversionError(faults=[fault])
     assert err.faults == [fault]
 
 
 def test_document_conversion_error_is_value_error():
+    """DocumentConversionError is a subclass of ValueError."""
     err = make_conversion_error()
     assert isinstance(err, ValueError)
 
 
-# --------------------------------------------------------------------------- #
-# Integration tests (real Docling conversion)                                  #
-# --------------------------------------------------------------------------- #
-
 def test_vectorize_returns_parsed_document(pdf_bytes):
+    """End-to-end: parsing a real PDF returns a ParsedDocument."""
     parser = DocumentParserDocling()
     result = parser.parse_stream(name="proposal.pdf", stream=BytesIO(pdf_bytes))
     assert isinstance(result, ParsedDocument)
 
 
 def test_vectorize_doc_is_docling_document(pdf_bytes):
+    """End-to-end: the doc attribute on the result is a genuine DoclingDocument."""
     parser = DocumentParserDocling()
     result = parser.parse_stream(name="proposal.pdf", stream=BytesIO(pdf_bytes))
     assert isinstance(result.doc, DoclingDocument)
 
 
 def test_vectorize_extracts_expected_text(pdf_bytes):
+    """End-to-end: known headings from the test PDF appear somewhere in the extracted sections."""
     parser = DocumentParserDocling()
     result = parser.parse_stream(name="proposal.pdf", stream=BytesIO(pdf_bytes))
 
@@ -234,12 +238,14 @@ def test_vectorize_extracts_expected_text(pdf_bytes):
 
 
 def test_vectorize_sections_are_non_empty(pdf_bytes):
+    """End-to-end: at least one section is extracted from the test PDF."""
     parser = DocumentParserDocling()
     result = parser.parse_stream(name="proposal.pdf", stream=BytesIO(pdf_bytes))
     assert len(result.sections) > 0
 
 
 def test_vectorize_sections_have_non_empty_text(pdf_bytes):
+    """End-to-end: every extracted section has a string title and non-blank body text."""
     parser = DocumentParserDocling()
     result = parser.parse_stream(name="proposal.pdf", stream=BytesIO(pdf_bytes))
     for title, text, tables in result.sections:
@@ -249,6 +255,7 @@ def test_vectorize_sections_have_non_empty_text(pdf_bytes):
 
 
 def test_vectorize_consumes_input_stream(pdf_bytes):
+    """End-to-end: seeking back to the start of a consumed stream allows a second successful parse."""
     parser = DocumentParserDocling()
     stream = BytesIO(pdf_bytes)
 
@@ -261,12 +268,14 @@ def test_vectorize_consumes_input_stream(pdf_bytes):
 
 
 def test_vectorize_invalid_extension_returns_error(pdf_bytes):
+    """End-to-end: an unsupported extension raises a ValueError even with real PDF bytes."""
     parser = DocumentParserDocling()
     with pytest.raises(ValueError, match="Unsupported file extension"):
         parser.parse_stream(name="proposal.xyz", stream=BytesIO(pdf_bytes))
 
 
 def test_vectorize_corrupted_pdf_raises_conversion_error():
+    """End-to-end: bytes that are not a valid PDF trigger a DocumentConversionError."""
     parser = DocumentParserDocling()
     with pytest.raises(DocumentConversionError):
         parser.parse_stream(name="broken.pdf", stream=BytesIO(b"%PDF totally broken file"))
