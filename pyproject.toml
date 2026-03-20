@@ -1,5 +1,8 @@
 [project]
-authors = [{name = "Hoog-v", email = "hogeweyv@gmail.com"}]
+authors = [
+  {name = "Hoog-v", email = "hogeweyv@gmail.com"},
+  {name = "Simon Dingemans", email = "simon.dingemans@gmail.com"}  
+]
 name = "database_builder_libs"
 requires-python = ">= 3.11, <=3.12"
 version = "0.1.0"
