@@ -1,10 +1,9 @@
 define
-
-attribute name_key, value string;
+attribute name, value string;
 attribute email, value string;
 attribute age, value integer;
 
 entity person,
-    owns name_key @key,
+    owns name @key,
     owns email,
     owns age;

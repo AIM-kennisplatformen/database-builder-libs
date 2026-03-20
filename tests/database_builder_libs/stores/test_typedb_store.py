@@ -121,8 +121,8 @@ def populated_friendship_store(friendship_store: TypeDbDatastore) -> TypeDbDatas
     friendship_store.query_write(
         """
         insert
-            $a isa person, has name_key "Alice", has email "alice@test.com";
-            $b isa person, has name_key "Bob", has email "bob@test.com";
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
             $f isa friendship, links (friend: $a, friend_of: $b);
         """
     )
@@ -134,8 +134,8 @@ def alice_node() -> Node:
     return Node(
         id="Alice",
         entity_type="person",
-        key_attribute="name_key",
-        payload_data={"name_key": "Alice", "email": "alice@test.com", "age": 25},
+        key_attribute="name",
+        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
         relations=(),
     )
 
@@ -145,20 +145,20 @@ def bob_with_friendship_node() -> Node:
     return Node(
         id="Bob",
         entity_type="person",
-        key_attribute="name_key",
-        payload_data={"name_key": "Bob", "email": "bob@test.com", "age": 30},
+        key_attribute="name",
+        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
         relations=(
             {
                 "type": "friendship",
                 "roles": {
                     "friend": {
                         "entity_type": "person",
-                        "key_attr": "name_key",
+                        "key_attr": "name",
                         "key": "Alice",
                     },
                     "friend_of": {
                         "entity_type": "person",
-                        "key_attr": "name_key",
+                        "key_attr": "name",
                         "key": "Bob",
                     },
                 },
@@ -183,13 +183,13 @@ def test_requires_connect(typedb_container):
 
 
 def test_save_and_fetch_workflow(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Alice", has email "alice@test.com";')
+    store.query_write('insert $p isa person, has name "Alice", has email "alice@test.com";')
 
     rows = store.query_read("""
         match 
-        $p isa person, has name_key "Alice"; 
+        $p isa person, has name "Alice"; 
         fetch {
-            "name_key": $p.name_key,
+            "name": $p.name,
             "email": $p.email
         };
     """).as_concept_documents()
@@ -197,13 +197,13 @@ def test_save_and_fetch_workflow(store: TypeDbDatastore):
     results = list(rows)
     assert len(results) == 1
 
-    assert results[0]["name_key"] == "Alice"
+    assert results[0]["name"] == "Alice"
     assert results[0]["email"] == "alice@test.com"
 
 
 def test_get_workflow(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Bob", has age 30;')
-    rows = store.query_read('match $p isa person, has name_key "Bob";').as_concept_rows()
+    store.query_write('insert $p isa person, has name "Bob", has age 30;')
+    rows = store.query_read('match $p isa person, has name "Bob";').as_concept_rows()
 
     results = list(rows)
 
@@ -211,32 +211,32 @@ def test_get_workflow(store: TypeDbDatastore):
 
 
 def test_update_workflow(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Charlie", has age 20;')
+    store.query_write('insert $p isa person, has name "Charlie", has age 20;')
 
     update_query = """
     match
-    $p isa person, has name_key "Charlie", has age 20;
+    $p isa person, has name "Charlie", has age 20;
     update
     $p has age 21;
     """
     store.query_write(update_query)
 
-    rows = store.query_read('match $p isa person, has name_key "Charlie"; fetch { "age": $p.age };').as_concept_documents()
+    rows = store.query_read('match $p isa person, has name "Charlie"; fetch { "age": $p.age };').as_concept_documents()
     results = list(rows)
 
     assert results[0]["age"] == 21
 
 
 def test_delete_workflow(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Dave";')
+    store.query_write('insert $p isa person, has name "Dave";')
     assert (
         len(list(
-            store.query_read('match $p isa person, has name_key "Dave"; fetch { "name_key": $p.name_key };'))
+            store.query_read('match $p isa person, has name "Dave"; fetch { "name": $p.name };'))
     ))
 
-    store.query_write('match $p isa person, has name_key "Dave"; delete $p;')
+    store.query_write('match $p isa person, has name "Dave"; delete $p;')
 
-    rows = store.query_read('match $p isa person, has name_key "Dave"; fetch { "name_key": $p.name_key };')
+    rows = store.query_read('match $p isa person, has name "Dave"; fetch { "name": $p.name };')
     results = list(rows)
 
     assert len(results) == 0
@@ -245,29 +245,29 @@ def test_delete_workflow(store: TypeDbDatastore):
 def test_get_nodes_by_keyed_filter(store: TypeDbDatastore):
     # Arrange
     store.query_write(
-        'insert $p isa person, has name_key "Alice", has email "alice@test.com", has age 25;'
+        'insert $p isa person, has name "Alice", has email "alice@test.com", has age 25;'
     )
 
     # Act
-    results = store.get_nodes("entity=person&name_key=Alice")
+    results = store.get_nodes("entity=person&name=Alice")
 
     # Assert
     assert len(results) == 1
     node = results[0]
 
-    assert node.payload_data["name_key"] == "Alice"
+    assert node.payload_data["name"] == "Alice"
     assert node.payload_data["email"] == "alice@test.com"
     assert node.payload_data["age"] == 25
 
 
 def test_get_nodes_returns_empty_when_no_match(store: TypeDbDatastore):
-    results = store.get_nodes("entity=person&name_key=Nonexistent")
+    results = store.get_nodes("entity=person&name=Nonexistent")
     assert results == []
 
 
 def test_get_nodes_multiple_matches(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Bob1", has age 30;')
-    store.query_write('insert $p isa person, has name_key "Bob2", has age 30;')
+    store.query_write('insert $p isa person, has name "Bob1", has age 30;')
+    store.query_write('insert $p isa person, has name "Bob2", has age 30;')
 
     results = store.get_nodes("entity=person&age=30")
 
@@ -277,28 +277,28 @@ def test_get_nodes_multiple_matches(store: TypeDbDatastore):
 
 def test_remove_single_node_by_keyed_filter(store: TypeDbDatastore):
     store.query_write(
-        'insert $p isa person, has name_key "Charlie", has email "charlie@test.com";'
+        'insert $p isa person, has name "Charlie", has email "charlie@test.com";'
     )
 
-    assert len(store.get_nodes("entity=person&name_key=Charlie")) == 1
+    assert len(store.get_nodes("entity=person&name=Charlie")) == 1
 
-    deleted_count = store.remove_nodes("entity=person&name_key=Charlie")
+    deleted_count = store.remove_nodes("entity=person&name=Charlie")
 
     assert deleted_count == 1
-    assert store.get_nodes("entity=person&name_key=Charlie") == []
+    assert store.get_nodes("entity=person&name=Charlie") == []
 
 
 def test_remove_nodes_refuses_bulk_delete_by_default(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Dave";')
-    store.query_write('insert $p isa person, has name_key "Eve";')
+    store.query_write('insert $p isa person, has name "Dave";')
+    store.query_write('insert $p isa person, has name "Eve";')
 
     with pytest.raises(ValueError):
         store.remove_nodes("entity=person")
 
 
 def test_remove_nodes_bulk_delete_with_explicit_flag(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Frank";')
-    store.query_write('insert $p isa person, has name_key "Grace";')
+    store.query_write('insert $p isa person, has name "Frank";')
+    store.query_write('insert $p isa person, has name "Grace";')
 
     deleted_count = store.remove_nodes(
         "entity=person",
@@ -310,19 +310,19 @@ def test_remove_nodes_bulk_delete_with_explicit_flag(store: TypeDbDatastore):
 
 
 def test_remove_nodes_only_affects_target_entities(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Henry";')
-    store.query_write('insert $p isa person, has name_key "Ivy";')
+    store.query_write('insert $p isa person, has name "Henry";')
+    store.query_write('insert $p isa person, has name "Ivy";')
 
     store.query_write(
-        'insert $p isa person, has name_key "Jack";'
+        'insert $p isa person, has name "Jack";'
     )
 
-    store.remove_nodes("entity=person&name_key=Jack")
+    store.remove_nodes("entity=person&name=Jack")
 
     remaining = store.get_nodes("entity=person")
-    name_keys = sorted(n.payload_data["name_key"] for n in remaining)
+    names = sorted(n.payload_data["name"] for n in remaining)
 
-    assert name_keys == ["Henry", "Ivy"]
+    assert names == ["Henry", "Ivy"]
 
 
 def test_store_node_inserts_entity(store: TypeDbDatastore, alice_node: Node):
@@ -338,15 +338,15 @@ def test_store_node_inserts_entity(store: TypeDbDatastore, alice_node: Node):
     assert len(rows) == 1
     person = rows[0]
 
-    assert person["name_key"] == "Alice"
+    assert person["name"] == "Alice"
     assert person["email"] == "alice@test.com"
     assert person["age"] == 25
 
 def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     # Arrange
-    store.query_write('insert $p isa person, has name_key "Alice";')
-    store.query_write('insert $p isa person, has name_key "Bob";')
-    store.query_write('insert $p isa person, has name_key "Charlie";')
+    store.query_write('insert $p isa person, has name "Alice";')
+    store.query_write('insert $p isa person, has name "Bob";')
+    store.query_write('insert $p isa person, has name "Charlie";')
 
     # Act
     results = store.get_nodes(None)
@@ -355,8 +355,8 @@ def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     assert isinstance(results, list)
     assert len(results) == 3
 
-    name_keys = sorted(n.payload_data["name_key"] for n in results)
-    assert name_keys == ["Alice", "Bob", "Charlie"]
+    names = sorted(n.payload_data["name"] for n in results)
+    assert names == ["Alice", "Bob", "Charlie"]
 
 
 def test_store_node_inserts_relation(friendship_store: TypeDbDatastore, alice_node: Node, bob_with_friendship_node: Node):
@@ -388,14 +388,14 @@ def test_get_nodes_with_relations(populated_friendship_store: TypeDbDatastore):
 def test_key_inference_from_schema(store: TypeDbDatastore):
     store.query_schema("""
         define
-        attribute username_key, value string;
+        attribute username, value string;
 
         entity account,
-            owns username_key @key,
+            owns username @key,
             owns email;
         """)
     store.query_write(
-        'insert $a isa account, has username_key "u1", has email "u1@test.com";'
+        'insert $a isa account, has username "u1", has email "u1@test.com";'
     )
 
     results = store.get_nodes("entity=account")
@@ -403,24 +403,24 @@ def test_key_inference_from_schema(store: TypeDbDatastore):
     assert len(results) == 1
     node = results[0]
 
-    assert node.key_attribute == "username_key"
+    assert node.key_attribute == "username"
     assert node.id == "u1"
 
 def test_schema_evolution_new_attribute(store: TypeDbDatastore):
     store.query_schema("""
         define
-        attribute nickname_key, value string;
+        attribute nickname, value string;
 
-        person owns nickname_key;
+        person owns nickname;
         """)
 
     store.query_write(
         """
         insert
             $p isa person,
-            has name_key "Alice",
+            has name "Alice",
             has email "alice@test.com",
-            has nickname_key "Al";
+            has nickname "Al";
         """
     )
 
@@ -429,7 +429,7 @@ def test_schema_evolution_new_attribute(store: TypeDbDatastore):
     assert len(nodes) == 1
     node = nodes[0]
 
-    assert node.payload_data["nickname_key"] == "Al"
+    assert node.payload_data["nickname"] == "Al"
 
 
 def test_relation_with_attributes(store: TypeDbDatastore):
@@ -449,8 +449,8 @@ def test_relation_with_attributes(store: TypeDbDatastore):
     store.query_write(
         """
         insert
-            $a isa person, has name_key "Alice", has email "alice@test.com";
-            $b isa person, has name_key "Bob", has email "bob@test.com";
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
             $f isa friendship, links (friend: $a, friend_of: $b), has since 2024;
         """
     )
@@ -473,7 +473,7 @@ def test_relation_single_role_player_is_loaded(store: TypeDbDatastore):
 
     store.query_write("""
         insert
-            $p isa person, has name_key "Alice", has email "alice@test.com";
+            $p isa person, has name "Alice", has email "alice@test.com";
             (item: $p) isa tagged;
     """)
 
@@ -501,8 +501,8 @@ def test_relation_attributes_are_loaded(store: TypeDbDatastore):
 
     store.query_write("""
         insert
-            $a isa person, has name_key "Alice", has email "alice@test.com";
-            $b isa person, has name_key "Bob", has email "bob@test.com";
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
             (contributor: $a, project: $b) isa collaboration, has contribution_role "author";
     """)
 
@@ -529,7 +529,7 @@ def test_store_node_relation_idempotent(friendship_store: TypeDbDatastore, alice
     # insert again
     friendship_store.store_node(bob_with_friendship_node)
 
-    nodes = friendship_store.get_nodes("entity=person&name_key=Bob&include=relations")
+    nodes = friendship_store.get_nodes("entity=person&name=Bob&include=relations")
 
     assert len(nodes[0].relations) == 1
 
@@ -551,8 +551,8 @@ def test_multiple_relations_retrieval(store: TypeDbDatastore):
 
     store.query_write("""
         insert
-            $a isa person, has name_key "Alice", has email "alice@test.com";
-            $b isa person, has name_key "Bob", has email "bob@test.com";
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
             $f isa friendship, links (friend: $a, friend_of: $b);
             (item: $a) isa tagged;
     """)
