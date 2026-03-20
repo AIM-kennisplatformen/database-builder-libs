@@ -291,27 +291,25 @@ Because adjacent chunks share content, this strategy produces more chunks than
 fixed-size for the same input. The overlap means the end of chunk *N* and the start
 of chunk *N+1* share words, which improves recall for queries that land near a boundary.
 
-### Summary + N-sections chunking
-
-Partitions the full document body into exactly `n_sections` equal chunks and
-optionally prepends a dedicated summary chunk. This is the right choice when you want
-a fixed, predictable number of retrievable pieces per document — for example, when
-storing into a vector store with a strict per-document quota.
+### Summary + sections chunking
+Preserves the document's natural section structure and optionally prepends a dedicated
+summary chunk at index 0. This is the right choice when section-level retrieval
+granularity must be maintained and an optional LLM-generated summary is desired.
 
 ```python
-from database_builder_libs.utility.chunk.summary_n_points import SummaryAndNSectionsStrategy
+from database_builder_libs.utility.chunk.summary_and_sections import SummaryAndSectionsStrategy
 
-strategy = SummaryAndNSectionsStrategy(n_sections=5)  # n_sections must be >= 1
+strategy = SummaryAndSectionsStrategy(min_chars=20)
 
-# Without a summary — produces exactly 5 body chunks.
+# Without a summary — produces one chunk per non-empty section.
 chunks = strategy.chunk(sections, document_id="doc-001")
 
 for chunk in chunks:
-    print(chunk.chunk_index, chunk.metadata["chunk_type"], chunk.metadata["partition_index"])
+    print(chunk.chunk_index, chunk.metadata["chunk_type"], chunk.metadata["section_title"])
 ```
 
-Pass a `summary` string (e.g. produced by an LLM) to prepend a summary chunk. The
-summary chunk is assigned `chunk_index=0` and all body chunks follow in order. A
+Pass a summary string (e.g. produced by an LLM) to prepend a summary chunk. The
+summary chunk is assigned chunk_index=0 and all body chunks follow in order. A
 whitespace-only summary is treated as absent.
 
 ```python
@@ -320,10 +318,14 @@ summary_text = "This document covers the annual research results for 2024."
 chunks = strategy.chunk(sections, document_id="doc-001", summary=summary_text)
 
 summary_chunk = chunks[0]  # chunk_type == "summary"
-body_chunks   = chunks[1:] # chunk_type == "body"
+body_chunks   = chunks[1:] # chunk_type == "body", one per section
 
 print(summary_chunk.text)
 print(f"{len(body_chunks)} body chunks")
+
+# Each body chunk carries its originating section title.
+for chunk in body_chunks:
+    print(chunk.metadata["section_title"], chunk.metadata["has_tables"])
 ```
 
 ### Choosing a strategy
@@ -333,7 +335,7 @@ print(f"{len(body_chunks)} body chunks")
 | `SectionChunkingStrategy` | One per section | Clean heading structure, variable section length is acceptable |
 | `FixedSizeChunkingStrategy` | One or more per section | Uniform context window needed, no overlap required |
 | `SlidingWindowChunkingStrategy` | More than fixed-size due to overlap | Boundary recall matters; willing to trade storage for coverage |
-| `SummaryAndNSectionsStrategy` | Exactly `n_sections` (+ 1 if summary provided) | Fixed quota per document; optional LLM-generated summary chunk |
+| `SummaryAndSectionsStrategy` | One per section (+ 1 if summary provided) | Section structure must be preserved with an optional summary chunk prepended|
 
 ### Common chunk fields
 
