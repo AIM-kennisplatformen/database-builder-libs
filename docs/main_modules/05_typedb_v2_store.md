@@ -125,5 +125,5 @@ deleted_count = store.remove_nodes(filter)  # Raises ValueError
 
 
 ## Docstring
-::: database_builder_libs.stores.typedb_v2.typedb_v2_store
+::: database_builder_libs.stores.typedb.typedb_store
     handler: python
