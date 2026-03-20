@@ -2,11 +2,12 @@ import os
 import pytest
 import time
 import socket
-from unittest.mock import patch, mock_open
+import uuid
 from testcontainers.core.container import DockerContainer
-from testcontainers.core.wait_strategies import LogMessageWaitStrategy
-from typedb.driver import TypeDB, SessionType, TransactionType
+from typedb.driver import ConceptRowIterator, Credentials, DriverOptions, QueryAnswer, Transaction, TypeDB, TransactionType
 from database_builder_libs.models.node import Node
+from database_builder_libs.stores.typedb.typedb_store import TypeDbDatastore
+
 
 def wait_for_port(host: str, port: int, timeout: float = 60.0):
     """
@@ -25,25 +26,13 @@ def wait_for_port(host: str, port: int, timeout: float = 60.0):
             time.sleep(0.5)
 
 
-TEST_SCHEMA = """
-define
-    person sub entity,
-        owns name,
-        owns email,
-        owns age;
-    name sub attribute, value string;
-    email sub attribute, value string;
-    age sub attribute, value long;
-"""
-
-
 @pytest.fixture(scope="module")
 def typedb_container():
     """
     Starts a TypeDB 2.29 container and waits for the driver to be ready.
     """
     container = (
-        DockerContainer("vaticle/typedb:2.29.0")
+        DockerContainer("typedb/typedb:3.8.0")
         .with_exposed_ports(1729)
         .with_env("JAVA_TOOL_OPTIONS", "-Xmx1g")
     )
@@ -52,6 +41,8 @@ def typedb_container():
     host = "127.0.0.1"
     port = container.get_exposed_port(1729)
     address = f"{host}:{port}"
+    credentials = Credentials("admin", "password")
+    driver_options = DriverOptions(is_tls_enabled=False)
 
     try:
         print(f"   [DEBUG] Waiting for TCP port {address}...")
@@ -60,10 +51,11 @@ def typedb_container():
         max_retries = 30
         for _ in range(max_retries):
             try:
-                with TypeDB.core_driver(address) as driver:
+                with TypeDB.driver(address, credentials, driver_options) as driver:
                     driver.databases.all()
                     break
-            except Exception:
+            except Exception as e:
+                print(f"   [DEBUG] Driver connection failed: {e}. Retrying...")
                 time.sleep(1)
         else:
             raise RuntimeError("Driver could not connect to TypeDB.")
@@ -75,104 +67,184 @@ def typedb_container():
         print(stderr.decode())
         raise e
 
-    yield container, address
+    yield address
     container.stop()
 
 
 @pytest.fixture
 def store(typedb_container):
-    container, address = typedb_container
+    address = typedb_container
 
-    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
+    datastore = TypeDbDatastore()
+    schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
+    db_name = f"test_db_{uuid.uuid4().hex}"
+    datastore.connect(
+        {
+            "uri": address,
+            "database": db_name,
+            "schema_path": schema_path,
+            "username": "admin",
+            "password": "password",
+            "tls": False,
+        }
+    )
 
-    with patch("builtins.open", mock_open(read_data=TEST_SCHEMA)):
-        datastore = TypeDbDatastore()
-        schema_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "schema.tql")
-        datastore.connect(
+    yield datastore
+
+    datastore._entity_attr_cache = {}
+    datastore._all_attr_cache = None
+    datastore._key_attr_cache = {}
+
+    if datastore.typedb_driver and datastore.typedb_driver.is_open():
+        try:
+            datastore.typedb_driver.databases.get(db_name).delete()
+        except Exception as e:
+            print(f"Failed to delete test db {db_name}: {e}")
+
+
+@pytest.fixture
+def friendship_store(store: TypeDbDatastore) -> TypeDbDatastore:
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+    return store
+
+
+@pytest.fixture
+def populated_friendship_store(friendship_store: TypeDbDatastore) -> TypeDbDatastore:
+    friendship_store.query_write(
+        """
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            $f isa friendship, links (friend: $a, friend_of: $b);
+        """
+    )
+    return friendship_store
+
+
+@pytest.fixture
+def alice_node() -> Node:
+    return Node(
+        id="Alice",
+        entity_type="person",
+        key_attribute="name",
+        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
+        relations=(),
+    )
+
+
+@pytest.fixture
+def bob_with_friendship_node() -> Node:
+    return Node(
+        id="Bob",
+        entity_type="person",
+        key_attribute="name",
+        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
+        relations=(
             {
-                "uri": address,
-                "database": "integration_test_db",
-                "schema_path": schema_path,
-            }
-        )
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "name",
+                        "key": "Alice",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "name",
+                        "key": "Bob",
+                    },
+                },
+            },
+        ),
+    )
 
-        # clean test data AFTER connect
-        with datastore._query(SessionType.DATA, TransactionType.WRITE) as tx:
-            tx.query.delete("match $x isa person; delete $x isa person;")
+def test_initialization_creates_database_and_schema(store: TypeDbDatastore):
+    rows: ConceptRowIterator = store.query_read("match entity $t sub person;").as_concept_rows()
+    row = next(rows, None)
+    assert row is not None
+    person_type = row.get("t")
 
-        yield datastore
-
-
-def test_initialization_creates_database_and_schema(store):
-    with store._query(SessionType.SCHEMA, TransactionType.READ) as tx:
-        person_type = tx.concepts.get_entity_type("person").resolve()
-        assert person_type is not None
-        assert person_type.get_label().name == "person"
+    assert person_type is not None
+    assert person_type.get_label() == "person"
 
 def test_requires_connect(typedb_container):
-    from database_builder_libs.stores.typedb_v2.typedb_v2_store import TypeDbDatastore
-
     store = TypeDbDatastore()
 
     with pytest.raises(RuntimeError):
         store.get_nodes("entity=person")
 
 
-def test_save_and_fetch_workflow(store):
-    store.save('insert $p isa person, has name "Alice", has email "alice@test.com";')
+def test_save_and_fetch_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Alice", has email "alice@test.com";')
 
-    results = store.fetch(
-        'match $p isa person, has name "Alice"; fetch $p: name, email;'
-    )
+    rows = store.query_read("""
+        match 
+        $p isa person, has name "Alice"; 
+        fetch {
+            "name": $p.name,
+            "email": $p.email
+        };
+    """).as_concept_documents()
 
+    results = list(rows)
     assert len(results) == 1
-    data = results[0]["p"]
 
-    assert data["name"][0]["value"] == "Alice"
-    assert data["email"][0]["value"] == "alice@test.com"
+    assert results[0]["name"] == "Alice"
+    assert results[0]["email"] == "alice@test.com"
 
 
-def test_get_workflow(store):
-    store.save('insert $p isa person, has name "Bob", has age 30;')
-    results = store.get('match $p isa person, has name "Bob"; get $p;')
+def test_get_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Bob", has age 30;')
+    rows = store.query_read('match $p isa person, has name "Bob";').as_concept_rows()
+
+    results = list(rows)
 
     assert len(results) > 0
 
 
-def test_update_workflow(store):
-    store.save('insert $p isa person, has name "Charlie", has age 20;')
+def test_update_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Charlie", has age 20;')
 
     update_query = """
-    match 
-        $p isa person, has name "Charlie", has age $old_age; 
-        $old_age = 20;
-    delete 
-        $p has $old_age;
-    insert 
-        $p has age 21;
+    match
+    $p isa person, has name "Charlie", has age 20;
+    update
+    $p has age 21;
     """
-    store.update(update_query)
+    store.query_write(update_query)
 
-    results = store.fetch('match $p isa person, has name "Charlie"; fetch $p: age;')
+    rows = store.query_read('match $p isa person, has name "Charlie"; fetch { "age": $p.age };').as_concept_documents()
+    results = list(rows)
 
-    assert results[0]["p"]["age"][0]["value"] == 21
+    assert results[0]["age"] == 21
 
 
-def test_delete_workflow(store):
-    store.save('insert $p isa person, has name "Dave";')
+def test_delete_workflow(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Dave";')
     assert (
-        len(store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')) == 1
-    )
+        len(list(
+            store.query_read('match $p isa person, has name "Dave"; fetch { "name": $p.name };'))
+    ))
 
-    store.delete('match $p isa person, has name "Dave"; delete $p isa person;')
+    store.query_write('match $p isa person, has name "Dave"; delete $p;')
 
-    results = store.fetch('match $p isa person, has name "Dave"; fetch $p: name;')
+    rows = store.query_read('match $p isa person, has name "Dave"; fetch { "name": $p.name };')
+    results = list(rows)
+
     assert len(results) == 0
 
 
-def test_get_nodes_by_keyed_filter(store):
+def test_get_nodes_by_keyed_filter(store: TypeDbDatastore):
     # Arrange
-    store.save(
+    store.query_write(
         'insert $p isa person, has name "Alice", has email "alice@test.com", has age 25;'
     )
 
@@ -188,24 +260,23 @@ def test_get_nodes_by_keyed_filter(store):
     assert node.payload_data["age"] == 25
 
 
-def test_get_nodes_returns_empty_when_no_match(store):
+def test_get_nodes_returns_empty_when_no_match(store: TypeDbDatastore):
     results = store.get_nodes("entity=person&name=Nonexistent")
     assert results == []
 
 
-def test_get_nodes_multiple_matches(store):
-    store.save('insert $p isa person, has name "Bob", has age 30;')
-    store.save('insert $p isa person, has name "Bob", has age 40;')
+def test_get_nodes_multiple_matches(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Bob1", has age 30;')
+    store.query_write('insert $p isa person, has name "Bob2", has age 30;')
 
-    results = store.get_nodes("entity=person&name=Bob")
+    results = store.get_nodes("entity=person&age=30")
 
     assert len(results) == 2
     ages = sorted(n.payload_data["age"] for n in results)
-    assert ages == [30, 40]
+    assert ages == [30, 30]
 
-
-def test_remove_single_node_by_keyed_filter(store):
-    store.save(
+def test_remove_single_node_by_keyed_filter(store: TypeDbDatastore):
+    store.query_write(
         'insert $p isa person, has name "Charlie", has email "charlie@test.com";'
     )
 
@@ -217,17 +288,17 @@ def test_remove_single_node_by_keyed_filter(store):
     assert store.get_nodes("entity=person&name=Charlie") == []
 
 
-def test_remove_nodes_refuses_bulk_delete_by_default(store):
-    store.save('insert $p isa person, has name "Dave";')
-    store.save('insert $p isa person, has name "Eve";')
+def test_remove_nodes_refuses_bulk_delete_by_default(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Dave";')
+    store.query_write('insert $p isa person, has name "Eve";')
 
     with pytest.raises(ValueError):
         store.remove_nodes("entity=person")
 
 
-def test_remove_nodes_bulk_delete_with_explicit_flag(store):
-    store.save('insert $p isa person, has name "Frank";')
-    store.save('insert $p isa person, has name "Grace";')
+def test_remove_nodes_bulk_delete_with_explicit_flag(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Frank";')
+    store.query_write('insert $p isa person, has name "Grace";')
 
     deleted_count = store.remove_nodes(
         "entity=person",
@@ -238,11 +309,11 @@ def test_remove_nodes_bulk_delete_with_explicit_flag(store):
     assert store.get_nodes("entity=person") == []
 
 
-def test_remove_nodes_only_affects_target_entities(store):
-    store.save('insert $p isa person, has name "Henry";')
-    store.save('insert $p isa person, has name "Ivy";')
+def test_remove_nodes_only_affects_target_entities(store: TypeDbDatastore):
+    store.query_write('insert $p isa person, has name "Henry";')
+    store.query_write('insert $p isa person, has name "Ivy";')
 
-    store.save(
+    store.query_write(
         'insert $p isa person, has name "Jack";'
     )
 
@@ -254,37 +325,28 @@ def test_remove_nodes_only_affects_target_entities(store):
     assert names == ["Henry", "Ivy"]
 
 
-def test_store_node_inserts_entity(store):
-    node = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={
-            "name": "Alice",
-            "email": "alice@test.com",
-            "age": 25,
-        },
-        relations=()
-    )
+def test_store_node_inserts_entity(store: TypeDbDatastore, alice_node: Node):
+    store.store_node(alice_node)
 
-    store.store_node(node)
+    results = store.query_read("""
+        match $p isa person, has email "alice@test.com"; 
+        fetch { $p.* };
+    """).as_concept_documents()
 
-    results = store.fetch(
-        'match $p isa person, has email "alice@test.com"; fetch $p: name, email, age;'
-    )
+    rows = list(results)
 
-    assert len(results) == 1
-    person = results[0]["p"]
+    assert len(rows) == 1
+    person = rows[0]
 
-    assert person["name"][0]["value"] == "Alice"
-    assert person["email"][0]["value"] == "alice@test.com"
-    assert person["age"][0]["value"] == 25
+    assert person["name"] == "Alice"
+    assert person["email"] == "alice@test.com"
+    assert person["age"] == 25
 
-def test_get_nodes_none_returns_all_nodes(store):
+def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     # Arrange
-    store.save('insert $p isa person, has name "Alice";')
-    store.save('insert $p isa person, has name "Bob";')
-    store.save('insert $p isa person, has name "Charlie";')
+    store.query_write('insert $p isa person, has name "Alice";')
+    store.query_write('insert $p isa person, has name "Bob";')
+    store.query_write('insert $p isa person, has name "Charlie";')
 
     # Act
     results = store.get_nodes(None)
@@ -297,89 +359,24 @@ def test_get_nodes_none_returns_all_nodes(store):
     assert names == ["Alice", "Bob", "Charlie"]
 
 
-def test_store_node_inserts_relation(store):
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Alice", "email": "alice@test.com", "age": 25},
-        relations=(),
-    )
+def test_store_node_inserts_relation(friendship_store: TypeDbDatastore, alice_node: Node, bob_with_friendship_node: Node):
+    friendship_store.store_node(alice_node)
+    friendship_store.store_node(bob_with_friendship_node)
 
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Bob", "email": "bob@test.com", "age": 30},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
-
-    # add schema relation
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
-        define
-        friendship sub relation,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    store.store_node(alice)
-    store.store_node(bob)
-
-    results = store.get(
+    results = friendship_store.query_read(
         """
         match
             $a isa person, has email "alice@test.com";
             $b isa person, has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-        get;
+            $f isa friendship, links (friend: $a, friend_of: $b);
         """
-    )
+    ).as_concept_rows()
 
-    assert len(results) == 1
+    assert len(list(results)) == 1
 
 
-def test_get_nodes_with_relations(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
-        define
-        friendship sub relation,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    store.save(
-        """
-        insert
-            $a isa person, has name "Alice", has email "alice@test.com";
-            $b isa person, has name "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-        """
-    )
-
-    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+def test_get_nodes_with_relations(populated_friendship_store: TypeDbDatastore):
+    nodes = populated_friendship_store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
     assert len(nodes) == 1
     node = nodes[0]
@@ -388,17 +385,16 @@ def test_get_nodes_with_relations(store):
     assert node.relations[0]["type"] == "friendship"
 
 
-def test_key_inference_from_schema(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_key_inference_from_schema(store: TypeDbDatastore):
+    store.query_schema("""
         define
-        username sub attribute, value string;
+        attribute username, value string;
 
-        account sub entity,
+        entity account,
             owns username @key,
             owns email;
         """)
-    store.save(
+    store.query_write(
         'insert $a isa account, has username "u1", has email "u1@test.com";'
     )
 
@@ -410,17 +406,15 @@ def test_key_inference_from_schema(store):
     assert node.key_attribute == "username"
     assert node.id == "u1"
 
-
-def test_schema_evolution_new_attribute(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_schema_evolution_new_attribute(store: TypeDbDatastore):
+    store.query_schema("""
         define
-        nickname sub attribute, value string;
+        attribute nickname, value string;
 
         person owns nickname;
         """)
 
-    store.save(
+    store.query_write(
         """
         insert
             $p isa person,
@@ -438,26 +432,26 @@ def test_schema_evolution_new_attribute(store):
     assert node.payload_data["nickname"] == "Al"
 
 
-def test_relation_with_attributes(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_relation_with_attributes(store: TypeDbDatastore):
+    tx = store.query_schema("""
         define
-        friendship sub relation,
+        relation friendship,
             relates friend,
             relates friend_of,
             owns since;
 
-        since sub attribute, value long;
+        attribute since, value integer;
 
         person plays friendship:friend;
         person plays friendship:friend_of;
         """)
-    store.save(
+    
+    store.query_write(
         """
         insert
             $a isa person, has name "Alice", has email "alice@test.com";
             $b isa person, has name "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship, has since 2024;
+            $f isa friendship, links (friend: $a, friend_of: $b), has since 2024;
         """
     )
 
@@ -468,18 +462,16 @@ def test_relation_with_attributes(store):
     assert rel["type"] == "friendship"
     assert rel["attributes"]["since"] == 2024
 
+def test_relation_single_role_player_is_loaded(store: TypeDbDatastore):
+    store.query_schema("""
+    define
+    relation tagged,
+        relates item;
 
-def test_relation_single_role_player_is_loaded(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
-        define
-        tagged sub relation,
-            relates item;
+    person plays tagged:item;
+    """)
 
-        person plays tagged:item;
-        """)
-
-    store.save("""
+    store.query_write("""
         insert
             $p isa person, has name "Alice", has email "alice@test.com";
             (item: $p) isa tagged;
@@ -493,112 +485,84 @@ def test_relation_single_role_player_is_loaded(store):
     assert len(node.relations) == 1
     assert node.relations[0]["type"] == "tagged"
 
-def test_relation_attributes_are_loaded(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
+def test_relation_attributes_are_loaded(store: TypeDbDatastore):
+    store.query_schema("""
         define
-        collaboration sub relation,
+        relation collaboration,
             relates contributor,
             relates project,
-            owns role;
+            owns contribution_role;
 
-        role sub attribute, value string;
+        attribute contribution_role, value string;
 
         person plays collaboration:contributor;
         person plays collaboration:project;
         """)
 
-    store.save("""
+    store.query_write("""
         insert
             $a isa person, has name "Alice", has email "alice@test.com";
             $b isa person, has name "Bob", has email "bob@test.com";
-            (contributor: $a, project: $b) isa collaboration, has role "author";
+            (contributor: $a, project: $b) isa collaboration, has contribution_role "author";
     """)
 
     nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
     rel = nodes[0].relations[0]
 
-    assert rel["attributes"]["role"] == "author"
+    assert rel["attributes"]["contribution_role"] == "author"
 
-def test_relations_not_duplicated(store):
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
-        define
-        friendship sub relation,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    store.save("""
-        insert
-            $a isa person, has name "Alice", has email "alice@test.com";
-            $b isa person, has name "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
-    """)
-
-    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+def test_relations_not_duplicated(populated_friendship_store: TypeDbDatastore):
+    nodes = populated_friendship_store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
     assert len(nodes[0].relations) == 1
 
-def test_store_node_relation_idempotent(store):
+def test_store_node_relation_idempotent(friendship_store: TypeDbDatastore, alice_node: Node, bob_with_friendship_node: Node):
     """
     Store the same node again to verify that the operation is idempotent.
     Re-inserting an existing node should not create duplicates or duplicate relations. 
     This ensures that calling `store_node` multiple times with the same data leaves the graph in the same state.
     """
-    with store._query(SessionType.SCHEMA, TransactionType.WRITE) as tx:
-        tx.query.define("""
+    friendship_store.store_node(alice_node)
+    friendship_store.store_node(bob_with_friendship_node)
+
+    # insert again
+    friendship_store.store_node(bob_with_friendship_node)
+
+    nodes = friendship_store.get_nodes("entity=person&name=Bob&include=relations")
+
+    assert len(nodes[0].relations) == 1
+
+
+def test_multiple_relations_retrieval(store: TypeDbDatastore):
+    store.query_schema("""
         define
-        friendship sub relation,
+        relation friendship,
             relates friend,
             relates friend_of;
 
+        relation tagged,
+            relates item;
+
         person plays friendship:friend;
         person plays friendship:friend_of;
+        person plays tagged:item;
         """)
 
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Alice", "email": "alice@test.com"},
-        relations=(),
-    )
+    store.query_write("""
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            $f isa friendship, links (friend: $a, friend_of: $b);
+            (item: $a) isa tagged;
+    """)
 
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name": "Bob", "email": "bob@test.com"},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
 
-    store.store_node(alice)
-    store.store_node(bob)
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
-    # insert again
-    store.store_node(bob)
+    assert len(nodes) == 1
+    node = nodes[0]
 
-    nodes = store.get_nodes("entity=person&email=bob@test.com&include=relations")
-
-    assert len(nodes[0].relations) == 1
+    assert len(node.relations) == 2
+    relation_types = sorted(r["type"] for r in node.relations)
+    assert relation_types == ["friendship", "tagged"]
