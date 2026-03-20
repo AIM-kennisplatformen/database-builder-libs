@@ -592,10 +592,10 @@ class TypeDbDatastore(AbstractStore):
    
             query = f"""
             match
-            # 1. Identify the person (add 'has name_key "Name"' here to filter)
+            # 1. Identify the entity (add 'has key_attr "<key_val>"' here to filter)
             $p isa { node.entity_type }, has {node.key_attribute} "{node.id}"; 
 
-            # 2. Find any relation that this person plays a role in
+            # 2. Find any relation that this entity plays a role in
             $rel links ($p);
             $rel isa! $rel_type;
 
