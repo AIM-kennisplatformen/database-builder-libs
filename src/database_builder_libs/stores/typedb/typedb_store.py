@@ -382,6 +382,7 @@ class TypeDbDatastore(AbstractStore):
             "attributes": params,
             "include_relations": include_relations,
         }
+
     def _format_attribute_match(self, attrs: dict[str, str]) -> str:
         clauses = []
 
@@ -447,6 +448,7 @@ class TypeDbDatastore(AbstractStore):
                     key_map[type_name] = inherited
 
         return key_map
+
     def _get_key_attribute(
         self, entity_type: str, payload: Mapping[str, object]
     ) -> str:
@@ -662,9 +664,7 @@ class TypeDbDatastore(AbstractStore):
                         key=str(key_val),
                     )
 
-                rel_attributes: dict[str, object] = {
-                    k: v for k, v in rel_data.items()
-                }
+                rel_attributes: dict[str, object] = dict(rel_data.items())
 
                 node_relations.append(
                     RelationData(

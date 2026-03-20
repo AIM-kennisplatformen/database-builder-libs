@@ -1,7 +1,7 @@
 [project]
 authors = [{name = "Hoog-v", email = "hogeweyv@gmail.com"}]
 name = "database_builder_libs"
-requires-python = "<=3.12"
+requires-python = ">= 3.11, <=3.12"
 version = "0.1.0"
 dependencies = [
     "typedb-driver>=3.8.0",
@@ -71,7 +71,7 @@ include=["src"]
 exclude=["tests/", ".pixi/"]
 
 [tool.ruff.lint]
-select = ["B024", "E4", "E7", "E9", "F", "C4", "PT"]
+select = ["B024", "E4", "E7", "E9", "E301", "F", "C4", "PT"]
 
 [tool.ruff]
 exclude = [".pixi", "tests"]
@@ -82,6 +82,8 @@ format = "ruff format"
 typecheck = "ty check ."
 test = "pytest -s"
 app = "python -m src.backend.main"
+docs = "mkdocs serve -a 0.0.0.0:9001"
+docs-build = "mkdocs build"
 
 [tool.pixi.activation.env]
 PYTHONNOUSERSITE = "1"
