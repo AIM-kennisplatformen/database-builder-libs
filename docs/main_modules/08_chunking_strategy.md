@@ -175,17 +175,17 @@ index 0..N   →  one chunk per section   (when no summary is provided)
 
 ## Docstrings SectionChunkingStrategy
 
-::: database_builder_libs.utility.chunk.section_chunking_strategy
+::: database_builder_libs.utility.chunk.n_points_section
     handler: python
 
 ## Docstrings FixedSizeChunkingStrategy
 
-::: database_builder_libs.utility.chunk.fixed_size_chunking_strategy
+::: database_builder_libs.utility.chunk.n_points_fixed_size
     handler: python
 
 ## Docstrings SlidingWindowChunkingStrategy
 
-::: database_builder_libs.utility.chunk.sliding_window_chunking_strategy
+::: database_builder_libs.utility.chunk.n_points_sliding_window
     handler: python
 
 ## Docstrings SummaryAndSectionsStrategy

@@ -103,7 +103,7 @@ filter = "entity=person&email=user+tag@example.com"
 
 ### Deletion Filters
 
-The same filter syntax applies to [`remove_nodes()`](src/database_builder_libs/stores/typedb_v2/typedb_v2_store.py:736):
+The same filter syntax applies to `remove_nodes()`:
 
 #### Safe Deletion (Single Entity)
 ```python
