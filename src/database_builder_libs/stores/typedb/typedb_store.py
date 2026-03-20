@@ -258,31 +258,36 @@ class TypeDbDatastore(AbstractStore):
 
         self.query_write(query)
 
+    def _match_relation_ref(self, role: str, ref: RelationRef) -> str:
+        return f"""
+        ${role} isa {ref["entity_type"]},
+            has {ref["key_attr"]} "{ref["key"]}";
+        """
+
     def _relation_exists(
-        self, rel_type: str, role_map: Mapping[str, RelationRef]
+        self, rel: RelationData
     ) -> bool:
-        match_roles = []
+        role_map = rel["roles"]
+        attributes = rel.get("attributes", {})
 
-        for role, ref in role_map.items():
-            match_roles.append(
-                f"""
-                ${role} isa {ref["entity_type"]},
-                    has {ref["key_attr"]} "{ref["key"]}";
-                """
-            )
-
-        match_statements = [
-            f"${role} isa {data['entity_type']}, has {data['key_attr']} '{data['key']}';"
-            for role, data in role_map.items()
+        match_roles = [
+            self._match_relation_ref(role, ref)
+            for role, ref in role_map.items()
         ]
+
+        attr_match = ""
+        if attributes is not {}:
+            attr_match = ", " + self._format_attributes(attributes)
 
         # Generate the relation line
         role_bindings = ", ".join([f"{role}: ${role}" for role in role_map.keys()])
 
         query = f"""
         match
-            {" ".join(match_statements)}
-            ({role_bindings});
+            {" ".join(match_roles)}
+            $r ({", ".join(f"{r}: ${r}" for r in role_map)}) isa {rel["type"]}
+            {attr_match};
+        limit 1;
         """
 
         rows = self.query_read(query).as_concept_rows()
@@ -290,29 +295,25 @@ class TypeDbDatastore(AbstractStore):
         return bool(len(list(rows)) > 0)
 
     def _insert_relation(self, rel: RelationData) -> None:
-        if self._relation_exists(rel["type"], rel["roles"]):
+        attributes = rel.get("attributes", {})
+
+        if self._relation_exists(rel):
             return
 
-        match_roles = []
-        insert_roles = []
+        match_roles = [
+            self._match_relation_ref(role, ref)
+            for role, ref in rel["roles"].items()
+        ]
+        insert_roles = [f"{role}: ${role}" for role in rel["roles"]]
 
-        for role, ref in rel["roles"].items():
-            match_roles.append(
-                f"""
-                ${role} isa {ref["entity_type"]},
-                    has {ref["key_attr"]} "{ref["key"]}";
-                """
-            )
-            insert_roles.append(f"{role}: ${role}")
-
-        attrs = self._format_attributes(rel.get("attributes", {}))
+        attrs = self._format_attributes(attributes)
 
         query = f"""
         match
             {"".join(match_roles)}
         insert
             ({", ".join(insert_roles)}) isa {rel["type"]}
-            {", " if attrs else ""}{attrs};
+            {", " + attrs if attrs else ""};
         """
 
         self.query_write(query)
@@ -514,86 +515,161 @@ class TypeDbDatastore(AbstractStore):
 
         return relations
 
+    def _build_entity_relation_query(
+            self,
+            node: Node,
+            relation_player_counts: list[int]
+    ) -> str:
+        """
+        Build a query that matches relations for `node` where the relation has
+        any of the given numbers of *other* players.
+
+        Example:
+            relation_player_counts = [1, 2]
+            -> matches relations with:
+            - queried entity + 1 other player
+            - queried entity + 2 other players
+        """
+        branches = []
+
+        for count in relation_player_counts:
+            other_players = []
+            fetch_players = []
+
+            for i in range(1, count + 1):
+                other_players.append(f"$rp{i} isa $rp{i}_type;")
+                fetch_players.append(f"""
+                    "relation_player_{i}": {{
+                        'type': $rp{i}_type,
+                        'role': $rp{i}_role,
+                        'data': {{ $rp{i}.* }}
+                    }}
+                """)
+
+            # relation links queried entity + all other players
+            links = ", ".join(
+                ["$e"] + [f"$rp{i}: $rp{i}_role" for i in range(1, count + 1)]
+            )
+
+            branch = f"""
+            {{
+                {' '.join(other_players)}
+                $rel isa $rel_type, links ({links});
+                fetch {{
+                    {",".join(fetch_players)},
+                    "relation": {{
+                        'type': $rel_type,
+                        'data': {{ $rel.* }}
+                    }}
+                }};
+            }}
+            """
+            branches.append(branch)
+
+        query = f"""
+        match
+            $e isa {node.entity_type}, has {node.key_attribute} "{node.id}";
+        {chr(10).join(f"or {b}" if i > 0 else b for i, b in enumerate(branches))}
+        """
+
+        return query.strip()
+
     def _load_relations_batch(
         self,
-        tx,
+        tx: Transaction,
         nodes: list[Node],
     ) -> dict[str, list[RelationData]]:
         """
         Load relations for nodes.
 
-        Simpler and safer than complex batch queries.
+        Works with relations of any number of role players.
         """
-
-
         relations_by_node: dict[str, list[RelationData]] = {}
 
         for node in nodes:
             node_relations: list[RelationData] = relations_by_node.get(str(node.id), [])
-            type_lookup = {r["type"]: r for r in node_relations}
-
+            type_lookup = {r["type"]: r for r in node_relations}           
+   
             query = f"""
             match
-                $e isa {node.entity_type }, has {node.key_attribute} "{node.id}";
-                $other isa $other_type;
-                $rel isa $rel_type, links ($e, $other_role: $other);
+            # 1. Identify the person (add 'has name_key "Name"' here to filter)
+            $p isa { node.entity_type }, has {node.key_attribute} "{node.id}"; 
+
+            # 2. Find any relation that this person plays a role in
+            $rel links ($p);
+            $rel isa! $rel_type;
+
             fetch {{
-                "other": {{
-                    'type': $other_type,
-                    'role': $other_role,
-                    'data': {{ $other.* }}
-                }},
-                "relation": {{
+                # 3. Fetch the relation's type and its owned data
+                'relation': {{
                     'type': $rel_type,
                     'data': {{ $rel.* }}
                 }},
+
+                # 4. Open a sub-query to fetch all players in that specific relation
+                'players': [
+                    match 
+                    $r links ($role: $player);
+                    $player isa! $player_type;
+                    
+                    fetch {{
+                        # 5. Fetch the player's role, exact type, and owned data
+                        'role': $role,
+                        'type': $player_type,
+                        'data': {{ $player.* }}
+                    }};
+                ]
             }};
             """
 
-            for row in tx.query(query).resolve().as_concept_documents():
+            rows =tx.query(query).resolve().as_concept_documents()
+            rows = list(rows)
+
+            for row in rows:
                 rel_type = row.get("relation").get('type').get('label')
                 rel_data = row.get("relation").get('data')
 
-                other_type = row.get("other").get('type').get('label')
-                other_role = row.get("other").get('role').get('label')
-                other_data = row.get("other").get('data')
+                for player in row.get("players", []):
+                    role = player.get("role").get('label')
+                    type = player.get("type").get('label')
+                    data = player.get("data")
 
-                key_attr = self._get_key_attr_for_type(other_type)
-                key_val = None
+                    key_attr = self._get_key_attr_for_type(type)
+                    key_val = None
 
-                for other_attr, other_attr_val in other_data.items():
-                    if other_attr == key_attr:
-                        key_val = other_attr_val
-                        break
+                    for other_attr, other_attr_val in data.items():
+                        if other_attr == key_attr:
+                            key_val = other_attr_val
+                            break
 
-                if key_val is None:
-                    continue
+                    if key_val is None:
+                        continue
 
-                if rel_type not in type_lookup:
-                    roles = {other_role: RelationRef(
-                        entity_type=other_type,
-                        key_attr=key_attr,
-                        key=str(key_val),
-                    )}
+                    if rel_type not in type_lookup:
+                        roles = {role: RelationRef(
+                            entity_type=type,
+                            key_attr=key_attr,
+                            key=str(key_val),
+                        )}
 
-                    rel_attributes = {}
+                        rel_attributes = {}
 
-                    for rel_attr, rel_attr_val in rel_data.items():
-                       rel_attributes[rel_attr] = rel_attr_val
+                        for rel_attr, rel_attr_val in rel_data.items():
+                            rel_attributes[rel_attr] = rel_attr_val
 
-                    entry = RelationData(type=rel_type, roles=roles, attributes=rel_attributes)
+                        entry = RelationData(type=rel_type, roles=roles, attributes=rel_attributes)
 
-                    node_relations.append(entry)
-                    type_lookup[rel_type] = entry
-                else:
-                    existing = type_lookup[rel_type]
+                        node_relations.append(entry)
+                        type_lookup[rel_type] = entry
+                    else:
+                        existing = type_lookup[rel_type]
 
-                    roles = existing["roles"]
-                    roles[other_role] = RelationRef(
-                        entity_type=other_type,
-                        key_attr=key_attr,
-                        key=str(key_val),
-                    )
+                        roles = existing["roles"]
+                        roles[role] = RelationRef(
+                            entity_type=type,
+                            key_attr=key_attr,
+                            key=str(key_val),
+                        )
             
             relations_by_node[str(node.id)] = node_relations
 

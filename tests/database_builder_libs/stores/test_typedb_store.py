@@ -473,3 +473,133 @@ def test_relation_with_attributes(store: TypeDbDatastore):
 
     assert rel["type"] == "friendship"
     assert rel["attributes"]["since"] == 2024
+
+def test_relation_single_role_player_is_loaded(store: TypeDbDatastore):
+    store.query_schema("""
+    define
+    relation tagged,
+        relates item;
+
+    person plays tagged:item;
+    """)
+
+    store.query_write("""
+        insert
+            $p isa person, has name_key "Alice", has email "alice@test.com";
+            (item: $p) isa tagged;
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes) == 1
+    node = nodes[0]
+
+    assert len(node.relations) == 1
+    assert node.relations[0]["type"] == "tagged"
+
+def test_relation_attributes_are_loaded(store: TypeDbDatastore):
+    store.query_schema("""
+        define
+        relation collaboration,
+            relates contributor,
+            relates project,
+            owns contribution_role;
+
+        attribute contribution_role, value string;
+
+        person plays collaboration:contributor;
+        person plays collaboration:project;
+        """)
+
+    store.query_write("""
+        insert
+            $a isa person, has name_key "Alice", has email "alice@test.com";
+            $b isa person, has name_key "Bob", has email "bob@test.com";
+            (contributor: $a, project: $b) isa collaboration, has contribution_role "author";
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    rel = nodes[0].relations[0]
+
+    assert rel["attributes"]["contribution_role"] == "author"
+
+def test_relations_not_duplicated(store: TypeDbDatastore):
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    store.query_write("""
+        insert
+            $a isa person, has name_key "Alice", has email "alice@test.com";
+            $b isa person, has name_key "Bob", has email "bob@test.com";
+            (friend: $a, friend_of: $b) isa friendship;
+    """)
+
+    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
+
+def test_store_node_relation_idempotent(store: TypeDbDatastore):
+    """
+    Store the same node again to verify that the operation is idempotent.
+    Re-inserting an existing node should not create duplicates or duplicate relations. 
+    This ensures that calling `store_node` multiple times with the same data leaves the graph in the same state.
+    """
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+
+    alice = Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name_key": "Alice", "email": "alice@test.com"},
+        relations=(),
+    )
+
+    bob = Node(
+        id="bob@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name_key": "Bob", "email": "bob@test.com"},
+        relations=(
+            {
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "alice@test.com",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "bob@test.com",
+                    },
+                },
+            },
+        ),
+    )
+
+    store.store_node(alice)
+    store.store_node(bob)
+
+    # insert again
+    store.store_node(bob)
+
+    nodes = store.get_nodes("entity=person&email=bob@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
