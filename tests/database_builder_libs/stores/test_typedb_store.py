@@ -132,9 +132,9 @@ def populated_friendship_store(friendship_store: TypeDbDatastore) -> TypeDbDatas
 @pytest.fixture
 def alice_node() -> Node:
     return Node(
-        id="alice@test.com",
+        id="Alice",
         entity_type="person",
-        key_attribute="email",
+        key_attribute="name_key",
         payload_data={"name_key": "Alice", "email": "alice@test.com", "age": 25},
         relations=(),
     )
@@ -143,9 +143,9 @@ def alice_node() -> Node:
 @pytest.fixture
 def bob_with_friendship_node() -> Node:
     return Node(
-        id="bob@test.com",
+        id="Bob",
         entity_type="person",
-        key_attribute="email",
+        key_attribute="name_key",
         payload_data={"name_key": "Bob", "email": "bob@test.com", "age": 30},
         relations=(
             {
@@ -153,19 +153,18 @@ def bob_with_friendship_node() -> Node:
                 "roles": {
                     "friend": {
                         "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
+                        "key_attr": "name_key",
+                        "key": "Alice",
                     },
                     "friend_of": {
                         "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
+                        "key_attr": "name_key",
+                        "key": "Bob",
                     },
                 },
             },
         ),
     )
-
 
 def test_initialization_creates_database_and_schema(store: TypeDbDatastore):
     rows: ConceptRowIterator = store.query_read("match entity $t sub person;").as_concept_rows()
@@ -267,15 +266,14 @@ def test_get_nodes_returns_empty_when_no_match(store: TypeDbDatastore):
 
 
 def test_get_nodes_multiple_matches(store: TypeDbDatastore):
-    store.query_write('insert $p isa person, has name_key "Bob", has age 30;')
-    store.query_write('insert $p isa person, has name_key "Bob", has age 40;')
+    store.query_write('insert $p isa person, has name_key "Bob1", has age 30;')
+    store.query_write('insert $p isa person, has name_key "Bob2", has age 30;')
 
-    results = store.get_nodes("entity=person&name_key=Bob")
+    results = store.get_nodes("entity=person&age=30")
 
     assert len(results) == 2
     ages = sorted(n.payload_data["age"] for n in results)
-    assert ages == [30, 40]
-
+    assert ages == [30, 30]
 
 def test_remove_single_node_by_keyed_filter(store: TypeDbDatastore):
     store.query_write(
@@ -390,7 +388,7 @@ def test_get_nodes_with_relations(populated_friendship_store: TypeDbDatastore):
 def test_key_inference_from_schema(store: TypeDbDatastore):
     store.query_schema("""
         define
-        attribute username_key sub key, value string;
+        attribute username_key, value string;
 
         entity account,
             owns username_key @key,
@@ -407,7 +405,6 @@ def test_key_inference_from_schema(store: TypeDbDatastore):
 
     assert node.key_attribute == "username_key"
     assert node.id == "u1"
-
 
 def test_schema_evolution_new_attribute(store: TypeDbDatastore):
     store.query_schema("""
@@ -532,7 +529,7 @@ def test_store_node_relation_idempotent(friendship_store: TypeDbDatastore, alice
     # insert again
     friendship_store.store_node(bob_with_friendship_node)
 
-    nodes = friendship_store.get_nodes("entity=person&email=bob@test.com&include=relations")
+    nodes = friendship_store.get_nodes("entity=person&name_key=Bob&include=relations")
 
     assert len(nodes[0].relations) == 1
 

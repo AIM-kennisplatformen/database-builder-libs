@@ -1,9 +1,10 @@
 define
+
+attribute name_key, value string;
+attribute email, value string;
+attribute age, value integer;
+
 entity person,
-    owns name_key,
+    owns name_key @key,
     owns email,
     owns age;
-attribute key @abstract;
-attribute name_key sub key, value string;
-attribute email value string;
-attribute age value integer;

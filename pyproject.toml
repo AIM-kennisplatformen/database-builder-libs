@@ -1,7 +1,7 @@
 [project]
 authors = [{name = "Hoog-v", email = "hogeweyv@gmail.com"}]
 name = "database_builder_libs"
-requires-python = ">= 3.11, <=3.12"
+requires-python = "<=3.12"
 version = "0.1.0"
 dependencies = [
     "typedb-driver>=3.8.0",
