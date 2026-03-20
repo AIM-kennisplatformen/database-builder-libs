@@ -6,7 +6,7 @@ The **AbstractChunkingStrategy** class defines the contract that all concrete ch
 implementations must satisfy. It encapsulates the transformation of raw document sections
 into a flat, ordered list of `Chunk` objects that are ready for embedding and indexing.
 By adhering to this interface, different splitting approaches — section-based, fixed-size,
-sliding-window, or summary-partitioned — can be swapped interchangeably while the rest of
+sliding-window, or summary-prefixed — can be swapped interchangeably while the rest of
 the pipeline remains agnostic to the underlying strategy.
 
 ---
@@ -33,7 +33,7 @@ the pipeline remains agnostic to the underlying strategy.
 | `SectionChunkingStrategy` | One per section | Clean heading structure; sections are already semantically coherent |
 | `FixedSizeChunkingStrategy` | One or more per section | Uniform context window needed; no overlap required |
 | `SlidingWindowChunkingStrategy` | More than fixed-size due to overlap | Boundary recall matters; dense technical text with cross-boundary sentences |
-| `SummaryAndNSectionsStrategy` | Exactly N body chunks (+ 1 summary if provided) | Fixed per-document quota; optional LLM-generated summary chunk |
+| `SummaryAndSectionsStrategy` | One per section (+ 1 summary if provided) | Section structure must be preserved with an optional LLM-generated summary chunk prepended |
 
 ---
 
@@ -127,36 +127,30 @@ sentences often span what would otherwise be a hard split boundary.
 
 ---
 
-### SummaryAndNSectionsStrategy
+### SummaryAndSectionsStrategy
 
-Produces one optional summary chunk followed by exactly `n_sections` body chunks. All
-section texts are concatenated in document order and then divided as evenly as possible
-into `n_sections` fixed-size windows, splitting on whitespace boundaries. This gives a
-predictable, bounded index size regardless of how many sections the document contains —
-useful when downstream retrieval assumes a fixed budget of chunks per document.
+Produces one optional summary chunk followed by one chunk per non-empty section, preserving
+the document's natural heading structure. Unlike `SummaryAndNSectionsStrategy`, section
+boundaries and titles are never merged or discarded — each section maps to exactly one body
+chunk. Use this strategy when section-level retrieval granularity must be preserved and an
+optional LLM-generated summary chunk is desired at index 0.
 
 **Chunk layout**
 
 ```
 index 0      →  summary text            (only when summary is provided and non-blank)
-index 1      →  body partition 1        (≈ total_chars / n_sections)
-index 2      →  body partition 2
-...
-index N      →  body partition N        (absorbs any remainder)
+index 1..N   →  one chunk per section   (in document order)
+```
+
+```
+index 0..N   →  one chunk per section   (when no summary is provided)
 ```
 
 **Parameters**
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `n_sections` | `int` | `5` | Number of body chunks to produce from the merged section text. Must be ≥ 1. |
-| `min_chars` | `int` | `20` | Body windows shorter than this after splitting are silently dropped. The final chunk count may therefore be less than `n_sections` for very short documents. |
-
-**Raises**
-
-| Exception | Condition |
-|---|---|
-| `ValueError` | `n_sections < 1`. |
+| `min_chars` | `int` | `20` | Sections shorter than this after stripping are silently dropped. |
 
 **Metadata fields — summary chunk**
 
@@ -169,8 +163,8 @@ index N      →  body partition N        (absorbs any remainder)
 | Key | Type | Description |
 |---|---|---|
 | `chunk_type` | `str` | Always `"body"`. |
-| `partition_index` | `int` | Zero-based position of this partition within the `n_sections` windows. |
-| `has_tables` | `bool` | `True` if any input section contained at least one table. |
+| `section_title` | `str` | Title of the source section. |
+| `has_tables` | `bool` | `True` if the source section contained at least one table. |
 
 ---
 
@@ -179,22 +173,22 @@ index N      →  body partition N        (absorbs any remainder)
 ::: database_builder_libs.models.abstract_chunk_strategy
     handler: python
 
-## Docstrings NPointsSection
+## Docstrings SectionChunkingStrategy
 
-::: database_builder_libs.utility.chunk.n_points_section
+::: database_builder_libs.utility.chunk.section_chunking_strategy
     handler: python
 
-## Docstrings NPointsFixedSize
+## Docstrings FixedSizeChunkingStrategy
 
-::: database_builder_libs.utility.chunk.n_points_fixed_size
+::: database_builder_libs.utility.chunk.fixed_size_chunking_strategy
     handler: python
 
-## Docstrings NPointsSlidingWindow
+## Docstrings SlidingWindowChunkingStrategy
 
-::: database_builder_libs.utility.chunk.n_points_sliding_window
+::: database_builder_libs.utility.chunk.sliding_window_chunking_strategy
     handler: python
 
-## Docstrings SummaryNPoints
+## Docstrings SummaryAndSectionsStrategy
 
-::: database_builder_libs.utility.chunk.summary_n_points
+::: database_builder_libs.utility.chunk.summary_and_sections
     handler: python
