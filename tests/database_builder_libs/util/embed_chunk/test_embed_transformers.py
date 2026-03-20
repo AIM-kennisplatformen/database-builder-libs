@@ -13,10 +13,6 @@ _PATCH_MODEL = "database_builder_libs.utility.embed_chunk.transformer_based.Auto
 _MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def make_chunk(document_id: str = "doc-1", chunk_index: int = 0, text: str = "hello") -> Chunk:
     return Chunk(document_id=document_id, chunk_index=chunk_index, text=text, vector=[], metadata={})
 
