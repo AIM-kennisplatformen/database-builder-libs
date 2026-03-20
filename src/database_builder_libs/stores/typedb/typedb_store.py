@@ -2,7 +2,6 @@ from typing import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typedb.driver import (
-    ConceptRow,
     Credentials,
     Driver,
     DriverOptions,
@@ -27,7 +26,7 @@ class RelationRef(TypedDict):
 
 class RelationData(TypedDict, total=False):
     type: str
-    roles: Mapping[str, RelationRef]
+    roles: dict[str, RelationRef]
     attributes: Mapping[str, object]
 
 
@@ -132,6 +131,11 @@ class TypeDbDatastore(AbstractStore):
         self._all_attr_cache: list[str] | None = None
         self._key_attr_cache: dict[str, str | None] = {}
 
+    def _ensure_connected(self) -> None:
+        super()._ensure_connected()
+        assert self.typedb_driver is not None
+        assert self.database is not None
+
     def _connect_impl(self, config: dict | None) -> None:
         if not config:
             raise ValueError("TypeDB requires configuration")
@@ -143,8 +147,8 @@ class TypeDbDatastore(AbstractStore):
         if not uri or not database:
             raise ValueError("TypeDB config requires 'uri' and 'database'")
 
-        credentials = Credentials(config.get("username"), config.get("password"))
-        driver_options = DriverOptions(is_tls_enabled=config.get("tls"))
+        credentials = Credentials(str(config.get("username", "")), str(config.get("password", "")))
+        driver_options = DriverOptions(is_tls_enabled=bool(config.get("tls", False)))
 
         self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
         self.database = database
@@ -182,6 +186,8 @@ class TypeDbDatastore(AbstractStore):
     @contextmanager
     def transaction(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
         self._ensure_connected()
+        assert self.typedb_driver is not None
+        assert self.database is not None
 
         with self.typedb_driver.transaction(database_name=self.database, transaction_type=transaction_type) as transaction:
             try:
@@ -417,10 +423,10 @@ class TypeDbDatastore(AbstractStore):
         }};
         """
 
-        result = self.query_read(query)
+        result = list(self.query_read(query).as_concept_documents())
 
         if result:
-            key = result[0]["a"].get_label().name
+            key = result[0]["a"].get("label")
             self._key_attr_cache[entity_type] = key
             return key
 
@@ -632,6 +638,9 @@ class TypeDbDatastore(AbstractStore):
                     data = player.get("data")
 
                     key_attr = self._get_key_attr_for_type(type)
+                    if key_attr is None:
+                        continue
+
                     key_val = None
 
                     for other_attr, other_attr_val in data.items():
@@ -673,7 +682,7 @@ class TypeDbDatastore(AbstractStore):
         return relations_by_node
 
     def _fetch_to_nodes(
-        self, rows: list[ConceptRow], include_relations: bool = False
+        self, rows: list[dict], include_relations: bool = False
     ) -> list[Node]:
         nodes: list[Node] = []
 
@@ -681,8 +690,12 @@ class TypeDbDatastore(AbstractStore):
             raw_nodes = []
 
             for row in rows:
-                entity_type = row.get("entity_type", {})
-                entity_data = row.get("data", {})
+                entity_type = row.get("entity_type")
+                if not isinstance(entity_type, str):
+                    continue
+                entity_data = row.get("data")
+                if not isinstance(entity_data, dict):
+                    continue
 
                 payload = {}
 
