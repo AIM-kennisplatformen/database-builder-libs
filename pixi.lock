@@ -2156,7 +2156,7 @@ packages:
 - pypi: ./
   name: database-builder-libs
   version: 0.1.0
-  sha256: 1c10e0bb643b9a8a12bb4a89125d2370701dea42fbcda76a08d6ce750f22b6aa
+  sha256: 5ab9a8a325a4651c3efd3c5e70609a90c6714e69fd905b31f16a2dd8da5f4d82
   requires_dist:
   - typedb-driver>=3.8.0
   - fastapi>=0.128.0
@@ -6403,7 +6403,7 @@ packages:
   - influxdb>=5 ; extra == 'influxdb'
   - kubernetes ; extra == 'k3s'
   - pyyaml>=6.0.3 ; extra == 'k3s'
-  - python-keycloak>=6 ; python_full_version < '4' and extra == 'keycloak'
+  - python-keycloak>=6 ; python_full_version < '4.0' and extra == 'keycloak'
   - boto3>=1 ; extra == 'localstack'
   - cryptography ; extra == 'mailpit'
   - minio>=7 ; extra == 'minio'
@@ -6415,7 +6415,7 @@ packages:
   - nats-py>=2 ; extra == 'nats'
   - neo4j>=6 ; extra == 'neo4j'
   - openfga-sdk ; extra == 'openfga'
-  - opensearch-py>=3 ; python_full_version < '4' and extra == 'opensearch'
+  - opensearch-py>=3 ; python_full_version < '4.0' and extra == 'opensearch'
   - oracledb>=3 ; extra == 'oracle'
   - sqlalchemy>=2 ; extra == 'oracle'
   - oracledb>=3 ; extra == 'oracle-free'

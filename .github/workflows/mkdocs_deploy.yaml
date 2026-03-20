@@ -1,8 +1,10 @@
-name: ci 
+name: mkdocs-deploy
+
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: write
 jobs:

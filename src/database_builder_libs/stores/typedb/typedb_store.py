@@ -168,6 +168,9 @@ class TypeDbDatastore(AbstractStore):
             self.typedb_driver.close()
             self.typedb_driver = TypeDB.driver(address=uri, credentials=credentials, driver_options=driver_options)
 
+        for type_name, key_attr in self._load_key_attrs_from_schema().items():
+            self._key_attr_cache[type_name] = key_attr
+    
     def _build_match(
         self, entity_type: str | None, attrs: Mapping[str, str] | None
     ) -> str:
@@ -209,7 +212,14 @@ class TypeDbDatastore(AbstractStore):
 
     def query_schema(self, query: str) -> EagerQueryAnswer:
         with self.transaction(TransactionType.SCHEMA) as tx:
-            return EagerQueryAnswer(tx.query(query).resolve())
+            result = EagerQueryAnswer(tx.query(query).resolve())
+        # invalidate key attr cache — schema may have changed
+        self._key_attr_cache.clear()
+        self._all_attr_cache = None
+        self._entity_attr_cache.clear()
+        for type_name, key_attr in self._load_key_attrs_from_schema().items():
+            self._key_attr_cache[type_name] = key_attr
+        return result
 
     def _format_attributes(self, payload: Mapping[str, object]) -> str:
         clauses = []
@@ -377,61 +387,77 @@ class TypeDbDatastore(AbstractStore):
         clauses = []
 
         for attr, value in attrs.items():
-            clauses.append(f'has {attr} "{value}"')
+            try:
+                int_val = int(value)
+                clauses.append(f"has {attr} {int_val}")
+            except (ValueError, TypeError):
+                try:
+                    float_val = float(value)
+                    clauses.append(f"has {attr} {float_val}")
+                except (ValueError, TypeError):
+                    clauses.append(f'has {attr} "{value}"')
 
         return ",\n       ".join(clauses)
+
+    def _load_key_attrs_from_schema(self) -> dict[str, str]:
+        import re
+
+        assert self.typedb_driver is not None
+        assert self.database is not None
+
+        schema_text = self.typedb_driver.databases.get(self.database).schema()
+
+        # First pass: map each type to its parent
+        parent_map: dict[str, str] = {}
+        key_map: dict[str, str] = {}
+        current_type = None
+
+        for line in schema_text.splitlines():
+            line = line.strip()
+            type_match = re.match(r'^(?:entity|relation)\s+([\w\-]+)', line)
+            if type_match:
+                current_type = type_match.group(1)
+
+            sub_match = re.search(r'sub\s+([\w\-]+)', line)
+            if sub_match and current_type:
+                parent = sub_match.group(1)
+                if parent not in ("entity", "relation", "attribute"):
+                    parent_map[current_type] = parent
+
+            if current_type:
+                key_match = re.search(r'owns\s+([\w\-]+)\s+@key', line)
+                if key_match:
+                    key_map[current_type] = key_match.group(1)
+
+        # Second pass: propagate @key from parent to subtypes that don't have one
+        def resolve_key(type_name: str, depth: int = 0) -> str | None:
+            if depth > 20:
+                return None
+            if type_name in key_map:
+                return key_map[type_name]
+            parent = parent_map.get(type_name)
+            if parent:
+                return resolve_key(parent, depth + 1)
+            return None
+
+        all_types = set(key_map.keys()) | set(parent_map.keys())
+        for type_name in all_types:
+            if type_name not in key_map:
+                inherited = resolve_key(type_name)
+                if inherited:
+                    key_map[type_name] = inherited
+
+        return key_map
 
     def _get_key_attribute(
         self, entity_type: str, payload: Mapping[str, object]
     ) -> str:
-        # cached?
-        if entity_type in self._key_attr_cache:
-            key = self._key_attr_cache[entity_type]
-            return key if key else sorted(payload.keys())[0]
+        key = self._key_attr_cache.get(entity_type)
+        return key if key else sorted(payload.keys())[0]
 
-        query = f"""
-        match
-            {entity_type} owns $a;
-            $a sub key;
-        fetch {{
-            'a': $a
-        }};
-        """
-        rows = self.query_read(query).as_concept_documents()
-        result = list(rows)
-
-        if result:
-            key = result[0]["a"].get("label")
-            self._key_attr_cache[entity_type] = key
-            return key
-
-        # remember: no schema key
-        self._key_attr_cache[entity_type] = None
-        return sorted(payload.keys())[0]
 
     def _get_key_attr_for_type(self, entity_type: str) -> str | None:
-
-        if entity_type in self._key_attr_cache:
-            return self._key_attr_cache[entity_type]
-
-        query = f"""
-        match
-            {entity_type} owns $a;
-            $a sub key;
-        fetch {{
-            'a': $a
-        }};
-        """
-
-        result = list(self.query_read(query).as_concept_documents())
-
-        if result:
-            key = result[0]["a"].get("label")
-            self._key_attr_cache[entity_type] = key
-            return key
-
-        self._key_attr_cache[entity_type] = None
-        return None
+        return self._key_attr_cache.get(entity_type)
 
     def _get_entity_key_value(self, entity_type: str, key_attr: str, thing) -> str:
         # best effort: read all attributes and pick the key_attr
@@ -582,41 +608,26 @@ class TypeDbDatastore(AbstractStore):
         tx: Transaction,
         nodes: list[Node],
     ) -> dict[str, list[RelationData]]:
-        """
-        Load relations for nodes.
-
-        Works with relations of any number of role players.
-        """
         relations_by_node: dict[str, list[RelationData]] = {}
 
         for node in nodes:
-            node_relations: list[RelationData] = relations_by_node.get(str(node.id), [])
-            type_lookup = {r["type"]: r for r in node_relations}           
-   
+            node_relations: list[RelationData] = []
+
             query = f"""
             match
-            # 1. Identify the entity (add 'has key_attr "<key_val>"' here to filter)
-            $p isa { node.entity_type }, has {node.key_attribute} "{node.id}"; 
-
-            # 2. Find any relation that this entity plays a role in
-            $rel links ($p);
-            $rel isa! $rel_type;
-
+                $p isa {node.entity_type}, has {node.key_attribute} "{node.id}";
+                $rel links ($p);
+                $rel isa! $rel_type;
             fetch {{
-                # 3. Fetch the relation's type and its owned data
                 'relation': {{
                     'type': $rel_type,
                     'data': {{ $rel.* }}
                 }},
-
-                # 4. Open a sub-query to fetch all players in that specific relation
                 'players': [
-                    match 
-                    $r links ($role: $player);
+                    match
+                    $rel links ($role: $player);
                     $player isa! $player_type;
-                    
                     fetch {{
-                        # 5. Fetch the player's role, exact type, and owned data
                         'role': $role,
                         'type': $player_type,
                         'data': {{ $player.* }}
@@ -625,58 +636,44 @@ class TypeDbDatastore(AbstractStore):
             }};
             """
 
-            rows =tx.query(query).resolve().as_concept_documents()
-            rows = list(rows)
+            rows = list(tx.query(query).resolve().as_concept_documents())
 
             for row in rows:
-                rel_type = row.get("relation").get('type').get('label')
-                rel_data = row.get("relation").get('data')
+                rel_type = row.get("relation").get("type").get("label")
+                rel_data = row.get("relation").get("data")
+
+                roles: dict[str, RelationRef] = {}
 
                 for player in row.get("players", []):
-                    role = player.get("role").get('label')
-                    type = player.get("type").get('label')
+                    role_label = player.get("role").get("label")
+                    role = role_label.split(":")[-1] if ":" in role_label else role_label
+                    player_type = player.get("type").get("label")
                     data = player.get("data")
 
-                    key_attr = self._get_key_attr_for_type(type)
+                    key_attr = self._get_key_attr_for_type(player_type)
                     if key_attr is None:
                         continue
 
-                    key_val = None
-
-                    for other_attr, other_attr_val in data.items():
-                        if other_attr == key_attr:
-                            key_val = other_attr_val
-                            break
-
+                    key_val = data.get(key_attr)
                     if key_val is None:
                         continue
 
-                    if rel_type not in type_lookup:
-                        roles = {role: RelationRef(
-                            entity_type=type,
-                            key_attr=key_attr,
-                            key=str(key_val),
-                        )}
+                    roles[role] = RelationRef(
+                        entity_type=player_type,
+                        key_attr=key_attr,
+                        key=str(key_val),
+                    )
 
-                        rel_attributes = {}
+                rel_attributes: dict[str, object] = dict(rel_data.items())
 
-                        for rel_attr, rel_attr_val in rel_data.items():
-                            rel_attributes[rel_attr] = rel_attr_val
+                node_relations.append(
+                    RelationData(
+                        type=rel_type,
+                        roles=roles,
+                        attributes=rel_attributes,
+                    )
+                )
 
-                        entry = RelationData(type=rel_type, roles=roles, attributes=rel_attributes)
-
-                        node_relations.append(entry)
-                        type_lookup[rel_type] = entry
-                    else:
-                        existing = type_lookup[rel_type]
-
-                        roles = existing["roles"]
-                        roles[role] = RelationRef(
-                            entity_type=type,
-                            key_attr=key_attr,
-                            key=str(key_val),
-                        )
-            
             relations_by_node[str(node.id)] = node_relations
 
         return relations_by_node
