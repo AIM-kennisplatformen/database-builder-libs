@@ -276,11 +276,8 @@ class TypeDbDatastore(AbstractStore):
         ]
 
         attr_match = ""
-        if attributes is not {}:
+        if attributes != {}:
             attr_match = ", " + self._format_attributes(attributes)
-
-        # Generate the relation line
-        role_bindings = ", ".join([f"{role}: ${role}" for role in role_map.keys()])
 
         query = f"""
         match

@@ -102,6 +102,71 @@ def store(typedb_container):
             print(f"Failed to delete test db {db_name}: {e}")
 
 
+@pytest.fixture
+def friendship_store(store: TypeDbDatastore) -> TypeDbDatastore:
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            relates friend_of;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+    return store
+
+
+@pytest.fixture
+def populated_friendship_store(friendship_store: TypeDbDatastore) -> TypeDbDatastore:
+    friendship_store.query_write(
+        """
+        insert
+            $a isa person, has name_key "Alice", has email "alice@test.com";
+            $b isa person, has name_key "Bob", has email "bob@test.com";
+            $f isa friendship, links (friend: $a, friend_of: $b);
+        """
+    )
+    return friendship_store
+
+
+@pytest.fixture
+def alice_node() -> Node:
+    return Node(
+        id="alice@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name_key": "Alice", "email": "alice@test.com", "age": 25},
+        relations=(),
+    )
+
+
+@pytest.fixture
+def bob_with_friendship_node() -> Node:
+    return Node(
+        id="bob@test.com",
+        entity_type="person",
+        key_attribute="email",
+        payload_data={"name_key": "Bob", "email": "bob@test.com", "age": 30},
+        relations=(
+            {
+                "type": "friendship",
+                "roles": {
+                    "friend": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "alice@test.com",
+                    },
+                    "friend_of": {
+                        "entity_type": "person",
+                        "key_attr": "email",
+                        "key": "bob@test.com",
+                    },
+                },
+            },
+        ),
+    )
+
+
 def test_initialization_creates_database_and_schema(store: TypeDbDatastore):
     rows: ConceptRowIterator = store.query_read("match entity $t sub person;").as_concept_rows()
     row = next(rows, None)
@@ -262,20 +327,8 @@ def test_remove_nodes_only_affects_target_entities(store: TypeDbDatastore):
     assert name_keys == ["Henry", "Ivy"]
 
 
-def test_store_node_inserts_entity(store: TypeDbDatastore):
-    node = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={
-            "name_key": "Alice",
-            "email": "alice@test.com",
-            "age": 25,
-        },
-        relations=()
-    )
-
-    store.store_node(node)
+def test_store_node_inserts_entity(store: TypeDbDatastore, alice_node: Node):
+    store.store_node(alice_node)
 
     results = store.query_read("""
         match $p isa person, has email "alice@test.com"; 
@@ -308,54 +361,11 @@ def test_get_nodes_none_returns_all_nodes(store: TypeDbDatastore):
     assert name_keys == ["Alice", "Bob", "Charlie"]
 
 
-def test_store_node_inserts_relation(store: TypeDbDatastore):
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Alice", "email": "alice@test.com", "age": 25},
-        relations=(),
-    )
+def test_store_node_inserts_relation(friendship_store: TypeDbDatastore, alice_node: Node, bob_with_friendship_node: Node):
+    friendship_store.store_node(alice_node)
+    friendship_store.store_node(bob_with_friendship_node)
 
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Bob", "email": "bob@test.com", "age": 30},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
-
-    # add schema relation
-    store.query_schema("""
-        define
-        relation friendship,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    store.store_node(alice)
-    store.store_node(bob)
-
-    results = store.query_read(
+    results = friendship_store.query_read(
         """
         match
             $a isa person, has email "alice@test.com";
@@ -367,27 +377,8 @@ def test_store_node_inserts_relation(store: TypeDbDatastore):
     assert len(list(results)) == 1
 
 
-def test_get_nodes_with_relations(store: TypeDbDatastore):
-    store.query_schema("""
-        define
-        relation friendship,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    store.query_write(
-        """
-        insert
-            $a isa person, has name_key "Alice", has email "alice@test.com";
-            $b isa person, has name_key "Bob", has email "bob@test.com";
-            $f isa friendship, links (friend: $a, friend_of: $b);
-        """
-    )
-
-    nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
+def test_get_nodes_with_relations(populated_friendship_store: TypeDbDatastore):
+    nodes = populated_friendship_store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
     assert len(nodes) == 1
     node = nodes[0]
@@ -524,82 +515,57 @@ def test_relation_attributes_are_loaded(store: TypeDbDatastore):
 
     assert rel["attributes"]["contribution_role"] == "author"
 
-def test_relations_not_duplicated(store: TypeDbDatastore):
+def test_relations_not_duplicated(populated_friendship_store: TypeDbDatastore):
+    nodes = populated_friendship_store.get_nodes("entity=person&email=alice@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
+
+def test_store_node_relation_idempotent(friendship_store: TypeDbDatastore, alice_node: Node, bob_with_friendship_node: Node):
+    """
+    Store the same node again to verify that the operation is idempotent.
+    Re-inserting an existing node should not create duplicates or duplicate relations. 
+    This ensures that calling `store_node` multiple times with the same data leaves the graph in the same state.
+    """
+    friendship_store.store_node(alice_node)
+    friendship_store.store_node(bob_with_friendship_node)
+
+    # insert again
+    friendship_store.store_node(bob_with_friendship_node)
+
+    nodes = friendship_store.get_nodes("entity=person&email=bob@test.com&include=relations")
+
+    assert len(nodes[0].relations) == 1
+
+
+def test_multiple_relations_retrieval(store: TypeDbDatastore):
     store.query_schema("""
         define
         relation friendship,
             relates friend,
             relates friend_of;
 
+        relation tagged,
+            relates item;
+
         person plays friendship:friend;
         person plays friendship:friend_of;
+        person plays tagged:item;
         """)
 
     store.query_write("""
         insert
             $a isa person, has name_key "Alice", has email "alice@test.com";
             $b isa person, has name_key "Bob", has email "bob@test.com";
-            (friend: $a, friend_of: $b) isa friendship;
+            $f isa friendship, links (friend: $a, friend_of: $b);
+            (item: $a) isa tagged;
     """)
+
 
     nodes = store.get_nodes("entity=person&email=alice@test.com&include=relations")
 
-    assert len(nodes[0].relations) == 1
+    assert len(nodes) == 1
+    node = nodes[0]
 
-def test_store_node_relation_idempotent(store: TypeDbDatastore):
-    """
-    Store the same node again to verify that the operation is idempotent.
-    Re-inserting an existing node should not create duplicates or duplicate relations. 
-    This ensures that calling `store_node` multiple times with the same data leaves the graph in the same state.
-    """
-    store.query_schema("""
-        define
-        relation friendship,
-            relates friend,
-            relates friend_of;
-
-        person plays friendship:friend;
-        person plays friendship:friend_of;
-        """)
-
-    alice = Node(
-        id="alice@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Alice", "email": "alice@test.com"},
-        relations=(),
-    )
-
-    bob = Node(
-        id="bob@test.com",
-        entity_type="person",
-        key_attribute="email",
-        payload_data={"name_key": "Bob", "email": "bob@test.com"},
-        relations=(
-            {
-                "type": "friendship",
-                "roles": {
-                    "friend": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "alice@test.com",
-                    },
-                    "friend_of": {
-                        "entity_type": "person",
-                        "key_attr": "email",
-                        "key": "bob@test.com",
-                    },
-                },
-            },
-        ),
-    )
-
-    store.store_node(alice)
-    store.store_node(bob)
-
-    # insert again
-    store.store_node(bob)
-
-    nodes = store.get_nodes("entity=person&email=bob@test.com&include=relations")
-
-    assert len(nodes[0].relations) == 1
+    assert len(node.relations) == 2
+    relation_types = sorted(r["type"] for r in node.relations)
+    assert relation_types == ["friendship", "tagged"]
