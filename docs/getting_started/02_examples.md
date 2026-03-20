@@ -5,7 +5,8 @@ This page provides practical examples of how to use the database-builder-libs li
 ## Table of Contents
 
 - [Working with Zotero Source](#working-with-zotero-source)
-- [Document Vectorization](#document-vectorization)
+- [Document Parsing](#document-parsing)
+- [Chunking Strategies](#chunking-strategies)
 - [Using Vector Stores (Qdrant)](#using-vector-stores-qdrant)
 - [Using TypeDB Store](#using-typedb-store)
 
@@ -89,58 +90,263 @@ for doc in documents:
     print("---")
 ```
 
-## Document Vectorization
+## Document Parsing
 
-The library provides utilities to convert documents into vector representations for semantic search.
+`DocumentParserDocling` converts a raw document file into a structured `ParsedDocument`
+containing the full Docling IR and all extracted content types (sections, tables, figures,
+code blocks, list blocks, footnotes, and page furniture).
 
-### Initializing the Vectorizer
+### Parsing a file on disk
 
 ```python
-from database_builder_libs.utility.embedding.vectorize_document import VectorizeDocument
+from database_builder_libs.utility.extract.document_parser_docling import (
+    DocumentConversionError,
+    DocumentParserDocling,
+)
 
-# Initialize the document vectorizer
-vectorizer = VectorizeDocument()
+# Instantiate once and reuse for multiple documents.
+parser = DocumentParserDocling()
+
+try:
+    result = parser.parse("path/to/document.pdf")
+except FileNotFoundError:
+    print("File not found")
+except ValueError as exc:
+    print(f"Unsupported format: {exc}")
+except DocumentConversionError as exc:
+    for fault in exc.faults:
+        print(f"Conversion failed: {fault.path_file_document} — {fault.faults}")
 ```
 
-### Vectorizing a Document
+### Parsing an in-memory stream
+
+Use `parse_stream` when the document is not stored on disk, for example when it has been
+downloaded from an API or read from object storage.
 
 ```python
-import io
+from io import BytesIO
+from database_builder_libs.utility.extract.document_parser_docling import (
+    DocumentConversionError,
+    DocumentParserDocling,
+)
 
-# Open a document file
+parser = DocumentParserDocling()
+
 with open("path/to/document.pdf", "rb") as f:
-    document_data = io.BytesIO(f.read())
+    stream = BytesIO(f.read())
 
-# Vectorize the document
-document_name = "document.pdf"
-result = vectorizer.vectorize(document_name, document_data)
-
-# Check if vectorization was successful
-if hasattr(result, "faultss"):
-    print(f"Error vectorizing document: {result}")
-else:
-    # Process the DoclingDocument
-    print(f"Successfully vectorized document with {len(result.pages)} pages")
-    
-    # Access document content
-    for page in result.pages:
-        print(f"Page {page.page_num}: {len(page.blocks)} blocks")
-        
-        # Access text blocks
-        for block in page.blocks:
-            if hasattr(block, "text"):
-                print(f"Text: {block.text}")
+try:
+    result = parser.parse_stream(name="document.pdf", stream=stream)
+except ValueError as exc:
+    print(f"Unsupported format: {exc}")
+except DocumentConversionError as exc:
+    for fault in exc.faults:
+        print(f"Conversion failed: {fault.path_file_document} — {fault.faults}")
 ```
 
-### Handling Different Document Types
+### Working with the result
+
+`parse` and `parse_stream` both return a `ParsedDocument` — a frozen dataclass whose
+fields map directly to content types extracted from the document.
 
 ```python
-# The vectorizer supports multiple document formats
-supported_formats = [
-    ".csv", ".docx", ".html", ".md", ".pdf", ".pptx", ".xlsx"
-]
+# Sections are the primary input to chunking strategies.
+# Each section is a (title, body_text, tables) tuple.
+for title, text, tables in result.sections:
+    print(f"Section: '{title}'")
+    print(f"  {len(text)} characters, {len(tables)} table(s)")
 
-print(f"Supported document formats: {', '.join(supported_formats)}")
+# Tables come with their caption (empty string when absent).
+for table in result.tables:
+    print(f"Table caption: '{table.caption}'")
+    print(table.dataframe)
+
+# Figures come with their caption (empty string when absent).
+for figure in result.figures:
+    print(f"Figure caption: '{figure.caption}'")
+
+# Code blocks are attributed to their enclosing section.
+for block in result.code_blocks:
+    print(f"[{block.section_title}] {block.text}")
+
+# List blocks group consecutive list items within the same section.
+for block in result.list_blocks:
+    print(f"[{block.section_title}]")
+    for item in block.items:
+        print(f"  - {item}")
+
+# Footnotes in document order.
+for footnote in result.footnotes:
+    print(f"Footnote: {footnote.text}")
+
+# Page headers and footers, deduplicated across pages.
+for entry in result.furniture:
+    print(f"{entry.kind}: {entry.text}")
+
+# The full Docling IR is available for any downstream processing
+# that needs the raw node graph, bounding boxes, or provenance.
+print(type(result.doc))  # <class 'docling_core.types.doc.DoclingDocument'>
+```
+
+### Supported formats
+
+```python
+supported_formats = [".csv", ".docx", ".html", ".md", ".pdf", ".pptx", ".xlsx"]
+```
+
+### Loading ML model artefacts from a local directory
+
+By default Docling downloads its ML models at first use. Pass `path_dir_artifacts` to
+load them from a local directory instead, which is useful in air-gapped environments.
+
+```python
+parser = DocumentParserDocling(path_dir_artifacts="/opt/docling/models")
+result = parser.parse("path/to/document.pdf")
+```
+
+## Chunking Strategies
+
+All chunking strategies share the same interface: they accept a list of `RawSection`
+tuples — the `sections` field of a `ParsedDocument` — and return a list of `Chunk`
+objects. An optional `summary` keyword argument is accepted by every strategy; only
+`SummaryAndNSectionsStrategy` makes use of it.
+
+```python
+# RawSection = (section_title: str, body_text: str, tables: list[DataFrame])
+sections = result.sections  # from DocumentParserDocling.parse / parse_stream
+```
+
+### Section chunking
+
+Produces one chunk per section. Sections whose text falls below `min_chars` (default: 20)
+are silently dropped. This is the simplest strategy and works well when the source
+document has clean, well-scoped headings.
+
+```python
+from database_builder_libs.utility.chunk.n_points_section import SectionChunkingStrategy
+
+strategy = SectionChunkingStrategy(
+    min_chars=20,               # sections shorter than this are dropped
+    include_title_in_text=False # set True to prepend the section title to chunk text
+)
+
+chunks = strategy.chunk(sections, document_id="doc-001")
+
+for chunk in chunks:
+    print(chunk.chunk_index, chunk.metadata["section_title"], len(chunk.text))
+```
+
+With `include_title_in_text=True` the section heading is prepended to the body text,
+which can improve retrieval quality for embedding models that benefit from contextual
+headers:
+
+```python
+strategy = SectionChunkingStrategy(include_title_in_text=True)
+chunks = strategy.chunk(sections, document_id="doc-001")
+# chunk.text starts with "<section title>\n<body text>"
+```
+
+### Fixed-size chunking
+
+Splits each section into non-overlapping windows of at most `chunk_size` characters,
+respecting whitespace boundaries. Useful when sections vary wildly in length and a
+uniform context window is preferred.
+
+```python
+from database_builder_libs.utility.chunk.n_points_fixed_size import FixedSizeChunkingStrategy
+
+strategy = FixedSizeChunkingStrategy(
+    chunk_size=500,  # maximum characters per chunk
+    min_chars=20,    # windows shorter than this after splitting are dropped
+)
+
+chunks = strategy.chunk(sections, document_id="doc-001")
+
+for chunk in chunks:
+    print(chunk.chunk_index, chunk.metadata["section_title"], len(chunk.text))
+```
+
+Each chunk's `metadata["section_title"]` always reflects the section it was split from,
+so provenance is preserved even when a section is split across many chunks.
+
+### Sliding-window chunking
+
+Like fixed-size chunking but consecutive chunks overlap by `overlap` characters, so
+context at chunk boundaries is not lost. `overlap` must be strictly less than
+`chunk_size`; passing an equal or larger value raises `ValueError`.
+
+```python
+from database_builder_libs.utility.chunk.n_points_sliding_window import SlidingWindowChunkingStrategy
+
+strategy = SlidingWindowChunkingStrategy(
+    chunk_size=500,  # maximum characters per chunk
+    overlap=100,     # characters shared between consecutive chunks; must be < chunk_size
+    min_chars=20,
+)
+
+chunks = strategy.chunk(sections, document_id="doc-001")
+```
+
+Because adjacent chunks share content, this strategy produces more chunks than
+fixed-size for the same input. The overlap means the end of chunk *N* and the start
+of chunk *N+1* share words, which improves recall for queries that land near a boundary.
+
+### Summary + sections chunking
+Preserves the document's natural section structure and optionally prepends a dedicated
+summary chunk at index 0. This is the right choice when section-level retrieval
+granularity must be maintained and an optional LLM-generated summary is desired.
+
+```python
+from database_builder_libs.utility.chunk.summary_and_sections import SummaryAndSectionsStrategy
+
+strategy = SummaryAndSectionsStrategy(min_chars=20)
+
+# Without a summary — produces one chunk per non-empty section.
+chunks = strategy.chunk(sections, document_id="doc-001")
+
+for chunk in chunks:
+    print(chunk.chunk_index, chunk.metadata["chunk_type"], chunk.metadata["section_title"])
+```
+
+Pass a summary string (e.g. produced by an LLM) to prepend a summary chunk. The
+summary chunk is assigned chunk_index=0 and all body chunks follow in order. A
+whitespace-only summary is treated as absent.
+
+```python
+summary_text = "This document covers the annual research results for 2024."
+
+chunks = strategy.chunk(sections, document_id="doc-001", summary=summary_text)
+
+summary_chunk = chunks[0]  # chunk_type == "summary"
+body_chunks   = chunks[1:] # chunk_type == "body", one per section
+
+print(summary_chunk.text)
+print(f"{len(body_chunks)} body chunks")
+
+# Each body chunk carries its originating section title.
+for chunk in body_chunks:
+    print(chunk.metadata["section_title"], chunk.metadata["has_tables"])
+```
+
+### Choosing a strategy
+
+| Strategy | Chunks produced | When to use |
+|---|---|---|
+| `SectionChunkingStrategy` | One per section | Clean heading structure, variable section length is acceptable |
+| `FixedSizeChunkingStrategy` | One or more per section | Uniform context window needed, no overlap required |
+| `SlidingWindowChunkingStrategy` | More than fixed-size due to overlap | Boundary recall matters; willing to trade storage for coverage |
+| `SummaryAndSectionsStrategy` | One per section (+ 1 if summary provided) | Section structure must be preserved with an optional summary chunk prepended|
+
+### Common chunk fields
+
+Every `Chunk` returned by any strategy has the following fields:
+
+```python
+chunk.document_id   # str  — the document_id passed to .chunk()
+chunk.chunk_index   # int  — monotonically increasing from 0
+chunk.text          # str  — non-empty chunk body
+chunk.vector        # list — always [] until the embedding stage populates it
+chunk.metadata      # dict — strategy-specific; always contains "section_title"
 ```
 
 ## Using Vector Stores (Qdrant)

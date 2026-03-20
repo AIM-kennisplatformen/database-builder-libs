@@ -20,6 +20,7 @@ dependencies = [
     "mkdocs-material",
     "mkdocs",
     "mkdocstrings[python]>=0.18",
+    "pypdf>=4.0.0"
   ]
 
 [dependency-groups]
