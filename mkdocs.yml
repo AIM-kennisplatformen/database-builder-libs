@@ -155,9 +155,14 @@ nav:
   - Vector Stores:
     - main_modules/06_vector_stores.md
     - main_modules/07_qdrant_store.md
-  - Utilities:
+  - Text extract utilities:
     - main_modules/03_text_extract_utilities.md
+  - Text chunk utilities:
     - main_modules/08_chunking_strategy.md
+  - Text embed utilities:
+    - main_modules/09_abstract_chunk_embedder.md
+    - main_modules/10_chunk_embedder_openai.md
+    - main_modules/11_chunk_embedder_transformer.md
 
 - Contributing:
   - contributing/rules.md

@@ -21,7 +21,7 @@ dependencies = [
     "mkdocs",
     "mkdocstrings[python]>=0.18",
     "pypdf>=4.0.0"
-  ]
+  , "openai>=2.29.0,<3", "transformers>=4.57.6,<5"]
 
 [dependency-groups]
 dev = [
