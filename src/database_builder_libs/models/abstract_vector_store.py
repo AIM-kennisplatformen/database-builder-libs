@@ -23,7 +23,7 @@ class AbstractVectorStore(ABC):
     - Deterministic retrieval for identical index state
     - No duplicate chunks returned
     - Stable chunk identity across writes
-    - Full deletion of document vectors (GDPR requirement)
+    - Full deletion of document vectors (GPDR requirement)
 
     Embedding contract
     ------------------
