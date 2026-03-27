@@ -31,10 +31,6 @@ from database_builder_libs.utility.extract.document_parser_docling import (
 from pydantic import Field
 
 
-# --------------------------------------------------------------------------- #
-# Helpers / spies                                                              #
-# --------------------------------------------------------------------------- #
-
 class SpyStrategy(AbstractChunkingStrategy):
     """Records chunk() calls; returns empty list."""
     def __init__(self):
@@ -89,10 +85,6 @@ def _stub_parser(src: PDFSource, parsed=None, fail=False):
 class PDFSourceTests(unittest.TestCase):
     """Tests for PDFSource"""
 
-    # ------------------------------------------------------------------ #
-    # Fixtures                                                             #
-    # ------------------------------------------------------------------ #
-
     def setUp(self):
         self._tmpdir = tempfile.TemporaryDirectory()
         self.folder  = Path(self._tmpdir.name)
@@ -114,10 +106,6 @@ class PDFSourceTests(unittest.TestCase):
 
     def ts(self) -> datetime:
         return datetime(2024, 1, 1, tzinfo=timezone.utc)
-
-    # ------------------------------------------------------------------ #
-    # connect / lifecycle                                                  #
-    # ------------------------------------------------------------------ #
 
     def test_connect_succeeds_with_valid_folder(self):
         """connect() must not raise for an existing directory."""
@@ -147,10 +135,6 @@ class PDFSourceTests(unittest.TestCase):
             src.get_content([])
         with self.assertRaises(RuntimeError):
             src.get_all_documents_metadata()
-
-    # ------------------------------------------------------------------ #
-    # get_list_artefacts                                                   #
-    # ------------------------------------------------------------------ #
 
     def test_list_returns_all_when_last_synced_is_none(self):
         """None last_synced must return every PDF discovered."""
@@ -190,10 +174,6 @@ class PDFSourceTests(unittest.TestCase):
         src = self.connect()
         _, ts = src.get_list_artefacts(None)[0]
         self.assertIsNotNone(ts.tzinfo)
-
-    # ------------------------------------------------------------------ #
-    # get_content — pipeline wiring                                        #
-    # ------------------------------------------------------------------ #
 
     def test_get_content_returns_one_per_artefact(self):
         """One Content object must be returned per input artefact."""
@@ -330,9 +310,6 @@ class PDFSourceTests(unittest.TestCase):
         chunks = src.get_content([(pdf.name, self.ts())])[0].content["chunks"]
         self.assertTrue(all(c["vector"] == [] for c in chunks))
 
-    # ------------------------------------------------------------------ #
-    # Metadata — strategy dispatch                                         #
-    # ------------------------------------------------------------------ #
 
     def _src_with_llm(self, llm_payload: dict, **extra_config) -> tuple[PDFSource, Path]:
         """
@@ -561,9 +538,6 @@ class PDFSourceTests(unittest.TestCase):
     def test_parse_author_line_no_match(self):
         self.assertEqual(PDFSource._parse_author_line("not an author line"), [])
 
-    # ------------------------------------------------------------------ #
-    # DocumentMetadata                                                     #
-    # ------------------------------------------------------------------ #
 
     def test_document_metadata_default_fields(self):
         """All optional fields must default to None / empty."""
