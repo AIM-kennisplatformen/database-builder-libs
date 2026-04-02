@@ -5,6 +5,7 @@ This page provides practical examples of how to use the database-builder-libs li
 ## Table of Contents
 
 - [Working with Zotero Source](#working-with-zotero-source)
+- [Working with PDF Source](#working-with-pdf-source)
 - [Document Parsing](#document-parsing)
 - [Chunking Strategies](#chunking-strategies)
 - [Using Vector Stores (Qdrant)](#using-vector-stores-qdrant)
@@ -88,6 +89,202 @@ for doc in documents:
     print(f"Document: {doc.get('data', {}).get('title', 'No title')}")
     print(f"Key: {doc.get('data', {}).get('key', 'No key')}")
     print("---")
+```
+
+## Working with PDF Source
+
+The PDF source parses PDF files from a local folder, extracts metadata, chunks the content into
+sections, and optionally embeds those chunks — all in a single configurable pipeline.
+
+### Minimal setup
+
+Only `folder_path` is required. With no further config, metadata is extracted from embedded PDF
+metadata and Docling structural heuristics. No LLM calls are made.
+
+```python
+from database_builder_libs.sources.pdf_source import PDFSource
+
+src = PDFSource()
+src.connect({"folder_path": "/data/papers"})
+```
+
+### Listing changed files
+
+`get_list_artefacts` scans the folder for PDFs modified after `last_synced`. Pass `None` to
+return every file.
+
+```python
+from datetime import datetime, timezone
+
+last_sync = datetime(2024, 1, 1, tzinfo=timezone.utc)
+artefacts = src.get_list_artefacts(last_sync)
+
+for relative_path, modified_at in artefacts:
+    print(f"{relative_path}  —  last modified {modified_at}")
+```
+
+### Extracting content
+
+`get_content` runs the full pipeline — parse, metadata extraction, chunking, embedding — and
+returns one `Content` object per file.
+
+```python
+contents = src.get_content(artefacts)
+
+for content in contents:
+    meta = content.content["metadata"]
+    print(f"File:    {content.content['file_name']}")
+    print(f"Title:   {meta['title']}")
+    print(f"Authors: {meta['authors']}")
+    print(f"Source:  {meta['source']}")   # which strategy filled each field
+    print(f"Chunks:  {len(content.content['chunks'])}")
+    print("---")
+```
+
+### Enabling LLM extraction
+
+Provide `llm_base_url` and `llm_api_key` to unlock LLM-based extraction for fields where
+heuristics are insufficient — typically `title` on watermarked PDFs, `authors` on
+Word-derived documents, and `acknowledgements`.
+
+```python
+src = PDFSource()
+src.connect({
+    "folder_path":  "/data/papers",
+    "llm_base_url": "http://localhost:11434/v1",
+    "llm_api_key":  "ollama",
+    "llm_model":    "gemma2:9b",
+})
+```
+
+Any OpenAI-compatible endpoint works. The default model is `gpt-4.1-mini`.
+
+### Configuring extraction strategies per field
+
+Each metadata field can be configured independently. Strategies are tried in order;
+extraction stops on the first success unless `stop_on_success=False`.
+
+```python
+from database_builder_libs.sources.pdf_source import (
+    PDFSource,
+    FieldExtractionConfig,
+    OrderedStrategyConfig,
+    ExtractionStrategy,
+)
+
+src = PDFSource()
+src.connect({
+    "folder_path":  "/data/papers",
+    "llm_base_url": "http://localhost:11434/v1",
+    "llm_api_key":  "ollama",
+
+    # Try LLM first for title; fall back to Docling if LLM returns nothing.
+    "title": FieldExtractionConfig(
+        strategies=OrderedStrategyConfig(
+            order=[ExtractionStrategy.LLM, ExtractionStrategy.DOCLING],
+        )
+    ),
+
+    # Run both FILE_METADATA and LLM regardless of success — LLM always
+    # overwrites the embedded metadata value, which is often the Word creator name.
+    "authors": FieldExtractionConfig(
+        strategies=OrderedStrategyConfig(
+            order=[ExtractionStrategy.FILE_METADATA, ExtractionStrategy.LLM],
+            stop_on_success=False,
+        )
+    ),
+
+    # Disable acknowledgement extraction entirely.
+    "acknowledgements": FieldExtractionConfig(enabled=False),
+})
+```
+
+### Skipping fields already known from an external source
+
+When metadata is already available from a source like Zotero, disable the corresponding
+PDF extraction fields with `enabled=False`. Omitting a field from the config is not
+enough — `PDFDocumentConfig` has defaults for every field and will extract silently
+if not explicitly disabled.
+
+```python
+src = PDFSource()
+src.connect({
+    "folder_path": "/data/papers",
+    "title":       FieldExtractionConfig(enabled=False),  # already known
+    "authors":     FieldExtractionConfig(enabled=False),  # already known
+    # summary, publishing_institute, acknowledgements use their defaults
+})
+```
+
+After `get_content`, overlay the externally known values onto the returned `Content`:
+
+```python
+content = src.get_content(artefacts)[0]
+meta    = content.content["metadata"]
+source  = meta.get("source", {})
+
+# Overlay values from an external source
+meta["title"]   = "Title from Zotero"
+meta["authors"] = ["Author A", "Author B"]
+source["title"]   = "zotero"
+source["authors"] = "zotero"
+meta["source"]  = source
+```
+
+### Adding chunking and embedding
+
+Pass a `SectionsConfig` to control how sections are chunked and embedded.
+
+```python
+from database_builder_libs.sources.pdf_source import SectionsConfig
+from database_builder_libs.utility.chunk.summary_and_sections import SummaryAndSectionsStrategy
+from database_builder_libs.utility.embed_chunk.openai_compatible import OpenAICompatibleChunkEmbedder
+
+src = PDFSource()
+src.connect({
+    "folder_path": "/data/papers",
+    "sections": SectionsConfig(
+        chunking_strategy=SummaryAndSectionsStrategy(),
+        embedder=OpenAICompatibleChunkEmbedder(
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            model="nomic-embed-text",
+        ),
+    ),
+})
+
+contents = src.get_content(artefacts)
+for content in contents:
+    for chunk in content.content["chunks"]:
+        print(chunk["chunk_index"], chunk["text"][:80])
+```
+
+To skip chunking and embedding entirely and only extract metadata:
+
+```python
+src.connect({
+    "folder_path": "/data/papers",
+    "sections": SectionsConfig(enabled=False),
+})
+```
+
+### Quick inventory without parsing
+
+`get_all_documents_metadata` returns lightweight file stats for all PDFs in the folder
+without running Docling conversion — useful for auditing or building a manifest.
+
+```python
+inventory = src.get_all_documents_metadata()
+
+for item in inventory:
+    print(f"{item['id']}  {item['size']} bytes  modified {item['modified']}")
+    print(f"  pdf_meta: {item['pdf_meta']}")
+```
+
+Pass `limit` to cap the number of results:
+
+```python
+first_ten = src.get_all_documents_metadata(limit=10)
 ```
 
 ## Document Parsing
@@ -292,6 +489,7 @@ fixed-size for the same input. The overlap means the end of chunk *N* and the st
 of chunk *N+1* share words, which improves recall for queries that land near a boundary.
 
 ### Summary + sections chunking
+
 Preserves the document's natural section structure and optionally prepends a dedicated
 summary chunk at index 0. This is the right choice when section-level retrieval
 granularity must be maintained and an optional LLM-generated summary is desired.
@@ -335,7 +533,7 @@ for chunk in body_chunks:
 | `SectionChunkingStrategy` | One per section | Clean heading structure, variable section length is acceptable |
 | `FixedSizeChunkingStrategy` | One or more per section | Uniform context window needed, no overlap required |
 | `SlidingWindowChunkingStrategy` | More than fixed-size due to overlap | Boundary recall matters; willing to trade storage for coverage |
-| `SummaryAndSectionsStrategy` | One per section (+ 1 if summary provided) | Section structure must be preserved with an optional summary chunk prepended|
+| `SummaryAndSectionsStrategy` | One per section (+ 1 if summary provided) | Section structure must be preserved with an optional summary chunk prepended |
 
 ### Common chunk fields
 
@@ -389,7 +587,6 @@ chunks = [
         vector=[0.2, 0.3, ...],
         metadata={"page": 1, "section": "introduction"}
     ),
-    # Add more chunks as needed
 ]
 
 # Store the chunks
@@ -528,7 +725,7 @@ if person_nodes:
     print(f"Found person: {person.payload_data.get('name')}")
     print(f"Email: {person.payload_data.get('email')}")
     print(f"Age: {person.payload_data.get('age')}")
-    
+
     # Print relations
     for relation in person.relations:
         print(f"Relation: {relation.get('type')} -> {relation.get('target')}")

@@ -149,6 +149,7 @@ nav:
   - Sources:
     - main_modules/01_abstract_source.md
     - main_modules/04_zotero_source.md
+    - main_modules/12_pdf_source.md
   - Graph Stores:
     - main_modules/02_stores.md
     - main_modules/05_typedb_v2_store.md
