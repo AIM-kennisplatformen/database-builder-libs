@@ -1,8 +1,9 @@
 define
-    person sub entity,
-        owns name,
-        owns email,
-        owns age;
-    name sub attribute, value string;
-    email sub attribute, value string;
-    age sub attribute, value long;
+attribute name, value string;
+attribute email, value string;
+attribute age, value integer;
+
+entity person,
+    owns name @key,
+    owns email,
+    owns age;
