@@ -566,3 +566,75 @@ def test_multiple_relations_retrieval(store: TypeDbDatastore):
     assert len(node.relations) == 2
     relation_types = sorted(r["type"] for r in node.relations)
     assert relation_types == ["friendship", "tagged"]
+
+
+def test_get_relations_returns_all_when_none(populated_friendship_store: TypeDbDatastore):
+    relations = populated_friendship_store.get_relations(None)
+    assert len(relations) >= 1
+    types = [r["type"] for r in relations]
+    assert "friendship" in types
+
+
+def test_get_relations_by_type(populated_friendship_store: TypeDbDatastore):
+    relations = populated_friendship_store.get_relations("relation=friendship")
+    assert len(relations) == 1
+    rel = relations[0]
+    assert rel["type"] == "friendship"
+    assert "friend" in rel["roles"]
+    assert "friend_of" in rel["roles"]
+    assert rel["roles"]["friend"]["key"] == "Alice"
+    assert rel["roles"]["friend_of"]["key"] == "Bob"
+
+
+def test_get_relations_with_attributes(store: TypeDbDatastore):
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            relates friend_of,
+            owns since;
+
+        attribute since, value integer;
+
+        person plays friendship:friend;
+        person plays friendship:friend_of;
+        """)
+    
+    store.query_write(
+        """
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $b isa person, has name "Bob", has email "bob@test.com";
+            $f isa friendship, links (friend: $a, friend_of: $b), has since 2024;
+        """
+    )
+
+    relations = store.get_relations("relation=friendship&since=2024")
+    assert len(relations) == 1
+    rel = relations[0]
+    assert rel["type"] == "friendship"
+    assert rel["attributes"]["since"] == 2024
+
+
+def test_get_relations_returns_empty_when_no_match(store: TypeDbDatastore):
+    store.query_schema("""
+        define
+        relation friendship,
+            relates friend,
+            owns since;
+
+        attribute since, value integer;
+
+        person plays friendship:friend;
+        """)
+        
+    store.query_write(
+        """
+        insert
+            $a isa person, has name "Alice", has email "alice@test.com";
+            $f isa friendship, links (friend: $a), has since 2024;
+        """
+    )
+    
+    relations = store.get_relations("relation=friendship&since=2099")
+    assert relations == []

@@ -186,6 +186,21 @@ class TypeDbDatastore(AbstractStore):
 
         return ", ".join(clauses)
 
+    def _build_relation_match(
+        self, relation_type: str | None, attrs: Mapping[str, str] | None
+    ) -> str:
+        clauses = []
+
+        if relation_type:
+            clauses.append(f"$rel isa {relation_type}")
+        else:
+            clauses.append("$rel isa relation")
+
+        if attrs:
+            clauses.append(self._format_attribute_match(dict(attrs)))
+
+        return ", ".join(clauses)
+
     @contextmanager
     def transaction(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
         self._ensure_connected()
@@ -381,6 +396,22 @@ class TypeDbDatastore(AbstractStore):
             "entity_type": entity_type,
             "attributes": params,
             "include_relations": include_relations,
+        }
+
+    def _parse_relation_filter(self, filter: str) -> dict:
+        parsed = parse_qs(filter, keep_blank_values=False)
+
+        # flatten single values
+        params = {k: v[0] for k, v in parsed.items()}
+
+        if "relation" not in params:
+            raise ValueError("Missing required 'relation' filter")
+
+        relation_type = params.pop("relation")
+
+        return {
+            "relation_type": relation_type,
+            "attributes": params,
         }
 
     def _format_attribute_match(self, attrs: dict[str, str]) -> str:
@@ -733,6 +764,54 @@ class TypeDbDatastore(AbstractStore):
 
         return nodes
 
+    def _fetch_to_relations(self, rows: list[dict]) -> list[RelationData]:
+        relations: list[RelationData] = []
+
+        for row in rows:
+            rel = row.get("relation")
+            if not rel:
+                continue
+
+            rel_type_obj = rel.get("type", {})
+            rel_type = rel_type_obj.get("label") if isinstance(rel_type_obj, dict) else str(rel_type_obj)
+            rel_data = rel.get("data", {})
+
+            roles: dict[str, RelationRef] = {}
+
+            for player in row.get("players", []):
+                role_label = player.get("role", {}).get("label")
+                if not role_label:
+                    continue
+                role = role_label.split(":")[-1] if ":" in role_label else role_label
+                player_type = player.get("type", {}).get("label")
+                data = player.get("data", {})
+
+                key_attr = self._get_key_attr_for_type(player_type)
+                if key_attr is None:
+                    continue
+
+                key_val = data.get(key_attr)
+                if key_val is None:
+                    continue
+
+                roles[role] = RelationRef(
+                    entity_type=player_type,
+                    key_attr=key_attr,
+                    key=str(key_val),
+                )
+
+            rel_attributes: dict[str, object] = dict(rel_data.items())
+
+            relations.append(
+                RelationData(
+                    type=rel_type,
+                    roles=roles,
+                    attributes=rel_attributes,
+                )
+            )
+
+        return relations
+
     def _deduplicate(self, nodes: list[Node]) -> list[Node]:
         """Merge overlapping nodes based on payload subset semantics."""
 
@@ -810,6 +889,53 @@ class TypeDbDatastore(AbstractStore):
 
         return self._deduplicate(self._fetch_to_nodes(rows))
 
+    def _get_all_relations(self) -> list[RelationData]:
+        self._ensure_connected()
+
+        query = """
+        match
+            relation $t;
+        fetch {
+            't': $t,
+        };
+        """
+
+        type_rows = self.query_read(query).as_concept_documents()
+        result = list(type_rows)
+
+        rows = []
+
+        for row in result:
+            rel_label = row.get("t").get("label")
+            
+            if rel_label == 'relation':
+                continue
+
+            query = f"""
+            match
+                $rel isa {rel_label};
+                $rel isa! $rel_type;
+            fetch {{
+                'relation': {{
+                    'type': $rel_type,
+                    'data': {{ $rel.* }}
+                }},
+                'players': [
+                    match
+                    $rel links ($role: $player);
+                    $player isa! $player_type;
+                    fetch {{
+                        'role': $role,
+                        'type': $player_type,
+                        'data': {{ $player.* }}
+                    }};
+                ]
+            }};
+            """
+            rows.extend(list(self.query_read(query).as_concept_documents()))
+
+        return self._fetch_to_relations(rows)
+
     def _get_entity_attribute_labels(self, entity_type: str) -> list[str]:
         if entity_type in self._entity_attr_cache:
             return self._entity_attr_cache[entity_type]
@@ -884,10 +1010,78 @@ class TypeDbDatastore(AbstractStore):
             'entity_type': '{entity_type}',
         }};
         """
-
         rows = self.query_read(query).as_concept_documents()
 
         return self._fetch_to_nodes(list(rows), include_relations=include_relations)
+
+    def get_relations(self, filter: str | None) -> list[RelationData]:
+        """
+        Retrieve relations using a filter query.
+
+        Filter syntax
+        -------------
+        URL query string:
+
+            relation=<relation_type>&<attr>=<value>&...
+
+        Example
+        -------
+            relation=friendship&since=2024
+
+        Behaviour
+        ---------
+        - Returns normalized RelationData objects
+
+        Raises
+        ------
+        TypeError
+            If filter is not a string
+        ValueError
+            If filter missing required relation parameter
+        """
+
+        if filter is None:
+            return self._get_all_relations()
+
+        if not isinstance(filter, str):
+            raise TypeError("filter must be a string or None")
+
+        if not filter:
+            raise ValueError("filter cannot be empty; use None to fetch all relations")
+
+        self._ensure_connected()
+
+        parsed = self._parse_relation_filter(filter)
+        relation_type = parsed["relation_type"]
+        attrs = parsed["attributes"]
+
+        match_block = self._build_relation_match(relation_type, attrs)
+
+        query = f"""
+        match
+            {match_block};
+            $rel isa! $rel_type;
+        fetch {{
+            'relation': {{
+                'type': $rel_type,
+                'data': {{ $rel.* }}
+            }},
+            'players': [
+                match
+                $rel links ($role: $player);
+                $player isa! $player_type;
+                fetch {{
+                    'role': $role,
+                    'type': $player_type,
+                    'data': {{ $player.* }}
+                }};
+            ]
+        }};
+        """
+
+        rows = self.query_read(query).as_concept_documents()
+
+        return self._fetch_to_relations(list(rows))
 
     def remove_nodes(self, filter: str, allow_multiple: bool = False) -> int:
         """
