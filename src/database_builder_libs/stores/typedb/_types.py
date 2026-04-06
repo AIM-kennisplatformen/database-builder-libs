@@ -1,5 +1,5 @@
 from typing import Iterator, Mapping, TypedDict
-from typedb.driver import ConceptDocumentIterator, ConceptRowIterator, QueryAnswer
+from typedb.driver import QueryAnswer
 
 
 class RelationRef(TypedDict):
@@ -45,8 +45,8 @@ class EagerQueryAnswer:
     """
     is_docs: bool
     is_rows: bool
-    _docs: Iterator
-    _rows: Iterator
+    _docs: list
+    _rows: list
     _answer: QueryAnswer | None
 
     def __init__(self, answer: QueryAnswer):
