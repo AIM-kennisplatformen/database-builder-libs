@@ -1,5 +1,5 @@
 from typing import Iterator, Mapping, TypedDict
-from typedb.driver import ConceptDocumentIterator, ConceptRowIterator, QueryAnswer
+from typedb.driver import QueryAnswer
 
 
 class RelationRef(TypedDict):
