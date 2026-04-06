@@ -1,5 +1,5 @@
-from typing import Mapping, TypedDict
-from typedb.driver import QueryAnswer
+from typing import Iterator, Mapping, TypedDict
+from typedb.driver import ConceptDocumentIterator, ConceptRowIterator, QueryAnswer
 
 
 class RelationRef(TypedDict):
@@ -29,22 +29,22 @@ class EagerQueryAnswer:
         else:
             self._answer = answer
 
-    def as_concept_documents(self):
+    def as_concept_documents(self) -> ConceptDocumentIterator:
         if not self._is_docs:
             raise TypeError("Query did not return concept documents")
         return iter(self._docs)
 
-    def as_concept_rows(self):
+    def as_concept_rows(self) -> ConceptRowIterator:
         if not self._is_rows:
             raise TypeError("Query did not return concept rows")
         return iter(self._rows)
 
-    def as_raw(self):
+    def as_raw(self) -> QueryAnswer:
         if not self._answer:
             raise TypeError("Query is already evaluated as documents or rows")
         return self._answer
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         if self._is_docs:
             return iter(self._docs)
         if self._is_rows:
