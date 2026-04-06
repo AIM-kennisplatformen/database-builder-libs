@@ -17,6 +17,7 @@ class TypeDbWriteMixin(TypeDbBase):
         key_value: str,
         payload: Mapping[str, object],
     ) -> None:
+        """Insert a node entity into the TypeDB database."""
         attrs = self._format_attributes(payload)
 
         query = f"""
@@ -29,6 +30,7 @@ class TypeDbWriteMixin(TypeDbBase):
         self.query_write(query)
 
     def _insert_relation(self: "TypeDbDatastore", rel: RelationData) -> None:
+        """Insert a relation and link it to its role players."""
         attributes = rel.get("attributes", {})
 
         if self._relation_exists(rel):

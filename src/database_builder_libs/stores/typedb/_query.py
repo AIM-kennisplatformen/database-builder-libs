@@ -8,6 +8,7 @@ from database_builder_libs.stores.typedb._types import RelationRef
 
 class TypeDbQueryMixin(TypeDbBase):
     def _build_match(self, entity_type: str | None, attrs: Mapping[str, str] | None) -> str:
+        """Build a TypeQL match block for a specific entity type and its attributes."""
         clauses = []
 
         if entity_type:
@@ -21,6 +22,7 @@ class TypeDbQueryMixin(TypeDbBase):
         return ", ".join(clauses)
 
     def _build_relation_match(self, relation_type: str | None, attrs: Mapping[str, str] | None) -> str:
+        """Build a TypeQL match block for a specific relation type and its attributes."""
         clauses = []
 
         if relation_type:
@@ -34,6 +36,7 @@ class TypeDbQueryMixin(TypeDbBase):
         return ", ".join(clauses)
 
     def _format_attributes(self, payload: Mapping[str, object]) -> str:
+        """Format a payload mapping into a TypeQL attribute injection string."""
         clauses = []
 
         for attr, value in payload.items():
@@ -54,6 +57,7 @@ class TypeDbQueryMixin(TypeDbBase):
         return ", ".join(clauses)
 
     def _format_attribute_match(self, attrs: dict[str, str]) -> str:
+        """Format an attribute mapping into a TypeQL match attribute string, inferring types."""
         clauses = []
 
         for attr, value in attrs.items():
@@ -70,6 +74,7 @@ class TypeDbQueryMixin(TypeDbBase):
         return ",\n       ".join(clauses)
 
     def _parse_filter(self, filter: str) -> dict:
+        """Parse an entity filter string into entity type, attributes, and options."""
         parsed = parse_qs(filter, keep_blank_values=False)
 
         # flatten single values
@@ -88,6 +93,7 @@ class TypeDbQueryMixin(TypeDbBase):
         }
 
     def _parse_relation_filter(self, filter: str) -> dict:
+        """Parse a relation filter string into relation type and attributes."""
         parsed = parse_qs(filter, keep_blank_values=False)
 
         # flatten single values
@@ -104,6 +110,7 @@ class TypeDbQueryMixin(TypeDbBase):
         }
 
     def _match_relation_ref(self, role: str, ref: RelationRef) -> str:
+        """Format a TypeQL match block for a specific relation role reference."""
         return f"""
         ${role} isa {ref["entity_type"]},
             has {ref["key_attr"]} "{ref["key"]}";

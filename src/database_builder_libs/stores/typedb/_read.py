@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 class TypeDbReadMixin(TypeDbBase):
     def _entity_exists(self, entity_type: str, key_attr: str, key_value: str) -> bool:
+        """Check if an entity with the given key attribute and value already exists."""
 
         query = f"""
         match
@@ -26,6 +27,7 @@ class TypeDbReadMixin(TypeDbBase):
         return bool(len(list(result)) == 1)
 
     def _relation_exists(self: "TypeDbDatastore", rel: RelationData) -> bool:
+        """Check if a specific relation linking exactly the same role players exists."""
         role_map = rel["roles"]
         attributes = rel.get("attributes", {})
 
@@ -48,6 +50,7 @@ class TypeDbReadMixin(TypeDbBase):
         return bool(len(list(rows)) > 0)
 
     def _get_entity_key_value(self, entity_type: str, key_attr: str, thing) -> str:
+        """Extract the key attribute value from a TypeDB Thing object."""
         # best effort: read all attributes and pick the key_attr
         for a in thing.get_has():
             if a.get_type().get_label().name == key_attr:
@@ -62,6 +65,7 @@ class TypeDbReadMixin(TypeDbBase):
         key_attr: str,
         key_value: str,
     ) -> list[RelationData]:
+        """Fetch all relations linked to an entity, and resolve their role players."""
 
         relations: list[RelationData] = []
 
@@ -137,6 +141,7 @@ class TypeDbReadMixin(TypeDbBase):
         tx: Transaction,
         nodes: list[Node],
     ) -> dict[str, list[RelationData]]:
+        """Batch load relations for a list of nodes using a single query per node."""
         relations_by_node: dict[str, list[RelationData]] = {}
 
         for node in nodes:
@@ -208,6 +213,7 @@ class TypeDbReadMixin(TypeDbBase):
         return relations_by_node
 
     def _fetch_to_nodes(self: "TypeDbDatastore", rows: list[dict], include_relations: bool = False) -> list[Node]:
+        """Convert raw concept document rows to canonical Node objects."""
         nodes: list[Node] = []
 
         with self.transaction(TransactionType.READ) as tx:
@@ -261,6 +267,7 @@ class TypeDbReadMixin(TypeDbBase):
         return nodes
 
     def _fetch_to_relations(self: "TypeDbDatastore", rows: list[dict]) -> list[RelationData]:
+        """Convert raw concept document rows to RelationData objects."""
         relations: list[RelationData] = []
 
         for row in rows:
@@ -334,6 +341,7 @@ class TypeDbReadMixin(TypeDbBase):
         return merged
 
     def _get_all_nodes(self: "TypeDbDatastore") -> list[Node]:
+        """Retrieve and reconstruct all Node objects from the database."""
         self._ensure_connected()
 
         attr_labels = self._get_all_attribute_labels()
@@ -370,6 +378,7 @@ class TypeDbReadMixin(TypeDbBase):
         return self._deduplicate(self._fetch_to_nodes(rows))
 
     def _get_all_relations(self: "TypeDbDatastore") -> list[RelationData]:
+        """Retrieve and reconstruct all relations from the database."""
         self._ensure_connected()
 
         query = """

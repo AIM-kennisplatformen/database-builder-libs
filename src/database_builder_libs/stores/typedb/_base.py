@@ -17,6 +17,7 @@ from database_builder_libs.stores.typedb._types import EagerQueryAnswer
 
 class TypeDbBase(AbstractStore):
     def __init__(self) -> None:
+        """Initialize the base TypeDB driver state."""
         super().__init__()
         self.typedb_driver: Driver | None = None
         self.database: str | None = None
@@ -25,11 +26,16 @@ class TypeDbBase(AbstractStore):
         self._key_attr_cache: dict[str, str | None] = {}
 
     def _ensure_connected(self) -> None:
+        """Ensure that the driver and database are initialized."""
         super()._ensure_connected()
         assert self.typedb_driver is not None
         assert self.database is not None
 
     def _connect_impl(self, config: dict | None) -> None:
+        """
+        Connect to the TypeDB database using the provided configuration.
+        Creates the database if missing and applies the schema if provided.
+        """
         if not config:
             raise ValueError("TypeDB requires configuration")
 
@@ -66,6 +72,10 @@ class TypeDbBase(AbstractStore):
 
     @contextmanager
     def transaction(self, transaction_type: TransactionType) -> Generator[Transaction, None, None]:
+        """
+        Context manager for yielding a TypeDB transaction.
+        Handles commits automatically for write and schema transactions.
+        """
         self._ensure_connected()
         assert self.typedb_driver is not None
         assert self.database is not None
@@ -81,14 +91,17 @@ class TypeDbBase(AbstractStore):
                     transaction.commit()
 
     def query_read(self, query: str) -> EagerQueryAnswer:
+        """Execute a read query and eagerly return its evaluated answer."""
         with self.transaction(TransactionType.READ) as tx:
             return EagerQueryAnswer(tx.query(query).resolve())
 
     def query_write(self, query: str) -> EagerQueryAnswer:
+        """Execute a write query and eagerly return its evaluated answer."""
         with self.transaction(TransactionType.WRITE) as tx:
             return EagerQueryAnswer(tx.query(query).resolve())
 
     def query_schema(self, query: str) -> EagerQueryAnswer:
+        """Execute a schema query, eagerly return its answer, and invalidate key caches."""
         with self.transaction(TransactionType.SCHEMA) as tx:
             result = EagerQueryAnswer(tx.query(query).resolve())
         # invalidate key attr cache — schema may have changed
@@ -100,4 +113,5 @@ class TypeDbBase(AbstractStore):
         return result
 
     def _load_key_attrs_from_schema(self) -> dict[str, str]:
+        """Load key attributes mapped by entity type from the database schema."""
         raise NotImplementedError("This method should be implemented by TypeDbSchemaMixin")

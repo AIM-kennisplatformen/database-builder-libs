@@ -6,6 +6,7 @@ from database_builder_libs.stores.typedb._base import TypeDbBase
 
 class TypeDbSchemaMixin(TypeDbBase):
     def _load_key_attrs_from_schema(self) -> dict[str, str]:
+        """Load key attributes mapped by entity type from the database schema."""
         assert self.typedb_driver is not None
         assert self.database is not None
 
@@ -54,13 +55,16 @@ class TypeDbSchemaMixin(TypeDbBase):
         return key_map
 
     def _get_key_attribute(self, entity_type: str, payload: Mapping[str, object]) -> str:
+        """Get the key attribute name for an entity type, falling back to an inferred one."""
         key = self._key_attr_cache.get(entity_type)
         return key if key else sorted(payload.keys())[0]
 
     def _get_key_attr_for_type(self, entity_type: str) -> str | None:
+        """Get the cached key attribute name for a given entity type."""
         return self._key_attr_cache.get(entity_type)
 
     def _get_entity_attribute_labels(self, entity_type: str) -> list[str]:
+        """Get all attribute labels owned by a specific entity type."""
         if entity_type in self._entity_attr_cache:
             return self._entity_attr_cache[entity_type]
 
@@ -78,6 +82,7 @@ class TypeDbSchemaMixin(TypeDbBase):
         return labels
 
     def _get_all_attribute_labels(self) -> list[str]:
+        """Get all attribute labels owned by any concept in the schema."""
         if self._all_attr_cache is not None:
             return self._all_attr_cache
 
