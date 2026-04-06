@@ -50,6 +50,3 @@ class EagerQueryAnswer:
         if self._is_rows:
             return iter(self._rows)
         return iter([])
-
-    def hi():
-        pass
