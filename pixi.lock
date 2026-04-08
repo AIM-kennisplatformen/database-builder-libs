@@ -2156,7 +2156,7 @@ packages:
 - pypi: ./
   name: database-builder-libs
   version: 0.1.0
-  sha256: b7bfb3a640255d22cd428910352edb874069b6473f12d25f1030cd7840a98032
+  sha256: 8cc56438accdfdc2410d41cea4999a03d942d34e487bd5d189f7b9abc7244f29
   requires_dist:
   - typedb-driver>=3.8.0
   - fastapi>=0.128.0
