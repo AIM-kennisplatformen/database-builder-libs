@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
+from loguru import logger
 from typedb.driver import (
     Credentials,
     Driver,
@@ -84,6 +85,7 @@ class TypeDbBase(AbstractStore):
             try:
                 yield transaction
             except Exception:
+                logger.warning("TypeDB transaction has encountered an error")
                 # Do NOT commit — let TypeDB abort on close
                 raise
             else:
