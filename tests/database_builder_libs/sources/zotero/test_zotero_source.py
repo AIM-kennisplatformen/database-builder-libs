@@ -10,7 +10,7 @@ from loguru import logger
 from datetime import datetime, timezone
 
 
-from database_builder_libs.sources.zotero_source import ZoteroSource
+from database_builder_libs.sources.zotero_source import ZoteroSource, FileType
 
 
 class ZoteroTests(unittest.TestCase):
@@ -93,6 +93,196 @@ class ZoteroTests(unittest.TestCase):
             filename="ITEM123.pdf",
             path="/tmp",
         )
+    
+    def test_download_zotero_item_with_accept_types_pdf_only(self):
+        """Test download_zotero_item with accept_types=["pdf"] and allow_fallback=False"""
+        fake_children = [
+            {
+                "key": "ATTACH_PDF",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "application/pdf",
+                },
+            },
+            {
+                "key": "ATTACH_EPUB",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "application/epub+zip",
+                },
+            }
+        ]
+
+        fake_zotero = MagicMock()
+        fake_zotero.children.return_value = fake_children
+
+        source = self.connect_source()
+        source._zotero = fake_zotero
+
+        # Should select PDF even though EPUB is also present
+        source.download_zotero_item(
+            item_id="ITEM123",
+            download_path="/tmp",
+            accept_types=["pdf"],
+            allow_fallback=False,
+        )
+
+        # Verify PDF was selected (not EPUB)
+        fake_zotero.dump.assert_called_once_with(
+            itemkey="ATTACH_PDF",
+            filename="ITEM123.pdf",
+            path="/tmp",
+        )
+
+    def test_download_zotero_item_with_accept_types_epub_first(self):
+        """Test download_zotero_item with accept_types=["epub", "pdf"] (EPUB preferred)"""
+        fake_children = [
+            {
+                "key": "ATTACH_PDF",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "application/pdf",
+                },
+            },
+            {
+                "key": "ATTACH_EPUB",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "application/epub+zip",
+                },
+            }
+        ]
+
+        fake_zotero = MagicMock()
+        fake_zotero.children.return_value = fake_children
+
+        source = self.connect_source()
+        source._zotero = fake_zotero
+
+        # Should select EPUB (preferred) not PDF
+        source.download_zotero_item(
+            item_id="ITEM123",
+            download_path="/tmp",
+            accept_types=["epub", "pdf"],
+        )
+
+        # Verify EPUB was selected
+        fake_zotero.dump.assert_called_once_with(
+            itemkey="ATTACH_EPUB",
+            filename="ITEM123.epub",
+            path="/tmp",
+        )
+
+    def test_download_zotero_item_returns_false_when_no_acceptable_type(self):
+        """Test that download_zotero_item returns False when no acceptable type found and allow_fallback=False"""
+        fake_children = [
+            {
+                "key": "ATTACH_HTML",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "text/html",
+                },
+            }
+        ]
+
+        fake_zotero = MagicMock()
+        fake_zotero.children.return_value = fake_children
+
+        source = self.connect_source()
+        source._zotero = fake_zotero
+
+        # Request PDF only, but only HTML available, with no fallback
+        result = source.download_zotero_item(
+            item_id="ITEM123",
+            download_path="/tmp",
+            accept_types=["pdf"],
+            allow_fallback=False,
+        )
+
+        # Should return False (no acceptable type)
+        assert result is False
+        # dump should NOT be called
+        fake_zotero.dump.assert_not_called()
+
+    def test_download_zotero_item_fallback_when_preferred_type_missing(self):
+        """Test fallback behavior when preferred type not found but allow_fallback=True"""
+        fake_children = [
+            {
+                "key": "ATTACH_EPUB",
+                "data": {
+                    "itemType": "attachment",
+                    "contentType": "application/epub+zip",
+                },
+            }
+        ]
+
+        fake_zotero = MagicMock()
+        fake_zotero.children.return_value = fake_children
+
+        source = self.connect_source()
+        source._zotero = fake_zotero
+
+        # Request PDF with fallback enabled, but only EPUB available
+        result = source.download_zotero_item(
+            item_id="ITEM123",
+            download_path="/tmp",
+            accept_types=["pdf"],
+            allow_fallback=True,  # Should fall back to smart selection
+        )
+
+        # Should succeed and use EPUB (via fallback)
+        assert result is True
+        fake_zotero.dump.assert_called_once()
+        call_args = fake_zotero.dump.call_args
+        assert call_args[1]["filename"] == "ITEM123.epub"
+
+    def test_file_type_constants(self):
+        """Test that FileType constants are correctly defined"""
+        assert FileType.PDF == ["pdf"]
+        assert FileType.EPUB == ["epub"]
+        assert FileType.EBOOKS == ["epub", "pdf"]
+        assert FileType.DOCUMENTS == ["pdf", "docx", "doc"]
+        assert "pdf" in FileType.ALL
+        assert "epub" in FileType.ALL
+
+    def test_download_zotero_item_with_correct_file_extensions(self):
+        """Test that different file types get correct extensions"""
+        test_cases = [
+            ("application/pdf", "ITEM.pdf"),
+            ("application/epub+zip", "ITEM.epub"),
+            ("application/msword", "ITEM.doc"),
+            ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "ITEM.docx"),
+            ("text/plain", "ITEM.txt"),
+            ("text/html", "ITEM.html"),
+        ]
+
+        for content_type, expected_filename in test_cases:
+            fake_children = [
+                {
+                    "key": "ATTACH",
+                    "data": {
+                        "itemType": "attachment",
+                        "contentType": content_type,
+                    },
+                }
+            ]
+
+            fake_zotero = MagicMock()
+            fake_zotero.children.return_value = fake_children
+
+            source = self.connect_source()
+            source._zotero = fake_zotero
+
+            source.download_zotero_item(
+                item_id="ITEM",
+                download_path="/tmp",
+            )
+
+            # Verify correct filename with extension
+            fake_zotero.dump.assert_called_once()
+            call_args = fake_zotero.dump.call_args
+            assert call_args[1]["filename"] == expected_filename
+
     @httpretty.activate
     def test_list_artefacts_str_ids_http(self):
         """Ensure Zotero item keys are returned as stable string identifiers"""

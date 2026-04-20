@@ -80,11 +80,12 @@ class QdrantDatastore(AbstractVectorStore):
         collection = config.get("collection")
         vector_size = config.get("vector_size")
         api_key = config.get("api_key")
+        https = config.get("https", False)
 
         if url is None or collection is None or vector_size is None:
             raise ValueError("Qdrant config requires url, collection, vector_size")
 
-        self.client = QdrantClient(url=url, api_key=api_key)
+        self.client = QdrantClient(url=url, api_key=api_key, https=https)
         self.collection = collection
         self.vector_size = int(vector_size)
         if self.vector_size <= 0:
