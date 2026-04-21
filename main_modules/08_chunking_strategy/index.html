@@ -1,0 +1,3099 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../03_text_extract_utilities/">
+      
+      
+        <link rel="next" href="../09_abstract_chunk_embedder/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Chunking strategies - Database-builder-libs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#chunking-strategies" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Database-builder-libs" class="md-header__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Database-builder-libs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Chunking strategies
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome to Database Builder Libs
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/00_getting_started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../00_overview/" class="md-tabs__link">
+          
+  
+  
+  Main modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/rules/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Database-builder-libs" class="md-nav__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Database-builder-libs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Database Builder Libs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/00_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate in your project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/01_learn_the_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started with development on this library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/02_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Main modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sources
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_abstract_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_zotero_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zotero source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12_pdf_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_typedb_v2_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeDB V2 store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vector Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vector Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_vector_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract vector store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_qdrant_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Qdrant store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text extract utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text extract utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_text_extract_utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text structure extraction (DocumentParserDocling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text chunk utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text chunk utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chunking strategies
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chunking strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-chunk-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common chunk fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sectionchunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SectionChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixedsizechunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FixedSizeChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slidingwindowchunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SlidingWindowChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summaryandsectionsstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SummaryAndSectionsStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstrings-abstractchunkstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstrings AbstractChunkStrategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text embed utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text embed utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09_abstract_chunk_embedder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10_chunk_embedder_openai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI-compatible chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11_chunk_embedder_transformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transformer-based chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choosing-a-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing a strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-chunk-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common chunk fields
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sectionchunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SectionChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixedsizechunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FixedSizeChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slidingwindowchunkingstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SlidingWindowChunkingStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#summaryandsectionsstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SummaryAndSectionsStrategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstrings-abstractchunkstrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstrings AbstractChunkStrategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Welcome to Database Builder Libs
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../00_overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Main modules
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Text chunk utilities
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="chunking-strategies">Chunking strategies<a class="headerlink" href="#chunking-strategies" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The <strong>AbstractChunkingStrategy</strong> class defines the contract that all concrete chunking
+implementations must satisfy. It encapsulates the transformation of raw document sections
+into a flat, ordered list of <code>Chunk</code> objects that are ready for embedding and indexing.
+By adhering to this interface, different splitting approaches — section-based, fixed-size,
+sliding-window, or summary-prefixed — can be swapped interchangeably while the rest of
+the pipeline remains agnostic to the underlying strategy.</p>
+<hr />
+<h2 id="design-notes">Design notes<a class="headerlink" href="#design-notes" title="Permanent link">&para;</a></h2>
+<h3 id="interaction-pattern">Interaction pattern<a class="headerlink" href="#interaction-pattern" title="Permanent link">&para;</a></h3>
+<p><code>AbstractChunkingStrategy</code> follows a single-phase transformation pattern:</p>
+<ol>
+<li><strong>Input</strong> — an ordered sequence of <code>RawSection</code> tuples, each carrying a section title,
+   body text, and any tables extracted from that section. These are produced directly by
+   <code>DocumentParserDocling</code> and passed in without further transformation.</li>
+<li><strong>Chunking</strong> — the strategy splits, merges, or partitions the sections according to its
+   own logic and returns a flat list of <code>Chunk</code> objects.</li>
+<li><strong>Output</strong> — every returned <code>Chunk</code> has a non-empty <code>text</code>, a stable <code>chunk_index</code>
+   starting from 0, the caller-supplied <code>document_id</code>, and an empty <code>vector</code> list.
+   Embedding is a separate downstream concern.</li>
+</ol>
+<h3 id="choosing-a-strategy">Choosing a strategy<a class="headerlink" href="#choosing-a-strategy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Chunks produced</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SectionChunkingStrategy</code></td>
+<td>One per section</td>
+<td>Clean heading structure; sections are already semantically coherent</td>
+</tr>
+<tr>
+<td><code>FixedSizeChunkingStrategy</code></td>
+<td>One or more per section</td>
+<td>Uniform context window needed; no overlap required</td>
+</tr>
+<tr>
+<td><code>SlidingWindowChunkingStrategy</code></td>
+<td>More than fixed-size due to overlap</td>
+<td>Boundary recall matters; dense technical text with cross-boundary sentences</td>
+</tr>
+<tr>
+<td><code>SummaryAndSectionsStrategy</code></td>
+<td>One per section (+ 1 summary if provided)</td>
+<td>Section structure must be preserved with an optional LLM-generated summary chunk prepended</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="common-chunk-fields">Common chunk fields<a class="headerlink" href="#common-chunk-fields" title="Permanent link">&para;</a></h2>
+<p>Every <code>Chunk</code> returned by any strategy has the following fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>document_id</code></td>
+<td><code>str</code></td>
+<td>The <code>document_id</code> passed to <code>.chunk()</code>, unchanged.</td>
+</tr>
+<tr>
+<td><code>chunk_index</code></td>
+<td><code>int</code></td>
+<td>Monotonically increasing from 0.</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>Non-empty chunk body.</td>
+</tr>
+<tr>
+<td><code>vector</code></td>
+<td><code>list</code></td>
+<td>Always <code>[]</code> until the embedding stage populates it.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Strategy-specific; see each strategy below.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="implementations">Implementations<a class="headerlink" href="#implementations" title="Permanent link">&para;</a></h2>
+<h3 id="sectionchunkingstrategy">SectionChunkingStrategy<a class="headerlink" href="#sectionchunkingstrategy" title="Permanent link">&para;</a></h3>
+<p>Produces exactly one chunk per non-empty document section. This is the simplest strategy
+and maps cleanly onto the heading structure that Docling extracts. It is the right default
+when sections are already semantically coherent units such as academic papers or reports.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>min_chars</code></td>
+<td><code>int</code></td>
+<td><code>20</code></td>
+<td>Sections shorter than this after stripping are silently dropped, preventing index pollution from stub sections such as lone headings with no body.</td>
+</tr>
+<tr>
+<td><code>include_title_in_text</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>When <code>True</code>, the section title is prepended to the chunk text as <code>"&lt;title&gt;\n&lt;text&gt;"</code>. Useful when the title adds retrieval signal that does not appear in the body.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Metadata fields</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>section_title</code></td>
+<td><code>str</code></td>
+<td>Title of the source section.</td>
+</tr>
+<tr>
+<td><code>has_tables</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> if the section contained at least one table.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="fixedsizechunkingstrategy">FixedSizeChunkingStrategy<a class="headerlink" href="#fixedsizechunkingstrategy" title="Permanent link">&para;</a></h3>
+<p>Splits each section's text into non-overlapping fixed-size character windows. Each section
+may produce one or more chunks depending on its length relative to <code>chunk_size</code>. Splits are
+made on whitespace boundaries wherever possible to avoid cutting words mid-token.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chunk_size</code></td>
+<td><code>int</code></td>
+<td><code>1000</code></td>
+<td>Target maximum number of characters per chunk.</td>
+</tr>
+<tr>
+<td><code>min_chars</code></td>
+<td><code>int</code></td>
+<td><code>20</code></td>
+<td>Windows shorter than this are dropped; typically catches the last fragment of a short section.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Metadata fields</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>section_title</code></td>
+<td><code>str</code></td>
+<td>Title of the source section.</td>
+</tr>
+<tr>
+<td><code>has_tables</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> if the source section contained at least one table.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="slidingwindowchunkingstrategy">SlidingWindowChunkingStrategy<a class="headerlink" href="#slidingwindowchunkingstrategy" title="Permanent link">&para;</a></h3>
+<p>Produces overlapping character windows across each section's text. Overlapping windows
+preserve cross-boundary context that non-overlapping splits lose, at the cost of a larger
+index and some retrieval redundancy. Useful for dense technical text where important
+sentences often span what would otherwise be a hard split boundary.</p>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chunk_size</code></td>
+<td><code>int</code></td>
+<td><code>1000</code></td>
+<td>Target maximum number of characters per window.</td>
+</tr>
+<tr>
+<td><code>overlap</code></td>
+<td><code>int</code></td>
+<td><code>200</code></td>
+<td>Number of characters shared between consecutive windows. Must be strictly less than <code>chunk_size</code>.</td>
+</tr>
+<tr>
+<td><code>min_chars</code></td>
+<td><code>int</code></td>
+<td><code>20</code></td>
+<td>Windows shorter than this are dropped.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Raises</strong></p>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError</code></td>
+<td><code>overlap &gt;= chunk_size</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Metadata fields</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>section_title</code></td>
+<td><code>str</code></td>
+<td>Title of the source section.</td>
+</tr>
+<tr>
+<td><code>has_tables</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> if the source section contained at least one table.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="summaryandsectionsstrategy">SummaryAndSectionsStrategy<a class="headerlink" href="#summaryandsectionsstrategy" title="Permanent link">&para;</a></h3>
+<p>Produces one optional summary chunk followed by one chunk per non-empty section, preserving
+the document's natural heading structure. Unlike <code>SummaryAndNSectionsStrategy</code>, section
+boundaries and titles are never merged or discarded — each section maps to exactly one body
+chunk. Use this strategy when section-level retrieval granularity must be preserved and an
+optional LLM-generated summary chunk is desired at index 0.</p>
+<p><strong>Chunk layout</strong></p>
+<div class="highlight"><pre><span></span><code>index 0      →  summary text            (only when summary is provided and non-blank)
+index 1..N   →  one chunk per section   (in document order)
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>index 0..N   →  one chunk per section   (when no summary is provided)
+</code></pre></div>
+<p><strong>Parameters</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>min_chars</code></td>
+<td><code>int</code></td>
+<td><code>20</code></td>
+<td>Sections shorter than this after stripping are silently dropped.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Metadata fields — summary chunk</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chunk_type</code></td>
+<td><code>str</code></td>
+<td>Always <code>"summary"</code>.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Metadata fields — body chunks</strong></p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chunk_type</code></td>
+<td><code>str</code></td>
+<td>Always <code>"body"</code>.</td>
+</tr>
+<tr>
+<td><code>section_title</code></td>
+<td><code>str</code></td>
+<td>Title of the source section.</td>
+</tr>
+<tr>
+<td><code>has_tables</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> if the source section contained at least one table.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="docstrings-abstractchunkstrategy">Docstrings AbstractChunkStrategy<a class="headerlink" href="#docstrings-abstractchunkstrategy" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.models.abstract_chunk_strategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">abstract_chunk_strategy</span>
+
+
+<a href="#database_builder_libs.models.abstract_chunk_strategy" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy">AbstractChunkingStrategy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Interface for all chunking strategies.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">AbstractChunkingStrategy</span>
+
+
+<a href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" id="mermaid-link-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy">
+              flowchart TD
+              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy[AbstractChunkingStrategy]
+
+              
+
+              click database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy href "" "database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Interface for all chunking strategies.</p>
+<p>A ChunkingStrategy transforms a sequence of raw document sections into a
+flat list of <code>Chunk</code> objects that are ready for embedding and indexing.</p>
+<h4 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy--contract">Contract<a class="headerlink" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy--contract" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>chunk()</code> is the single method every implementation must provide.</li>
+<li>Returned <code>chunk_index</code> values must be monotonically increasing from 0
+  and stable across re-indexing runs for identical input.</li>
+<li><code>text</code> on each <code>Chunk</code> must be non-empty.</li>
+<li><code>vector</code> is left as an empty sequence — embedding is a separate concern.</li>
+<li><code>metadata</code> may carry arbitrary JSON-serialisable fields but must never
+  influence chunk identity.</li>
+</ul>
+<h4 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy--implementations">Implementations<a class="headerlink" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy--implementations" title="Permanent link">&para;</a></h4>
+<ul>
+<li>:class:<code>SectionChunkingStrategy</code>       – one chunk per docling section (default)</li>
+<li>:class:<code>FixedSizeChunkingStrategy</code>      – splits text into fixed-size windows</li>
+<li>:class:<code>SlidingWindowChunkingStrategy</code>  – overlapping fixed-size windows</li>
+<li>:class:<code>SummaryAndNSectionsStrategy</code>    – summary chunk + N evenly-merged body chunks</li>
+</ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            chunk
+
+
+  
+      abstractmethod
+   (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk">chunk</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Convert raw sections into <code>Chunk</code> objects.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">chunk</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">chunk</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk(sections)">sections</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><span title="database_builder_libs.models.abstract_chunk_strategy.RawSection">RawSection</span></span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n"><span title="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk(document_id)">document_id</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><span title="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk(summary)">summary</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Chunk
+
+
+  
+      dataclass
+   (database_builder_libs.models.chunk.Chunk)" href="../06_vector_stores/#database_builder_libs.models.chunk.Chunk">Chunk</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Convert raw sections into <code>Chunk</code> objects.</p>
+<h5 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk--parameters">Parameters<a class="headerlink" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk--parameters" title="Permanent link">&para;</a></h5>
+<p>sections:
+    Ordered sequence of <code>(title, text, tables)</code> tuples as produced
+    by <code>TextStructureExtractor.extract_sections()</code>.
+document_id:
+    Stable identifier of the parent document.  Passed through
+    unchanged into every <code>Chunk.document_id</code>.
+summary:
+    Optional pre-extracted summary string (e.g. from
+    <code>TextMetadata.summary</code>).  Most strategies ignore this; it is
+    consumed by :class:<code>SummaryAndNSectionsStrategy</code>.</p>
+<h5 id="database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk--returns">Returns<a class="headerlink" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy.chunk--returns" title="Permanent link">&para;</a></h5>
+<p>list[Chunk]
+    Flat, ordered list of chunks.  May be empty if <em>sections</em> is empty
+    or all sections are blank after cleaning.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_chunk_strategy.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">chunk</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">sections</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">RawSection</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">document_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">summary</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chunk</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert raw sections into ``Chunk`` objects.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sections:</span>
+<span class="sd">        Ordered sequence of ``(title, text, tables)`` tuples as produced</span>
+<span class="sd">        by ``TextStructureExtractor.extract_sections()``.</span>
+<span class="sd">    document_id:</span>
+<span class="sd">        Stable identifier of the parent document.  Passed through</span>
+<span class="sd">        unchanged into every ``Chunk.document_id``.</span>
+<span class="sd">    summary:</span>
+<span class="sd">        Optional pre-extracted summary string (e.g. from</span>
+<span class="sd">        ``TextMetadata.summary``).  Most strategies ignore this; it is</span>
+<span class="sd">        consumed by :class:`SummaryAndNSectionsStrategy`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list[Chunk]</span>
+<span class="sd">        Flat, ordered list of chunks.  May be empty if *sections* is empty</span>
+<span class="sd">        or all sections are blank after cleaning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="docstrings-sectionchunkingstrategy">Docstrings SectionChunkingStrategy<a class="headerlink" href="#docstrings-sectionchunkingstrategy" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.utility.chunk.n_points_section" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">n_points_section</span>
+
+
+<a href="#database_builder_libs.utility.chunk.n_points_section" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            SectionChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy">SectionChunkingStrategy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Produces exactly one <code>Chunk</code> per non-empty document section.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SectionChunkingStrategy</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SectionChunkingStrategy</span><span class="p">(</span><span class="n"><span title="database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy(min_chars)">min_chars</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n"><span title="database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy(include_title_in_text)">include_title_in_text</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            SectionChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy" id="mermaid-link-database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy"></a>
+                  <a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" id="mermaid-link-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy">
+              flowchart TD
+              database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy[SectionChunkingStrategy]
+              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy[AbstractChunkingStrategy]
+
+                              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy --> database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy
+                
+
+
+              click database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy href "" "database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy"
+              click database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy href "" "database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Produces exactly one <code>Chunk</code> per non-empty document section.</p>
+<p>This is the simplest strategy and maps cleanly onto the heading structure
+that Docling extracts.  It is the best default when sections are already
+semantically coherent units (e.g. academic papers, reports).</p>
+<h4 id="database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy--attributes">Attributes<a class="headerlink" href="#database_builder_libs.utility.chunk.n_points_section.SectionChunkingStrategy--attributes" title="Permanent link">&para;</a></h4>
+<p>min_chars : int
+    Sections whose text is shorter than this threshold (after stripping)
+    are silently dropped.  Prevents index pollution from stub sections
+    such as lone headings with no body.  Default: 20.
+include_title_in_text : bool
+    When <code>True</code> the section title is prepended to the chunk text as
+    <code>"&lt;title&gt;\n&lt;text&gt;"</code>.  Useful when the title adds retrieval signal
+    that does not appear in the body.  Default: <code>False</code>.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="docstrings-fixedsizechunkingstrategy">Docstrings FixedSizeChunkingStrategy<a class="headerlink" href="#docstrings-fixedsizechunkingstrategy" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.utility.chunk.n_points_fixed_size" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">n_points_fixed_size</span>
+
+
+<a href="#database_builder_libs.utility.chunk.n_points_fixed_size" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            FixedSizeChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy">FixedSizeChunkingStrategy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Splits section text into non-overlapping fixed-size character windows.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">FixedSizeChunkingStrategy</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">FixedSizeChunkingStrategy</span><span class="p">(</span><span class="n"><span title="database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy(chunk_size)">chunk_size</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n"><span title="database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy(min_chars)">min_chars</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            FixedSizeChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy" id="mermaid-link-database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy"></a>
+                  <a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" id="mermaid-link-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy">
+              flowchart TD
+              database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy[FixedSizeChunkingStrategy]
+              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy[AbstractChunkingStrategy]
+
+                              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy --> database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy
+                
+
+
+              click database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy href "" "database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy"
+              click database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy href "" "database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Splits section text into non-overlapping fixed-size character windows.</p>
+<p>Each section may produce one or more chunks depending on its length
+relative to <code>chunk_size</code>.  Splits are made on whitespace boundaries
+wherever possible to avoid cutting words mid-token.</p>
+<h4 id="database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy--attributes">Attributes<a class="headerlink" href="#database_builder_libs.utility.chunk.n_points_fixed_size.FixedSizeChunkingStrategy--attributes" title="Permanent link">&para;</a></h4>
+<p>chunk_size : int
+    Target maximum number of characters per chunk.  Default: 1000.
+min_chars : int
+    Windows shorter than this are dropped (typically the last fragment of
+    a short section).  Default: 20.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="docstrings-slidingwindowchunkingstrategy">Docstrings SlidingWindowChunkingStrategy<a class="headerlink" href="#docstrings-slidingwindowchunkingstrategy" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.utility.chunk.n_points_sliding_window" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">n_points_sliding_window</span>
+
+
+<a href="#database_builder_libs.utility.chunk.n_points_sliding_window" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            SlidingWindowChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy">SlidingWindowChunkingStrategy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Produces overlapping character windows across each section's text.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SlidingWindowChunkingStrategy</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SlidingWindowChunkingStrategy</span><span class="p">(</span><span class="n"><span title="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy(chunk_size)">chunk_size</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n"><span title="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy(overlap)">overlap</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span> <span class="n"><span title="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy(min_chars)">min_chars</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            SlidingWindowChunkingStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy)" href="#database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy" id="mermaid-link-database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy"></a>
+                  <a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" id="mermaid-link-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy">
+              flowchart TD
+              database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy[SlidingWindowChunkingStrategy]
+              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy[AbstractChunkingStrategy]
+
+                              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy --> database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy
+                
+
+
+              click database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy href "" "database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy"
+              click database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy href "" "database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Produces overlapping character windows across each section's text.</p>
+<p>Overlapping windows preserve cross-boundary context that non-overlapping
+splits lose, at the cost of index size and some retrieval redundancy.
+Useful for dense technical text where important sentences often span what
+would otherwise be a hard split boundary.</p>
+<h4 id="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy--attributes">Attributes<a class="headerlink" href="#database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy--attributes" title="Permanent link">&para;</a></h4>
+<p>chunk_size : int
+    Target maximum number of characters per window.  Default: 1000.
+overlap : int
+    Number of characters shared between consecutive windows.
+    Must be strictly less than <code>chunk_size</code>.  Default: 200.
+min_chars : int
+    Windows shorter than this threshold are dropped.  Default: 20.</p>
+<h4 id="database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy--raises">Raises<a class="headerlink" href="#database_builder_libs.utility.chunk.n_points_sliding_window.SlidingWindowChunkingStrategy--raises" title="Permanent link">&para;</a></h4>
+<p>ValueError
+    If <code>overlap &gt;= chunk_size</code>.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="docstrings-summaryandsectionsstrategy">Docstrings SummaryAndSectionsStrategy<a class="headerlink" href="#docstrings-summaryandsectionsstrategy" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.utility.chunk.summary_and_sections" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">summary_and_sections</span>
+
+
+<a href="#database_builder_libs.utility.chunk.summary_and_sections" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            SummaryAndSectionsStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy)" href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy">SummaryAndSectionsStrategy</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Produces one optional summary chunk followed by one chunk per section.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">SummaryAndSectionsStrategy</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SummaryAndSectionsStrategy</span><span class="p">(</span><span class="n"><span title="database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy(min_chars)">min_chars</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="mi">20</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            SummaryAndSectionsStrategy
+
+
+  
+      dataclass
+   (database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy)" href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy" id="mermaid-link-database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy"></a>
+                  <a class="autorefs autorefs-internal" title="            AbstractChunkingStrategy (database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy)" href="#database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy" id="mermaid-link-database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy">
+              flowchart TD
+              database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy[SummaryAndSectionsStrategy]
+              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy[AbstractChunkingStrategy]
+
+                              database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy --> database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy
+                
+
+
+              click database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy href "" "database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy"
+              click database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy href "" "database_builder_libs.models.abstract_chunk_strategy.AbstractChunkingStrategy"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Produces one optional summary chunk followed by one chunk per section.</p>
+<p>Combines the summary prepending of :class:<code>SummaryAndNSectionsStrategy</code>
+with the section-preserving behaviour of :class:<code>SectionChunkingStrategy</code>.
+Section boundaries, titles, and table flags are all preserved on each body
+chunk.</p>
+<h4 id="database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--chunk-layout-when-summary-is-present">Chunk layout (when summary is present)<a class="headerlink" href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--chunk-layout-when-summary-is-present" title="Permanent link">&para;</a></h4>
+<p>index 0      →  summary text
+index 1..N   →  one chunk per non-empty section, in document order</p>
+<h4 id="database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--chunk-layout-when-summary-is-absent">Chunk layout (when summary is absent)<a class="headerlink" href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--chunk-layout-when-summary-is-absent" title="Permanent link">&para;</a></h4>
+<p>index 0..N   →  one chunk per non-empty section, in document order</p>
+<h4 id="database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--attributes">Attributes<a class="headerlink" href="#database_builder_libs.utility.chunk.summary_and_sections.SummaryAndSectionsStrategy--attributes" title="Permanent link">&para;</a></h4>
+<p>min_chars : int
+    Sections whose text is shorter than this after stripping are silently
+    dropped.  Default: 20.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.tabs.link", "navigation.tabs", "content.tabs.link", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

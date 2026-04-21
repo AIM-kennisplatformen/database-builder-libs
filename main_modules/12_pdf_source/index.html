@@ -1,0 +1,2739 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../04_zotero_source/">
+      
+      
+        <link rel="next" href="../02_stores/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>PDF source - Database-builder-libs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pdf-source" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Database-builder-libs" class="md-header__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Database-builder-libs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PDF source
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome to Database Builder Libs
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/00_getting_started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../00_overview/" class="md-tabs__link">
+          
+  
+  
+  Main modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/rules/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Database-builder-libs" class="md-nav__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Database-builder-libs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Database Builder Libs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/00_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate in your project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/01_learn_the_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started with development on this library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/02_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Main modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sources
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_abstract_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_zotero_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zotero source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF source
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-pdfsource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring the PDFSource
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the PDFSource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-llm-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling LLM extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-extraction-strategies-per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring extraction strategies per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-extraction-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default extraction strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-chunking-and-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring chunking and embedding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipping-fields-already-known-from-an-external-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skipping fields already known from an external source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#content-object-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Content object structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_typedb_v2_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeDB V2 store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vector Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vector Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_vector_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract vector store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_qdrant_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Qdrant store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text extract utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text extract utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_text_extract_utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text structure extraction (DocumentParserDocling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text chunk utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text chunk utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_chunking_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chunking strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text embed utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text embed utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09_abstract_chunk_embedder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10_chunk_embedder_openai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI-compatible chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11_chunk_embedder_transformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transformer-based chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Patterns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Details
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-pdfsource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring the PDFSource
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuring the PDFSource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enabling-llm-extraction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enabling LLM extraction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-extraction-strategies-per-field" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring extraction strategies per field
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-extraction-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default extraction strategies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuring-chunking-and-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring chunking and embedding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skipping-fields-already-known-from-an-external-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Skipping fields already known from an external source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#content-object-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Content object structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Welcome to Database Builder Libs
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../00_overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Main modules
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../01_abstract_source/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Sources
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="pdf-source">PDF source<a class="headerlink" href="#pdf-source" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The PDF source allows you to parse, extract metadata from, chunk, and embed PDF documents stored in a local folder. It implements the AbstractSource interface to provide incremental synchronization based on file modification times, and exposes a fully configurable extraction pipeline that can combine embedded PDF metadata, structural heuristics from Docling, and LLM-based extraction for each metadata field independently.</p>
+<h2 id="design-notes">Design Notes<a class="headerlink" href="#design-notes" title="Permanent link">&para;</a></h2>
+<h3 id="interaction-patterns">Interaction Patterns<a class="headerlink" href="#interaction-patterns" title="Permanent link">&para;</a></h3>
+<p>The PDFSource follows these interaction patterns:</p>
+<ol>
+<li>
+<p><strong>Connection Pattern</strong>:</p>
+<ul>
+<li>Validate folder path exists on disk</li>
+<li>Initialise the Docling document parser</li>
+<li>Build the LLM client if credentials are provided</li>
+<li>All field extraction strategies are configured at connect time</li>
+</ul>
+</li>
+<li>
+<p><strong>Synchronization Pattern</strong>:</p>
+<ul>
+<li>Scan folder recursively for <code>.pdf</code> files</li>
+<li>Compare file mtime against <code>last_synced</code> cursor</li>
+<li>Return stable relative paths as artefact identifiers</li>
+<li>Sorted ascending by mtime for deterministic ordering</li>
+</ul>
+</li>
+<li>
+<p><strong>Content Retrieval Pattern</strong>:</p>
+<ul>
+<li>Parse each PDF with Docling to produce a structural IR</li>
+<li>Run the metadata extraction pipeline (see Configuration below)</li>
+<li>Chunk the parsed sections using the configured strategy</li>
+<li>Embed chunks if an embedder is configured</li>
+<li>Pack everything into a <code>Content</code> object</li>
+</ul>
+</li>
+<li>
+<p><strong>Metadata Extraction Pattern</strong>:</p>
+<ul>
+<li>Each field (<code>title</code>, <code>authors</code>, <code>summary</code>, <code>publishing_institute</code>, <code>acknowledgements</code>) has its own ordered strategy list</li>
+<li>Strategies are tried in order; extraction stops on first success when <code>stop_on_success=True</code></li>
+<li>Expensive operations (LLM call, PDF metadata read) are cached and run at most once per document</li>
+</ul>
+</li>
+</ol>
+<h3 id="implementation-details">Implementation Details<a class="headerlink" href="#implementation-details" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Incremental Sync</strong>: Uses filesystem mtime for change detection. Deletions are not reported.</li>
+<li><strong>Stable Identifiers</strong>: Artefact IDs are paths relative to <code>folder_path</code> and remain stable as long as files are not moved.</li>
+<li><strong>Parser Resilience</strong>: Docling conversion failures are caught and logged per file; the pipeline continues and returns a <code>Content</code> with empty chunks and metadata for that file.</li>
+<li><strong>LLM Caching</strong>: The LLM is called at most once per document regardless of how many fields request it. The result is cached and reused across fields.</li>
+<li><strong>PDF Metadata Robustness</strong>: The embedded PDF metadata reader handles both plain dicts and <code>DocumentInformation</code> objects (pypdf), as well as gracefully dropping any non-string keys caused by library version mismatches.</li>
+<li><strong>Chunking</strong>: Sections produced by Docling are passed to the configured <code>AbstractChunkingStrategy</code>. Chunking failures are caught and logged without aborting the pipeline.</li>
+<li><strong>Embedding</strong>: If an <code>AbstractChunkEmbedder</code> is configured, it is called on the chunk list after chunking. Embedding failures return the original un-embedded chunks.</li>
+</ul>
+<h2 id="configuring-the-pdfsource">Configuring the PDFSource<a class="headerlink" href="#configuring-the-pdfsource" title="Permanent link">&para;</a></h2>
+<p>Configuration is passed as a dict to <code>src.connect({...})</code> and validated into a <code>PDFDocumentConfig</code> internally. All keys except <code>folder_path</code> are optional.</p>
+<h3 id="minimal-setup">Minimal setup<a class="headerlink" href="#minimal-setup" title="Permanent link">&para;</a></h3>
+<p>Only <code>folder_path</code> is required. With no other config, metadata extraction uses embedded PDF metadata and Docling heuristics only — no LLM calls are made.</p>
+<div class="highlight"><pre><span></span><code><span class="n">src</span> <span class="o">=</span> <span class="n">PDFSource</span><span class="p">()</span>
+<span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span><span class="s2">&quot;folder_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/papers&quot;</span><span class="p">})</span>
+</code></pre></div>
+<h3 id="enabling-llm-extraction">Enabling LLM extraction<a class="headerlink" href="#enabling-llm-extraction" title="Permanent link">&para;</a></h3>
+<p>Provide <code>llm_base_url</code>, <code>llm_api_key</code>, and optionally <code>llm_model</code> to enable LLM-based extraction. The LLM receives the first 60 lines of the document and is expected to return JSON with <code>title</code>, <code>authors</code>, <code>publishing_institute</code>, and <code>acknowledgements</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">src</span> <span class="o">=</span> <span class="n">PDFSource</span><span class="p">()</span>
+<span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span>
+    <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span>  <span class="s2">&quot;/data/papers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;llm_base_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://localhost:11434/v1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;llm_api_key&quot;</span><span class="p">:</span>  <span class="s2">&quot;ollama&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;llm_model&quot;</span><span class="p">:</span>    <span class="s2">&quot;gemma2:9b&quot;</span><span class="p">,</span>
+<span class="p">})</span>
+</code></pre></div>
+<p>Any OpenAI-compatible endpoint is supported. The default model is <code>gpt-4.1-mini</code>.</p>
+<h3 id="configuring-extraction-strategies-per-field">Configuring extraction strategies per field<a class="headerlink" href="#configuring-extraction-strategies-per-field" title="Permanent link">&para;</a></h3>
+<p>Each metadata field can be configured independently using a <code>FieldExtractionConfig</code> that holds an <code>OrderedStrategyConfig</code>. The three available strategies are:</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ExtractionStrategy.FILE_METADATA</code></td>
+<td><code>"file_metadata"</code></td>
+<td>Reads embedded PDF metadata via pypdf. Fast, no ML. Reliable for well-tagged PDFs; often noisy for Word-derived documents.</td>
+</tr>
+<tr>
+<td><code>ExtractionStrategy.DOCLING</code></td>
+<td><code>"docling"</code></td>
+<td>Infers values from the Docling structural IR. Uses section headers for title, abstract section detection for summary.</td>
+</tr>
+<tr>
+<td><code>ExtractionStrategy.LLM</code></td>
+<td><code>"llm"</code></td>
+<td>Sends the document header to the configured LLM. Most flexible but requires LLM credentials and adds latency.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>OrderedStrategyConfig</code> controls the order strategies are tried and whether to stop on the first success:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">database_builder_libs.sources.pdf_source</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FieldExtractionConfig</span><span class="p">,</span>
+    <span class="n">OrderedStrategyConfig</span><span class="p">,</span>
+    <span class="n">ExtractionStrategy</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Try LLM first, fall back to Docling heuristics</span>
+<span class="n">title_config</span> <span class="o">=</span> <span class="n">FieldExtractionConfig</span><span class="p">(</span>
+    <span class="n">strategies</span><span class="o">=</span><span class="n">OrderedStrategyConfig</span><span class="p">(</span>
+        <span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="o">.</span><span class="n">LLM</span><span class="p">,</span> <span class="n">ExtractionStrategy</span><span class="o">.</span><span class="n">DOCLING</span><span class="p">],</span>
+        <span class="n">stop_on_success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>   <span class="c1"># default — stops as soon as one strategy succeeds</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Run both strategies regardless of success — LLM overwrites FILE_METADATA result</span>
+<span class="n">authors_config</span> <span class="o">=</span> <span class="n">FieldExtractionConfig</span><span class="p">(</span>
+    <span class="n">strategies</span><span class="o">=</span><span class="n">OrderedStrategyConfig</span><span class="p">(</span>
+        <span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="n">ExtractionStrategy</span><span class="o">.</span><span class="n">FILE_METADATA</span><span class="p">,</span> <span class="n">ExtractionStrategy</span><span class="o">.</span><span class="n">LLM</span><span class="p">],</span>
+        <span class="n">stop_on_success</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># LLM always runs and overwrites</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Disable a field entirely</span>
+<span class="n">acks_config</span> <span class="o">=</span> <span class="n">FieldExtractionConfig</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+<p>Pass these configs by field name in the connect dict:</p>
+<div class="highlight"><pre><span></span><code><span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span>
+    <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span>          <span class="s2">&quot;/data/papers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;llm_base_url&quot;</span><span class="p">:</span>         <span class="s2">&quot;http://localhost:11434/v1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;llm_api_key&quot;</span><span class="p">:</span>          <span class="s2">&quot;ollama&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span>                <span class="n">title_config</span><span class="p">,</span>
+    <span class="s2">&quot;authors&quot;</span><span class="p">:</span>              <span class="n">authors_config</span><span class="p">,</span>
+    <span class="s2">&quot;acknowledgements&quot;</span><span class="p">:</span>     <span class="n">acks_config</span><span class="p">,</span>
+<span class="p">})</span>
+</code></pre></div>
+<h3 id="default-extraction-strategies">Default extraction strategies<a class="headerlink" href="#default-extraction-strategies" title="Permanent link">&para;</a></h3>
+<p>When no field config is provided, PDFSource uses these defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default strategy order</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td><code>FILE_METADATA</code> → <code>DOCLING</code></td>
+<td>LLM not in default chain; add it if embedded metadata is unreliable</td>
+</tr>
+<tr>
+<td><code>authors</code></td>
+<td><code>FILE_METADATA</code> → <code>LLM</code></td>
+<td>LLM used as fallback when embedded metadata is empty or noisy</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>DOCLING</code></td>
+<td>Abstract section detection is reliable; LLM rarely needed</td>
+</tr>
+<tr>
+<td><code>publishing_institute</code></td>
+<td><code>FILE_METADATA</code></td>
+<td>LLM can be added for documents without well-tagged metadata</td>
+</tr>
+<tr>
+<td><code>acknowledgements</code></td>
+<td><code>LLM</code></td>
+<td>Only LLM can extract these reliably from free text</td>
+</tr>
+</tbody>
+</table>
+<h3 id="configuring-chunking-and-embedding">Configuring chunking and embedding<a class="headerlink" href="#configuring-chunking-and-embedding" title="Permanent link">&para;</a></h3>
+<p>Section chunking and vector embedding are controlled via <code>SectionsConfig</code>. Disable chunking entirely, or plug in any <code>AbstractChunkingStrategy</code> and <code>AbstractChunkEmbedder</code> implementation.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">database_builder_libs.sources.pdf_source</span><span class="w"> </span><span class="kn">import</span> <span class="n">SectionsConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">database_builder_libs.utility.chunk.summary_and_sections</span><span class="w"> </span><span class="kn">import</span> <span class="n">SummaryAndSectionsStrategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">database_builder_libs.utility.embed_chunk.openai_compatible</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenAICompatibleChunkEmbedder</span>
+
+<span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span>
+    <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/papers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sections&quot;</span><span class="p">:</span> <span class="n">SectionsConfig</span><span class="p">(</span>
+        <span class="n">chunking_strategy</span><span class="o">=</span><span class="n">SummaryAndSectionsStrategy</span><span class="p">(),</span>
+        <span class="n">embedder</span><span class="o">=</span><span class="n">OpenAICompatibleChunkEmbedder</span><span class="p">(</span>
+            <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;http://localhost:11434/v1&quot;</span><span class="p">,</span>
+            <span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;ollama&quot;</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="s2">&quot;nomic-embed-text&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">})</span>
+</code></pre></div>
+<p>To skip chunking and embedding entirely (metadata and file stats only):</p>
+<div class="highlight"><pre><span></span><code><span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span>
+    <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/papers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sections&quot;</span><span class="p">:</span> <span class="n">SectionsConfig</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="p">})</span>
+</code></pre></div>
+<h3 id="skipping-fields-already-known-from-an-external-source">Skipping fields already known from an external source<a class="headerlink" href="#skipping-fields-already-known-from-an-external-source" title="Permanent link">&para;</a></h3>
+<p>When metadata for a document is already available from an external source (e.g. Zotero), pass <code>FieldExtractionConfig(enabled=False)</code> explicitly for those fields. Omitting a field from the config is not sufficient — PDFDocumentConfig has defaults for every field and will fall back to them silently.</p>
+<div class="highlight"><pre><span></span><code><span class="n">src</span><span class="o">.</span><span class="n">connect</span><span class="p">({</span>
+    <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span> <span class="s2">&quot;/data/papers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;title&quot;</span><span class="p">:</span>   <span class="n">FieldExtractionConfig</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>  <span class="c1"># already known from Zotero</span>
+    <span class="s2">&quot;authors&quot;</span><span class="p">:</span> <span class="n">FieldExtractionConfig</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>  <span class="c1"># already known from Zotero</span>
+    <span class="c1"># summary, publishing_institute and acknowledgements will use their defaults</span>
+<span class="p">})</span>
+</code></pre></div>
+<h2 id="content-object-structure">Content object structure<a class="headerlink" href="#content-object-structure" title="Permanent link">&para;</a></h2>
+<p><code>PDFSource.get_content()</code> returns one <code>Content</code> object per artefact. <code>Content.content</code> is a dict with the following keys:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>file_path</code></td>
+<td><code>str</code></td>
+<td>Absolute path to the PDF file</td>
+</tr>
+<tr>
+<td><code>file_name</code></td>
+<td><code>str</code></td>
+<td>Filename only</td>
+</tr>
+<tr>
+<td><code>file_size</code></td>
+<td><code>int</code></td>
+<td>File size in bytes</td>
+</tr>
+<tr>
+<td><code>num_pages</code></td>
+<td><code>int \| None</code></td>
+<td>Page count from Docling; <code>None</code> if conversion failed</td>
+</tr>
+<tr>
+<td><code>pdf_meta</code></td>
+<td><code>dict</code></td>
+<td>Raw embedded PDF metadata from pypdf, keys stripped of leading <code>/</code></td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>DocumentMetadata</code> serialised via <code>dataclasses.asdict()</code></td>
+</tr>
+<tr>
+<td><code>num_sections</code></td>
+<td><code>int</code></td>
+<td>Section count from Docling</td>
+</tr>
+<tr>
+<td><code>num_tables</code></td>
+<td><code>int</code></td>
+<td>Table count from Docling</td>
+</tr>
+<tr>
+<td><code>num_figures</code></td>
+<td><code>int</code></td>
+<td>Figure count from Docling</td>
+</tr>
+<tr>
+<td><code>section_titles</code></td>
+<td><code>list[str]</code></td>
+<td>Ordered list of section header strings</td>
+</tr>
+<tr>
+<td><code>chunks</code></td>
+<td><code>list[dict]</code></td>
+<td><code>Chunk</code> objects serialised via <code>dataclasses.asdict()</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>metadata</code> dict mirrors <code>DocumentMetadata</code> and includes a <code>source</code> sub-dict that maps each populated field to the strategy that filled it, for example:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;A Randomised Controlled Trial ...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;authors&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Heyman, Bob&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Harrington, Barbara&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;publishing_institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Housing Studies&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;parent&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;This paper discusses ...&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;acknowledgements&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;NEARG&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;organization&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;relation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;collaboration&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;zotero&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;authors&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;zotero&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;summary&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;docling_heuristic&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;publishing_institute&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llm&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;acknowledgements&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;llm&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;keywords&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;literature_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;strategic_overview&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;target_groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;best_practices&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="docstring">Docstring<a class="headerlink" href="#docstring" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.sources.pdf_source" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">pdf_source</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            PDFDocumentConfig (database_builder_libs.sources.pdf_source.PDFDocumentConfig)" href="#database_builder_libs.sources.pdf_source.PDFDocumentConfig">PDFDocumentConfig</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Full configuration for the PDFSource pipeline.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            PDFSource (database_builder_libs.sources.pdf_source.PDFSource)" href="#database_builder_libs.sources.pdf_source.PDFSource">PDFSource</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Self-contained PDF source that parses, extracts metadata, chunks, and</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.sources.pdf_source.PDFDocumentConfig" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">PDFDocumentConfig</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFDocumentConfig" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            PDFDocumentConfig (database_builder_libs.sources.pdf_source.PDFDocumentConfig)" href="#database_builder_libs.sources.pdf_source.PDFDocumentConfig" id="mermaid-link-database_builder_libs.sources.pdf_source.PDFDocumentConfig"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.sources.pdf_source.PDFDocumentConfig">
+              flowchart TD
+              database_builder_libs.sources.pdf_source.PDFDocumentConfig[PDFDocumentConfig]
+
+              
+
+              click database_builder_libs.sources.pdf_source.PDFDocumentConfig href "" "database_builder_libs.sources.pdf_source.PDFDocumentConfig"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.sources.pdf_source.PDFDocumentConfig');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Full configuration for the PDFSource pipeline.</p>
+<p>Every metadata field has a <code>FieldExtractionConfig</code> with an ordered list
+of :class:<code>ExtractionStrategy</code> values.  The pipeline tries each strategy
+in order and stops on first success when <code>stop_on_success=True</code>.</p>
+<h4 id="database_builder_libs.sources.pdf_source.PDFDocumentConfig--available-strategies">Available strategies<a class="headerlink" href="#database_builder_libs.sources.pdf_source.PDFDocumentConfig--available-strategies" title="Permanent link">&para;</a></h4>
+<p><code>FILE_METADATA</code>
+    Reads embedded PDF metadata via <code>pypdf</code> (fast, no ML).
+<code>DOCLING</code>
+    Infers fields from the Docling structural IR.
+<code>LLM</code>
+    Sends the first ~60 lines to the configured LLM.
+    Requires <code>llm_base_url</code> and <code>llm_api_key</code> to be set.</p>
+<h4 id="database_builder_libs.sources.pdf_source.PDFDocumentConfig--defaults">Defaults<a class="headerlink" href="#database_builder_libs.sources.pdf_source.PDFDocumentConfig--defaults" title="Permanent link">&para;</a></h4>
+<ul>
+<li><code>title</code>               : FILE_METADATA → DOCLING</li>
+<li><code>authors</code>             : FILE_METADATA → LLM</li>
+<li><code>summary</code>             : DOCLING</li>
+<li><code>publishing_institute</code>: FILE_METADATA</li>
+<li><code>acknowledgements</code>    : LLM</li>
+</ul>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.sources.pdf_source.PDFSource" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">PDFSource</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFSource" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            PDFSource (database_builder_libs.sources.pdf_source.PDFSource)" href="#database_builder_libs.sources.pdf_source.PDFSource" id="mermaid-link-database_builder_libs.sources.pdf_source.PDFSource"></a>
+                  <a class="autorefs autorefs-internal" title="            AbstractSource (database_builder_libs.models.abstract_source.AbstractSource)" href="../01_abstract_source/#database_builder_libs.models.abstract_source.AbstractSource" id="mermaid-link-database_builder_libs.models.abstract_source.AbstractSource"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.sources.pdf_source.PDFSource">
+              flowchart TD
+              database_builder_libs.sources.pdf_source.PDFSource[PDFSource]
+              database_builder_libs.models.abstract_source.AbstractSource[AbstractSource]
+
+                              database_builder_libs.models.abstract_source.AbstractSource --> database_builder_libs.sources.pdf_source.PDFSource
+                
+
+
+              click database_builder_libs.sources.pdf_source.PDFSource href "" "database_builder_libs.sources.pdf_source.PDFSource"
+              click database_builder_libs.models.abstract_source.AbstractSource href "" "database_builder_libs.models.abstract_source.AbstractSource"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.sources.pdf_source.PDFSource');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Self-contained PDF source that parses, extracts metadata, chunks, and
+embeds in a single configurable pipeline.</p>
+<h4 id="database_builder_libs.sources.pdf_source.PDFSource--mapping">Mapping<a class="headerlink" href="#database_builder_libs.sources.pdf_source.PDFSource--mapping" title="Permanent link">&para;</a></h4>
+<p>PDF file path (relative)  →  Content.id_
+File mtime (UTC)          →  Content.date</p>
+<h4 id="database_builder_libs.sources.pdf_source.PDFSource--contentcontent-keys">Content.content keys<a class="headerlink" href="#database_builder_libs.sources.pdf_source.PDFSource--contentcontent-keys" title="Permanent link">&para;</a></h4>
+<p><code>file_path</code>, <code>file_name</code>, <code>file_size</code>, <code>num_pages</code>
+    File-level stats.
+<code>pdf_meta</code>
+    Raw pypdf embedded metadata dict.
+<code>num_sections</code>, <code>num_tables</code>, <code>num_figures</code>, <code>section_titles</code>
+    Structural counts from Docling.
+<code>metadata</code>
+    :class:<code>DocumentMetadata</code> serialised via <code>dataclasses.asdict()</code>.
+<code>chunks</code>
+    List of :class:<code>~database_builder_libs.models.chunk.Chunk</code> dicts.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            connect (database_builder_libs.sources.pdf_source.PDFSource.connect)" href="#database_builder_libs.sources.pdf_source.PDFSource.connect">connect</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Establish connection to the external source.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_all_documents_metadata (database_builder_libs.sources.pdf_source.PDFSource.get_all_documents_metadata)" href="#database_builder_libs.sources.pdf_source.PDFSource.get_all_documents_metadata">get_all_documents_metadata</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Return lightweight file-level metadata for all PDFs (no Docling conversion).</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_content (database_builder_libs.sources.pdf_source.PDFSource.get_content)" href="#database_builder_libs.sources.pdf_source.PDFSource.get_content">get_content</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Run the full parse → metadata → chunk → embed pipeline for each artefact.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_list_artefacts (database_builder_libs.sources.pdf_source.PDFSource.get_list_artefacts)" href="#database_builder_libs.sources.pdf_source.PDFSource.get_list_artefacts">get_list_artefacts</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Return PDFs modified after <code>last_synced</code>, sorted ascending by mtime.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.sources.pdf_source.PDFSource.connect" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">connect</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFSource.connect" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">connect</span><span class="p">(</span><span class="n"><span title="database_builder_libs.sources.pdf_source.PDFSource.connect(config)">config</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Establish connection to the external source.</p>
+<p>Idempotent: safe to call multiple times.</p>
+<h5 id="database_builder_libs.sources.pdf_source.PDFSource.connect--raises">Raises<a class="headerlink" href="#database_builder_libs.sources.pdf_source.PDFSource.connect--raises" title="Permanent link">&para;</a></h5>
+<p>ConnectionError
+PermissionError
+ValueError</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_source.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Establish connection to the external source.</span>
+
+<span class="sd">    Idempotent: safe to call multiple times.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ConnectionError</span>
+<span class="sd">    PermissionError</span>
+<span class="sd">    ValueError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connect_impl</span><span class="p">(</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{})</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.sources.pdf_source.PDFSource.get_all_documents_metadata" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_all_documents_metadata</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFSource.get_all_documents_metadata" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_all_documents_metadata</span><span class="p">(</span><span class="n"><span title="database_builder_libs.sources.pdf_source.PDFSource.get_all_documents_metadata(limit)">limit</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return lightweight file-level metadata for all PDFs (no Docling conversion).</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/sources/pdf_source.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_all_documents_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return lightweight file-level metadata for all PDFs (no Docling conversion).&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="n">results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pdf_path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">folder_path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pdf&quot;</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">limit</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">stat</span> <span class="o">=</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span>       <span class="nb">str</span><span class="p">(</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">folder_path</span><span class="p">)),</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span>     <span class="n">pdf_path</span><span class="p">,</span>
+            <span class="s2">&quot;size&quot;</span><span class="p">:</span>     <span class="n">stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+            <span class="s2">&quot;modified&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">),</span>
+            <span class="s2">&quot;pdf_meta&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_pdf_meta</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pdf_path</span><span class="p">)),</span>
+        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">results</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.sources.pdf_source.PDFSource.get_content" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_content</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFSource.get_content" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_content</span><span class="p">(</span><span class="n"><span title="database_builder_libs.sources.pdf_source.PDFSource.get_content(artefacts)">artefacts</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#tuple">tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Content (database_builder_libs.models.abstract_source.Content)" href="../01_abstract_source/#database_builder_libs.models.abstract_source.Content">Content</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Run the full parse → metadata → chunk → embed pipeline for each artefact.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/sources/pdf_source.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artefacts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Content</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the full parse → metadata → chunk → embed pipeline for each artefact.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="n">contents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Content</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">relative_id</span><span class="p">,</span> <span class="n">modified</span> <span class="ow">in</span> <span class="n">artefacts</span><span class="p">:</span>
+        <span class="n">pdf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">folder_path</span> <span class="o">/</span> <span class="n">relative_id</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Artefact &#39;</span><span class="si">{</span><span class="n">relative_id</span><span class="si">}</span><span class="s2">&#39; no longer exists.&quot;</span><span class="p">)</span>
+
+        <span class="n">stat</span>         <span class="o">=</span> <span class="n">pdf_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span>
+        <span class="n">pdf_path_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+
+        <span class="n">parsed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParsedDocument</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">num_pages</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parsed</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">pdf_path_str</span><span class="p">)</span>
+            <span class="n">num_pages</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">parsed</span><span class="o">.</span><span class="n">doc</span><span class="o">.</span><span class="n">pages</span><span class="p">)</span> <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">doc</span><span class="o">.</span><span class="n">pages</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="n">DocumentConversionError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Docling conversion failed for &#39;</span><span class="si">{</span><span class="n">relative_id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected parse error for &#39;</span><span class="si">{</span><span class="n">relative_id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metadata</span><span class="p">(</span><span class="n">pdf_path_str</span><span class="o">=</span><span class="n">pdf_path_str</span><span class="p">,</span> <span class="n">parsed</span><span class="o">=</span><span class="n">parsed</span><span class="p">)</span>
+        <span class="n">chunks</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunk</span><span class="p">(</span><span class="n">parsed</span><span class="o">=</span><span class="n">parsed</span><span class="p">,</span> <span class="n">document_id</span><span class="o">=</span><span class="n">relative_id</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">sections</span><span class="o">.</span><span class="n">enabled</span> <span class="ow">and</span> <span class="n">parsed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">chunks</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">sections</span><span class="o">.</span><span class="n">embedder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_embed</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+
+        <span class="n">contents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Content</span><span class="p">(</span>
+            <span class="n">date</span><span class="o">=</span><span class="n">modified</span><span class="p">,</span>
+            <span class="n">id_</span><span class="o">=</span><span class="n">relative_id</span><span class="p">,</span>
+            <span class="n">content</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;file_path&quot;</span><span class="p">:</span>  <span class="n">pdf_path_str</span><span class="p">,</span>
+                <span class="s2">&quot;file_name&quot;</span><span class="p">:</span>  <span class="n">pdf_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">&quot;file_size&quot;</span><span class="p">:</span>  <span class="n">stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+                <span class="s2">&quot;num_pages&quot;</span><span class="p">:</span>  <span class="n">num_pages</span><span class="p">,</span>
+                <span class="s2">&quot;pdf_meta&quot;</span><span class="p">:</span>   <span class="bp">self</span><span class="o">.</span><span class="n">_read_pdf_meta</span><span class="p">(</span><span class="n">pdf_path_str</span><span class="p">),</span>
+                <span class="s2">&quot;metadata&quot;</span><span class="p">:</span>   <span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">metadata</span><span class="p">),</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_structural_meta</span><span class="p">(</span><span class="n">parsed</span><span class="p">),</span>
+                <span class="s2">&quot;chunks&quot;</span><span class="p">:</span>     <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">asdict</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed &#39;</span><span class="si">{</span><span class="n">relative_id</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2"> chunk(s).&quot;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;get_content returning </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">contents</span><span class="p">)</span><span class="si">}</span><span class="s2"> Content object(s).&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">contents</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.sources.pdf_source.PDFSource.get_list_artefacts" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_list_artefacts</span>
+
+
+<a href="#database_builder_libs.sources.pdf_source.PDFSource.get_list_artefacts" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_list_artefacts</span><span class="p">(</span><span class="n"><span title="database_builder_libs.sources.pdf_source.PDFSource.get_list_artefacts(last_synced)">last_synced</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#tuple">tuple</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return PDFs modified after <code>last_synced</code>, sorted ascending by mtime.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/sources/pdf_source.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_list_artefacts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last_synced</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">datetime</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">datetime</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return PDFs modified after ``last_synced``, sorted ascending by mtime.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">last_synced</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">last_synced</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">last_synced</span> <span class="o">=</span> <span class="n">last_synced</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tzinfo</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
+    <span class="n">artefacts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">folder_path</span><span class="p">)),</span>
+         <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">pdf_path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">folder_path</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*.pdf&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">last_synced</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">pdf_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">last_synced</span>
+    <span class="p">]</span>
+    <span class="n">artefacts</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">artefact</span><span class="p">:</span> <span class="n">artefact</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;get_list_artefacts: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">artefacts</span><span class="p">)</span><span class="si">}</span><span class="s2"> PDF(s) since </span><span class="si">{</span><span class="n">last_synced</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">artefacts</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.tabs.link", "navigation.tabs", "content.tabs.link", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

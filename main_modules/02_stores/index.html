@@ -1,0 +1,2991 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../12_pdf_source/">
+      
+      
+        <link rel="next" href="../05_typedb_v2_store/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Abstract store - Database-builder-libs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#abstract-store" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Database-builder-libs" class="md-header__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Database-builder-libs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Abstract store
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome to Database Builder Libs
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/00_getting_started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../00_overview/" class="md-tabs__link">
+          
+  
+  
+  Main modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/rules/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Database-builder-libs" class="md-nav__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Database-builder-libs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Database Builder Libs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/00_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate in your project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/01_learn_the_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started with development on this library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/02_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Main modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sources
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_abstract_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_zotero_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zotero source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12_pdf_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract store
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring-abstract-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring abstract node
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05_typedb_v2_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeDB V2 store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vector Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vector Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_vector_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract vector store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_qdrant_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Qdrant store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text extract utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text extract utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_text_extract_utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text structure extraction (DocumentParserDocling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text chunk utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text chunk utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_chunking_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chunking strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text embed utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text embed utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09_abstract_chunk_embedder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10_chunk_embedder_openai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI-compatible chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11_chunk_embedder_transformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transformer-based chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#interaction-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interaction Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring-abstract-node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring abstract node
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Welcome to Database Builder Libs
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../00_overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Main modules
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Graph Stores
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="abstract-store">Abstract store<a class="headerlink" href="#abstract-store" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The abstract store is the interface which all database adapters share. It provides a unified API for persisting and retrieving Node objects across different backend implementations (SQL, NoSQL, Graph databases, etc.).</p>
+<h2 id="design-notes">Design Notes<a class="headerlink" href="#design-notes" title="Permanent link">&para;</a></h2>
+<h3 id="interaction-pattern">Interaction Pattern<a class="headerlink" href="#interaction-pattern" title="Permanent link">&para;</a></h3>
+<p>The AbstractStore follows these interaction patterns:</p>
+<ol>
+<li>
+<p><strong>Storage Pattern</strong>:</p>
+<ul>
+<li>Check if node exists (by id)</li>
+<li>Update if exists, insert if new</li>
+<li>Maintain idempotency</li>
+</ul>
+</li>
+<li>
+<p><strong>Retrieval Pattern</strong>:</p>
+<ul>
+<li>String filter: Return direct matches preserving multiplicity</li>
+<li>None filter: Return canonical, deduplicated node set</li>
+<li>Stable ordering for identical queries</li>
+</ul>
+</li>
+<li>
+<p><strong>Deletion Pattern</strong>:</p>
+<ul>
+<li>Single node removal with safety checks</li>
+<li>Must fail on ambiguous matches</li>
+</ul>
+</li>
+</ol>
+<h2 id="docstring-abstract-node">Docstring abstract node<a class="headerlink" href="#docstring-abstract-node" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.models.node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">node</span>
+
+
+<a href="#database_builder_libs.models.node" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="#database_builder_libs.models.node.Node">Node</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Canonical storage-agnostic representation of a knowledge entity.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            EntityType
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.EntityType)" href="#database_builder_libs.models.node.EntityType">EntityType</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Logical category of a Node.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            KeyAttribute
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.KeyAttribute)" href="#database_builder_libs.models.node.KeyAttribute">KeyAttribute</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Name of the primary human-readable identifier inside a Node payload.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            NodeId
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.NodeId)" href="#database_builder_libs.models.node.NodeId">NodeId</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Globally stable identifier of a knowledge entity.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            Payload
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.Payload)" href="#database_builder_libs.models.node.Payload">Payload</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Structured attributes describing a Node.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            Relation
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.Relation)" href="#database_builder_libs.models.node.Relation">Relation</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Edge description between two Nodes.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="database_builder_libs.models.node.EntityType" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">EntityType</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.EntityType" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">EntityType</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.NewType" href="https://docs.python.org/3/library/typing.html#typing.NewType">NewType</a></span><span class="p">(</span><span class="s1">&#39;EntityType&#39;</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Logical category of a Node.</p>
+<p>Represents ontology class — NOT a storage label.</p>
+<h4 id="database_builder_libs.models.node.EntityType--constraints">Constraints<a class="headerlink" href="#database_builder_libs.models.node.EntityType--constraints" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Stable for a given NodeId</li>
+<li>Low cardinality</li>
+<li>Used for indexing and filtering</li>
+</ul>
+<h4 id="database_builder_libs.models.node.EntityType--examples">Examples<a class="headerlink" href="#database_builder_libs.models.node.EntityType--examples" title="Permanent link">&para;</a></h4>
+<p>"person"
+"document"
+"organization"
+"concept"</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.node"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;node</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.node.Node"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Node</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="database_builder_libs.models.node.KeyAttribute" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">KeyAttribute</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.KeyAttribute" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">KeyAttribute</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.NewType" href="https://docs.python.org/3/library/typing.html#typing.NewType">NewType</a></span><span class="p">(</span><span class="s1">&#39;KeyAttribute&#39;</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Name of the primary human-readable identifier inside a Node payload.</p>
+<p>This is a presentation hint, not identity.</p>
+<h4 id="database_builder_libs.models.node.KeyAttribute--examples">Examples<a class="headerlink" href="#database_builder_libs.models.node.KeyAttribute--examples" title="Permanent link">&para;</a></h4>
+<p>"name"
+"title"
+"email"
+"filename"</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.node"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;node</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.node.Node"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Node</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="database_builder_libs.models.node.NodeId" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">NodeId</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.NodeId" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">NodeId</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.NewType" href="https://docs.python.org/3/library/typing.html#typing.NewType">NewType</a></span><span class="p">(</span><span class="s1">&#39;NodeId&#39;</span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Globally stable identifier of a knowledge entity.</p>
+<h4 id="database_builder_libs.models.node.NodeId--properties">Properties<a class="headerlink" href="#database_builder_libs.models.node.NodeId--properties" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Uniquely identifies the same real-world entity across all systems</li>
+<li>Must be deterministic across ingestion runs</li>
+<li>Must not encode storage-specific information (database IDs, row numbers)</li>
+<li>Safe for use as foreign key in relations</li>
+</ul>
+<h4 id="database_builder_libs.models.node.NodeId--examples">Examples<a class="headerlink" href="#database_builder_libs.models.node.NodeId--examples" title="Permanent link">&para;</a></h4>
+<p>"user:42"
+"doi:10.1000/182"
+"sharepoint:file:abc123"</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.node"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;node</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.node.Node"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Node</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="database_builder_libs.models.node.Payload" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Payload</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.Payload" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">Payload</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Structured attributes describing a Node.</p>
+<h4 id="database_builder_libs.models.node.Payload--requirements">Requirements<a class="headerlink" href="#database_builder_libs.models.node.Payload--requirements" title="Permanent link">&para;</a></h4>
+<ul>
+<li>JSON-serializable</li>
+<li>Order-independent</li>
+<li>Deterministic for identical source data</li>
+<li>Values must be immutable or safely copyable</li>
+</ul>
+<p>This data may be merged across updates.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.node"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;node</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.node.Node"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Node</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="database_builder_libs.models.node.Relation" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">Relation</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.Relation" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">Relation</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Mapping" href="https://docs.python.org/3/library/typing.html#typing.Mapping">Mapping</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#object">object</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Edge description between two Nodes.</p>
+<h4 id="database_builder_libs.models.node.Relation--minimum-required-keys">Minimum required keys<a class="headerlink" href="#database_builder_libs.models.node.Relation--minimum-required-keys" title="Permanent link">&para;</a></h4>
+<p>"type" : str
+    Relationship type
+"target" : NodeId
+    Identifier of the related node</p>
+<h4 id="database_builder_libs.models.node.Relation--optional-keys">Optional keys<a class="headerlink" href="#database_builder_libs.models.node.Relation--optional-keys" title="Permanent link">&para;</a></h4>
+<p>Any additional metadata describing the relation.</p>
+<h4 id="database_builder_libs.models.node.Relation--constraints">Constraints<a class="headerlink" href="#database_builder_libs.models.node.Relation--constraints" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Must not encode storage-specific fields</li>
+<li>Must be JSON-serializable</li>
+<li>Duplicate relations should be treated as identical</li>
+</ul>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.node"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;node</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.node.Node"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;Node</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.models.node.Node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">Node</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.node.Node" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Node</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.node.Node(id)">id</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            NodeId
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.NodeId)" href="#database_builder_libs.models.node.NodeId">NodeId</a></span><span class="p">,</span> <span class="n"><span title="database_builder_libs.models.node.Node(payload_data)">payload_data</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Payload
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.Payload)" href="#database_builder_libs.models.node.Payload">Payload</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">(),</span> <span class="n"><span title="database_builder_libs.models.node.Node(relations)">relations</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Relation
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.Relation)" href="#database_builder_libs.models.node.Relation">Relation</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#tuple">tuple</a></span><span class="p">(),</span> <span class="n"><span title="database_builder_libs.models.node.Node(entity_type)">entity_type</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            EntityType
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.EntityType)" href="#database_builder_libs.models.node.EntityType">EntityType</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            EntityType
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.EntityType)" href="#database_builder_libs.models.node.EntityType">EntityType</a></span><span class="p">(</span><span class="s1">&#39;node&#39;</span><span class="p">),</span> <span class="n"><span title="database_builder_libs.models.node.Node(key_attribute)">key_attribute</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            KeyAttribute
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.KeyAttribute)" href="#database_builder_libs.models.node.KeyAttribute">KeyAttribute</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="            KeyAttribute
+
+
+  
+      module-attribute
+   (database_builder_libs.models.node.KeyAttribute)" href="#database_builder_libs.models.node.KeyAttribute">KeyAttribute</a></span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Canonical storage-agnostic representation of a knowledge entity.</p>
+<p>A Node is the normalized form of structured information extracted from
+external sources. All database adapters MUST translate their internal
+records into this structure before persistence or retrieval.</p>
+<h4 id="database_builder_libs.models.node.Node--identity">Identity<a class="headerlink" href="#database_builder_libs.models.node.Node--identity" title="Permanent link">&para;</a></h4>
+<p>The node identity is defined exclusively by <code>id</code>.</p>
+<p>Nodes with identical <code>id</code> MUST represent the same real-world entity.
+Stores must overwrite existing nodes instead of creating duplicates.</p>
+<h4 id="database_builder_libs.models.node.Node--fields">Fields<a class="headerlink" href="#database_builder_libs.models.node.Node--fields" title="Permanent link">&para;</a></h4>
+<p>id : NodeId
+    Globally stable identifier of the entity.
+    Must remain constant across synchronization runs and storage backends.</p>
+
+
+<details class="payload_data-" open>
+  <summary>Mapping[str, object]</summary>
+  <p>Structured attributes describing the entity (properties).</p>
+<p>Requirements:
+- JSON-serializable
+- Deterministic for identical source state
+- Order-independent
+- Safe to merge across updates</p>
+</details>
+
+<details class="relations-" open>
+  <summary>Sequence[Relation]</summary>
+  <p>Outgoing relationships from this node to other nodes.</p>
+<p>Each relation mapping should minimally contain:
+    {
+        "type": <relation name>,
+        "target": <NodeId>
+    }</p>
+<p>Constraints:
+- Must not contain cyclic self-references unless meaningful
+- Order does not carry semantic meaning
+- Duplicate relations should be ignored by stores</p>
+</details>
+
+<details class="entity_type-" open>
+  <summary>EntityType</summary>
+  <p>Logical category of the entity (e.g., "person", "document", "concept").
+Used for indexing, filtering and schema interpretation.
+Must remain stable for a given node id.</p>
+</details>
+
+<details class="key_attribute-" open>
+  <summary>KeyAttribute</summary>
+  <p>Name of the primary human-readable identifier inside payload_data
+(e.g., "email", "title", "name").</p>
+</details>
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Returned by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.abstract_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;abstract_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.abstract_store.AbstractStore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AbstractStore</a>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_nodes</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;remove_node</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;typedb_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;TypeDbDatastore</a>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_nodes</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;remove_node</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+        <b class="doc doc-backlink-type">Used by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.abstract_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;abstract_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.models.abstract_store.AbstractStore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;AbstractStore</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.models.abstract_store.AbstractStore.store_node"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;store_node</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;typedb_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;TypeDbDatastore</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="../05_typedb_v2_store/#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;store_node</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="docstring-abstract-store">Docstring abstract store<a class="headerlink" href="#docstring-abstract-store" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.models.abstract_store" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">abstract_store</span>
+
+
+<a href="#database_builder_libs.models.abstract_store" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            AbstractStore (database_builder_libs.models.abstract_store.AbstractStore)" href="#database_builder_libs.models.abstract_store.AbstractStore">AbstractStore</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Abstract persistence layer for storing and retrieving Nodes.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.models.abstract_store.AbstractStore" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">AbstractStore</span>
+
+
+<a href="#database_builder_libs.models.abstract_store.AbstractStore" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">AbstractStore</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            AbstractStore (database_builder_libs.models.abstract_store.AbstractStore)" href="#database_builder_libs.models.abstract_store.AbstractStore" id="mermaid-link-database_builder_libs.models.abstract_store.AbstractStore"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.models.abstract_store.AbstractStore">
+              flowchart TD
+              database_builder_libs.models.abstract_store.AbstractStore[AbstractStore]
+
+              
+
+              click database_builder_libs.models.abstract_store.AbstractStore href "" "database_builder_libs.models.abstract_store.AbstractStore"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.models.abstract_store.AbstractStore');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Abstract persistence layer for storing and retrieving Nodes.</p>
+<p>A Store represents a backend capable of persisting structured nodes and
+retrieving them via identifier lookup, textual filtering, or vector similarity.</p>
+<p>Typical implementations:
+- SQL/NoSQL database
+- Vector database (e.g., embeddings search)
+- Graph database
+- In-memory index</p>
+<h4 id="database_builder_libs.models.abstract_store.AbstractStore--consistency-requirements">Consistency requirements<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore--consistency-requirements" title="Permanent link">&para;</a></h4>
+<p>Implementations must ensure:
+- Stable node identity across reads
+- Deterministic retrieval for identical queries
+- Idempotent storage: storing the same Node twice must not create duplicates</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            connect (database_builder_libs.models.abstract_store.AbstractStore.connect)" href="#database_builder_libs.models.abstract_store.AbstractStore.connect">connect</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Establish connection to the backend.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_nodes
+
+
+  
+      abstractmethod
+   (database_builder_libs.models.abstract_store.AbstractStore.get_nodes)" href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes">get_nodes</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Retrieve nodes from the store.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            remove_node
+
+
+  
+      abstractmethod
+   (database_builder_libs.models.abstract_store.AbstractStore.remove_node)" href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node">remove_node</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Remove a single node identified by filter.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            store_node
+
+
+  
+      abstractmethod
+   (database_builder_libs.models.abstract_store.AbstractStore.store_node)" href="#database_builder_libs.models.abstract_store.AbstractStore.store_node">store_node</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Persist a Node into the store.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+                  <details class="mkdocstrings-source">
+                    <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></table></div>
+                  </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.models.abstract_store.AbstractStore.connect" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">connect</span>
+
+
+<a href="#database_builder_libs.models.abstract_store.AbstractStore.connect" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">connect</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.abstract_store.AbstractStore.connect(config)">config</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Establish connection to the backend.</p>
+<p>This method is idempotent. Calling it multiple times must be safe.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.connect--parameters">Parameters<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.connect--parameters" title="Permanent link">&para;</a></h5>
+<p>config : Any | None
+    Backend-specific configuration object.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.connect--raises">Raises<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.connect--raises" title="Permanent link">&para;</a></h5>
+<p>ConnectionError
+    Backend unreachable.
+RuntimeError
+    Backend misconfigured.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Establish connection to the backend.</span>
+
+<span class="sd">    This method is idempotent. Calling it multiple times must be safe.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : Any | None</span>
+<span class="sd">        Backend-specific configuration object.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ConnectionError</span>
+<span class="sd">        Backend unreachable.</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        Backend misconfigured.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connect_impl</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.models.abstract_store.AbstractStore.get_nodes" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_nodes</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_nodes</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.abstract_store.AbstractStore.get_nodes(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="#database_builder_libs.models.node.Node">Node</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve nodes from the store.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.get_nodes--retrieval-modes">Retrieval Modes<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes--retrieval-modes" title="Permanent link">&para;</a></h5>
+<p>filter is interpreted as:</p>
+<ul>
+<li>
+<p>str  → Selection query
+    Returns nodes that directly match stored records.
+    Multiple results representing different stored entities
+    MUST be preserved (no merging/deduplication).</p>
+</li>
+<li>
+<p>None → Reconstruction query
+    Returns the canonical set of nodes represented by the backend.
+    Implementations MUST merge overlapping representations and
+    return a normalized, duplicate-free set of Nodes.</p>
+</li>
+</ul>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.get_nodes--returns">Returns<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes--returns" title="Permanent link">&para;</a></h5>
+<p>List[Node]
+    Deterministically ordered list of nodes.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.get_nodes--guarantees">Guarantees<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes--guarantees" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Stable ordering for identical queries if backend unchanged</li>
+<li>filter=None returns a duplicate-free canonical node set</li>
+<li>filter=str preserves multiplicity of stored entities</li>
+</ul>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.get_nodes--raises">Raises<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.get_nodes--raises" title="Permanent link">&para;</a></h5>
+<p>RuntimeError
+    If called before connect().</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve nodes from the store.</span>
+
+<span class="sd">    Retrieval Modes</span>
+<span class="sd">    ---------------</span>
+<span class="sd">    filter is interpreted as:</span>
+
+<span class="sd">    - str  → Selection query</span>
+<span class="sd">        Returns nodes that directly match stored records.</span>
+<span class="sd">        Multiple results representing different stored entities</span>
+<span class="sd">        MUST be preserved (no merging/deduplication).</span>
+
+<span class="sd">    - None → Reconstruction query</span>
+<span class="sd">        Returns the canonical set of nodes represented by the backend.</span>
+<span class="sd">        Implementations MUST merge overlapping representations and</span>
+<span class="sd">        return a normalized, duplicate-free set of Nodes.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    List[Node]</span>
+<span class="sd">        Deterministically ordered list of nodes.</span>
+
+<span class="sd">    Guarantees</span>
+<span class="sd">    ----------</span>
+<span class="sd">    - Stable ordering for identical queries if backend unchanged</span>
+<span class="sd">    - filter=None returns a duplicate-free canonical node set</span>
+<span class="sd">    - filter=str preserves multiplicity of stored entities</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If called before connect().</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.models.abstract_store.AbstractStore.remove_node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">remove_node</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">remove_node</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.abstract_store.AbstractStore.remove_node(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="#database_builder_libs.models.node.Node">Node</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Remove a single node identified by filter.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.remove_node--parameters">Parameters<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node--parameters" title="Permanent link">&para;</a></h5>
+<p>filter : str
+    Unique identifier of the node to remove.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.remove_node--returns">Returns<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node--returns" title="Permanent link">&para;</a></h5>
+<p>Node
+    The removed node.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.remove_node--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node--behaviour" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Must remove exactly one node</li>
+<li>Must fail if multiple or zero matches</li>
+</ul>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.remove_node--raises">Raises<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.remove_node--raises" title="Permanent link">&para;</a></h5>
+<p>KeyError
+    If no node matches the filter.
+ValueError
+    If multiple nodes match the filter.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove a single node identified by filter.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filter : str</span>
+<span class="sd">        Unique identifier of the node to remove.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Node</span>
+<span class="sd">        The removed node.</span>
+
+<span class="sd">    Behaviour</span>
+<span class="sd">    ---------</span>
+<span class="sd">    - Must remove exactly one node</span>
+<span class="sd">    - Must fail if multiple or zero matches</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If no node matches the filter.</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If multiple nodes match the filter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.models.abstract_store.AbstractStore.store_node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">store_node</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#database_builder_libs.models.abstract_store.AbstractStore.store_node" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">store_node</span><span class="p">(</span><span class="n"><span title="database_builder_libs.models.abstract_store.AbstractStore.store_node(node)">node</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="#database_builder_libs.models.node.Node">Node</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Persist a Node into the store.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.store_node--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.store_node--behaviour" title="Permanent link">&para;</a></h5>
+<ul>
+<li>If the node already exists (same unique identifier), it must be updated.</li>
+<li>Operation must be idempotent.</li>
+</ul>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.store_node--parameters">Parameters<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.store_node--parameters" title="Permanent link">&para;</a></h5>
+<p>node : Node
+    The node to persist.</p>
+<h5 id="database_builder_libs.models.abstract_store.AbstractStore.store_node--raises">Raises<a class="headerlink" href="#database_builder_libs.models.abstract_store.AbstractStore.store_node--raises" title="Permanent link">&para;</a></h5>
+<p>RuntimeError
+    If called before connect_to_source().
+ValueError
+    If the node is invalid for this backend.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">store_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Persist a Node into the store.</span>
+
+<span class="sd">    Behaviour</span>
+<span class="sd">    ---------</span>
+<span class="sd">    - If the node already exists (same unique identifier), it must be updated.</span>
+<span class="sd">    - Operation must be idempotent.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    node : Node</span>
+<span class="sd">        The node to persist.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        If called before connect_to_source().</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the node is invalid for this backend.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.tabs.link", "navigation.tabs", "content.tabs.link", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,3837 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../02_stores/">
+      
+      
+        <link rel="next" href="../06_vector_stores/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>TypeDB V2 store - Database-builder-libs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#typedb-v2-store" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Database-builder-libs" class="md-header__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Database-builder-libs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TypeDB V2 store
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Welcome to Database Builder Libs
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting_started/00_getting_started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../00_overview/" class="md-tabs__link">
+          
+  
+  
+  Main modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/rules/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Database-builder-libs" class="md-nav__button md-logo" aria-label="Database-builder-libs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Database-builder-libs
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Welcome to Database Builder Libs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/00_getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to integrate in your project
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/01_learn_the_basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting started with development on this library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/02_examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main modules
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Main modules
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architectural overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sources
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Sources
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01_abstract_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04_zotero_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zotero source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12_pdf_source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PDF source
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Graph Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Graph Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeDB V2 store
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    TypeDB V2 store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filter-logic-and-practical-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Logic and Practical Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Logic and Practical Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#practical-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Practical Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-single-attribute-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Single Attribute Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-multiple-attribute-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 2: Multiple Attribute Filters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-including-relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Including Relations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-retrieving-all-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Retrieving All Nodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-behavior-and-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Behavior and Edge Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Behavior and Edge Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#empty-vs-none-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Empty vs None Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-characters-in-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Special Characters in Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deletion-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deletion Filters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deletion Filters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#safe-deletion-single-entity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safe Deletion (Single Entity)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bulk-deletion-requires-permission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bulk Deletion (Requires Permission)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vector Stores
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vector Stores
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06_vector_stores/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract vector store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07_qdrant_store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Qdrant store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text extract utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text extract utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03_text_extract_utilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text structure extraction (DocumentParserDocling)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text chunk utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text chunk utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08_chunking_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chunking strategies
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Text embed utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Text embed utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09_abstract_chunk_embedder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Abstract chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10_chunk_embedder_openai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI-compatible chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11_chunk_embedder_transformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transformer-based chunk embedder
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/rules/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#filter-logic-and-practical-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Logic and Practical Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Logic and Practical Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filter-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#practical-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Practical Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-1-single-attribute-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 1: Single Attribute Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-2-multiple-attribute-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 2: Multiple Attribute Filters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-3-including-relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 3: Including Relations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-4-retrieving-all-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example 4: Retrieving All Nodes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter-behavior-and-edge-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filter Behavior and Edge Cases
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Filter Behavior and Edge Cases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#empty-vs-none-filter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Empty vs None Filter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#case-sensitivity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Case Sensitivity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-characters-in-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Special Characters in Values
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deletion-filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deletion Filters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Deletion Filters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#safe-deletion-single-entity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Safe Deletion (Single Entity)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bulk-deletion-requires-permission" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bulk Deletion (Requires Permission)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docstring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docstring
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Welcome to Database Builder Libs
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../00_overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Main modules
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../02_stores/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Graph Stores
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="typedb-v2-store">TypeDB V2 store<a class="headerlink" href="#typedb-v2-store" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The TypeDB V2 store allows you to store nodes using the Abstract store API. It maps canonical Node objects onto a TypeDB schema, providing graph database capabilities with strong typing and complex relationship modeling.</p>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h3>
+<p>Configuration of the typedb store happens using a dict containing an url, database and schema_path.</p>
+<div class="highlight"><pre><span></span><code><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;uri&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost:1729&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="s2">&quot;knowledge_base&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;schema_path&quot;</span><span class="p">:</span> <span class="s2">&quot;path/to/schema.tql&quot;</span>  <span class="c1"># Optional</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="filter-logic-and-practical-examples">Filter Logic and Practical Examples<a class="headerlink" href="#filter-logic-and-practical-examples" title="Permanent link">&para;</a></h2>
+<p>The TypeDB V2 store uses a URL-query style filter syntax for retrieving and deleting nodes. This section explains how filters work with practical examples.</p>
+<h3 id="filter-syntax">Filter Syntax<a class="headerlink" href="#filter-syntax" title="Permanent link">&para;</a></h3>
+<p>The basic filter format follows URL query string conventions:</p>
+<div class="highlight"><pre><span></span><code>entity=&lt;entity_type&gt;&amp;&lt;attribute&gt;=&lt;value&gt;&amp;&lt;attribute&gt;=&lt;value&gt;&amp;include=relations
+</code></pre></div>
+<h3 id="practical-examples">Practical Examples<a class="headerlink" href="#practical-examples" title="Permanent link">&para;</a></h3>
+<h4 id="example-1-single-attribute-filter">Example 1: Single Attribute Filter<a class="headerlink" href="#example-1-single-attribute-filter" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find a person by email</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;email=john.doe@example.com&quot;</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+<span class="c1"># Find documents by title</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=document&amp;title=Research Paper 2024&quot;</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="example-2-multiple-attribute-filters">Example 2: Multiple Attribute Filters<a class="headerlink" href="#example-2-multiple-attribute-filters" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find a person by email AND department</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;email=jane@company.com&amp;department=Engineering&quot;</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+<span class="c1"># Find documents by author AND status</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=document&amp;author=Dr. Smith&amp;status=published&quot;</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="example-3-including-relations">Example 3: Including Relations<a class="headerlink" href="#example-3-including-relations" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get person with all their relations loaded</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;email=john@example.com&amp;include=relations&quot;</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+<span class="c1"># The returned node will have its relations populated:</span>
+<span class="c1"># node.relations will contain RelationData objects</span>
+<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">relations</span><span class="p">)</span><span class="si">}</span><span class="s2"> relations for </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">relations</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - </span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> relation with roles: </span><span class="si">{</span><span class="n">rel</span><span class="p">[</span><span class="s1">&#39;roles&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="example-4-retrieving-all-nodes">Example 4: Retrieving All Nodes<a class="headerlink" href="#example-4-retrieving-all-nodes" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get all nodes in the database (use with caution on large datasets)</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># This is equivalent to:</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="filter-behavior-and-edge-cases">Filter Behavior and Edge Cases<a class="headerlink" href="#filter-behavior-and-edge-cases" title="Permanent link">&para;</a></h3>
+<h4 id="empty-vs-none-filter">Empty vs None Filter<a class="headerlink" href="#empty-vs-none-filter" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># None filter returns ALL nodes</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>  <span class="c1"># Returns everything</span>
+
+<span class="c1"># Empty string filter raises ValueError</span>
+<span class="n">nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>  <span class="c1"># Raises ValueError: filter cannot be empty</span>
+</code></pre></div>
+<h4 id="case-sensitivity">Case Sensitivity<a class="headerlink" href="#case-sensitivity" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Filters are case-sensitive</span>
+<span class="n">filter1</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;name=John Doe&quot;</span>
+<span class="n">filter2</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;name=john doe&quot;</span>
+<span class="c1"># These will return different results</span>
+</code></pre></div>
+<h4 id="special-characters-in-values">Special Characters in Values<a class="headerlink" href="#special-characters-in-values" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Values with special characters are handled automatically</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;email=user+tag@example.com&quot;</span>
+<span class="c1"># The + character is preserved correctly</span>
+</code></pre></div>
+<h3 id="deletion-filters">Deletion Filters<a class="headerlink" href="#deletion-filters" title="Permanent link">&para;</a></h3>
+<p>The same filter syntax applies to <code>remove_nodes()</code>:</p>
+<h4 id="safe-deletion-single-entity">Safe Deletion (Single Entity)<a class="headerlink" href="#safe-deletion-single-entity" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Delete a specific person</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=person&amp;email=john@example.com&quot;</span>
+<span class="n">deleted_count</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">remove_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="bulk-deletion-requires-permission">Bulk Deletion (Requires Permission)<a class="headerlink" href="#bulk-deletion-requires-permission" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Delete all draft documents (requires allow_multiple=True)</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=document&amp;status=draft&quot;</span>
+<span class="n">deleted_count</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">remove_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Attempting bulk deletion without permission raises ValueError</span>
+<span class="nb">filter</span> <span class="o">=</span> <span class="s2">&quot;entity=document&quot;</span>  <span class="c1"># No attribute filter</span>
+<span class="n">deleted_count</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">remove_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>  <span class="c1"># Raises ValueError</span>
+</code></pre></div>
+<h2 id="docstring">Docstring<a class="headerlink" href="#docstring" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h1 id="database_builder_libs.stores.typedb.typedb_store" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-module"></code>            <span class="doc doc-object-name doc-module-name">typedb_store</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store" class="headerlink" title="Permanent link">&para;</a></h1>
+
+    <div class="doc doc-contents first">
+
+          
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Classes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            EagerQueryAnswer (database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer">EagerQueryAnswer</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Eagerly evaluates a TypeDB QueryAnswer to prevent 'concurrent transaction close' errors</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            RelationData (database_builder_libs.stores.typedb.typedb_store.RelationData)" href="#database_builder_libs.stores.typedb.typedb_store.RelationData">RelationData</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Representation of a TypeDB relation.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            RelationRef (database_builder_libs.stores.typedb.typedb_store.RelationRef)" href="#database_builder_libs.stores.typedb.typedb_store.RelationRef">RelationRef</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Reference to a specific entity playing a role in a relation.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            TypeDbDatastore (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore">TypeDbDatastore</a></code></b>
+          –
+          <div class="doc-md-description">
+            <p>TypeDB-backed implementation of the AbstractStore knowledge persistence layer.</p>
+          </div>
+        </li>
+    </ul>
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">EagerQueryAnswer</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EagerQueryAnswer</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer(answer)">answer</span></span><span class="p">:</span> <span class="n"><span title="typedb.driver.QueryAnswer">QueryAnswer</span></span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Eagerly evaluates a TypeDB QueryAnswer to prevent 'concurrent transaction close' errors
+when evaluating iterator wrappers outside of the transaction block.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Returned by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.stores.typedb.typedb_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;typedb_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;TypeDbDatastore</a>
+  </span>
+
+            <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;query_read</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;query_schema</a>
+  </span>
+
+      </li>
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;query_write</a>
+  </span>
+
+      </li>
+  </ul>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            __iter__ (database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.__iter__)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.__iter__">__iter__</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Yield items from the eagerly evaluated result.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            as_concept_documents (database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_documents)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_documents">as_concept_documents</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Return the pre-evaluated documents iterator.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            as_concept_rows (database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_rows)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_rows">as_concept_rows</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Return the pre-evaluated rows iterator.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            as_raw (database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_raw)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_raw">as_raw</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Return the underlying raw typeDB.QueryAnswer object, if not evaluated yet.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+                  <details class="mkdocstrings-source">
+                    <summary>Source code in <code>src/database_builder_libs/stores/typedb/_types.py</code></summary>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">answer</span><span class="p">:</span> <span class="n">QueryAnswer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the EagerQueryAnswer by eagerly consuming the result iterator.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_is_docs</span> <span class="o">=</span> <span class="n">answer</span><span class="o">.</span><span class="n">is_concept_documents</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_is_rows</span> <span class="o">=</span> <span class="n">answer</span><span class="o">.</span><span class="n">is_concept_rows</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_docs</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concept_documents</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">answer</span><span class="o">.</span><span class="n">as_concept_documents</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_rows</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_concept_rows</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">answer</span><span class="o">.</span><span class="n">as_concept_rows</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span> <span class="o">=</span> <span class="n">answer</span>
+</code></pre></div></td></tr></table></div>
+                  </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.__iter__" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__iter__</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.__iter__" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">__iter__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterator" href="https://docs.python.org/3/library/typing.html#typing.Iterator">Iterator</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Yield items from the eagerly evaluated result.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_types.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yield items from the eagerly evaluated result.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_docs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concept_documents</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_rows</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concept_rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">([])</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_documents" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">as_concept_documents</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_documents" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">as_concept_documents</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterator" href="https://docs.python.org/3/library/typing.html#typing.Iterator">Iterator</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the pre-evaluated documents iterator.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_types.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">as_concept_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pre-evaluated documents iterator.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_docs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Query did not return concept documents&quot;</span><span class="p">)</span>
+    <span class="c1"># This is put from an ConceptDocumentIterator to a list and then into a generic Iterator in order to move the data out of the transaction</span>
+    <span class="c1"># Returned as an iterator for consistency with how the raw Query Answer is used</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concept_documents</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_rows" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">as_concept_rows</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_concept_rows" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">as_concept_rows</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterator" href="https://docs.python.org/3/library/typing.html#typing.Iterator">Iterator</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the pre-evaluated rows iterator.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_types.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">as_concept_rows</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the pre-evaluated rows iterator.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_rows</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Query did not return concept rows&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_concept_rows</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_raw" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">as_raw</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer.as_raw" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">as_raw</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="typedb.driver.QueryAnswer">QueryAnswer</span></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the underlying raw typeDB.QueryAnswer object, if not evaluated yet.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_types.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">as_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryAnswer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the underlying raw typeDB.QueryAnswer object, if not evaluated yet.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Query is already evaluated as documents or rows&quot;</span><span class="p">)</span>
+    <span class="c1"># This is put from an ConceptDocumentIterator to a list and then into a generic Iterator in order to move the data out of the transaction</span>
+    <span class="c1"># Returned as an iterator for consistency with how the raw Query Answer is used</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_answer</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.stores.typedb.typedb_store.RelationData" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">RelationData</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.RelationData" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            RelationData (database_builder_libs.stores.typedb.typedb_store.RelationData)" href="#database_builder_libs.stores.typedb.typedb_store.RelationData" id="mermaid-link-database_builder_libs.stores.typedb.typedb_store.RelationData"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.RelationData">
+              flowchart TD
+              database_builder_libs.stores.typedb.typedb_store.RelationData[RelationData]
+
+              
+
+              click database_builder_libs.stores.typedb.typedb_store.RelationData href "" "database_builder_libs.stores.typedb.typedb_store.RelationData"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.RelationData');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Representation of a TypeDB relation.</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.RelationData--attributes">Attributes<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.RelationData--attributes" title="Permanent link">&para;</a></h4>
+<p>type : str
+    The relation type name.
+roles : dict[str, RelationRef]
+    A mapping of role names to the entities (RelationRef) playing those roles.
+attributes : Mapping[str, object]
+    Optional mapping of attribute names to their values for this relation.</p>
+
+          
+
+
+  <div class="doc doc-backlinks">
+        <b class="doc doc-backlink-type">Returned by:</b>
+          <ul class="doc doc-backlink-list">
+      <li class="doc doc-backlink">
+            <span class="doc doc-backlink-crumb">
+      <span>Main modules</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <span>Graph Stores</span>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.stores.typedb.typedb_store"><code class="doc-symbol doc-symbol-toc doc-symbol-module"></code>&nbsp;typedb_store</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"><code class="doc-symbol doc-symbol-toc doc-symbol-class"></code>&nbsp;TypeDbDatastore</a>
+  </span>
+
+            <span class="doc doc-backlink-crumb last">
+      <a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations"><code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;get_relations</a>
+  </span>
+
+      </li>
+  </ul>
+
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.stores.typedb.typedb_store.RelationRef" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">RelationRef</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.RelationRef" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            RelationRef (database_builder_libs.stores.typedb.typedb_store.RelationRef)" href="#database_builder_libs.stores.typedb.typedb_store.RelationRef" id="mermaid-link-database_builder_libs.stores.typedb.typedb_store.RelationRef"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.RelationRef">
+              flowchart TD
+              database_builder_libs.stores.typedb.typedb_store.RelationRef[RelationRef]
+
+              
+
+              click database_builder_libs.stores.typedb.typedb_store.RelationRef href "" "database_builder_libs.stores.typedb.typedb_store.RelationRef"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.RelationRef');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>Reference to a specific entity playing a role in a relation.</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.RelationRef--attributes">Attributes<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.RelationRef--attributes" title="Permanent link">&para;</a></h4>
+<p>entity_type : str
+    The type name of the entity.
+key_attr : str
+    The name of the attribute serving as the key in the TypeDB schema.
+key : str
+    The string value of the key attribute.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TypeDbDatastore</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">TypeDbDatastore</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+            <div style="display: none">
+              <a class="autorefs autorefs-internal" title="            TypeDbDatastore (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore" id="mermaid-link-database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"></a>
+                  <span title="database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin"></span>
+                  <span title="database_builder_libs.stores.typedb._write.TypeDbWriteMixin"></span>
+                  <span title="database_builder_libs.stores.typedb._read.TypeDbReadMixin"></span>
+                  <span title="database_builder_libs.stores.typedb._query.TypeDbQueryMixin"></span>
+                  <span title="database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin"></span>
+                  <span title="database_builder_libs.stores.typedb._base.TypeDbBase"></span>
+                  <a class="autorefs autorefs-internal" title="            AbstractStore (database_builder_libs.models.abstract_store.AbstractStore)" href="../02_stores/#database_builder_libs.models.abstract_store.AbstractStore" id="mermaid-link-database_builder_libs.models.abstract_store.AbstractStore"></a>
+            </div>
+            <pre class="mermaid"><code id="mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore">
+              flowchart TD
+              database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore[TypeDbDatastore]
+              database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin[TypeDbDeleteMixin]
+              database_builder_libs.stores.typedb._write.TypeDbWriteMixin[TypeDbWriteMixin]
+              database_builder_libs.stores.typedb._read.TypeDbReadMixin[TypeDbReadMixin]
+              database_builder_libs.stores.typedb._query.TypeDbQueryMixin[TypeDbQueryMixin]
+              database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin[TypeDbSchemaMixin]
+              database_builder_libs.stores.typedb._base.TypeDbBase[TypeDbBase]
+              database_builder_libs.models.abstract_store.AbstractStore[AbstractStore]
+
+                              database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+                database_builder_libs.stores.typedb._write.TypeDbWriteMixin --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb._write.TypeDbWriteMixin
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+                database_builder_libs.stores.typedb._read.TypeDbReadMixin --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb._read.TypeDbReadMixin
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+                database_builder_libs.stores.typedb._query.TypeDbQueryMixin --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb._query.TypeDbQueryMixin
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+                database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+                database_builder_libs.stores.typedb._base.TypeDbBase --> database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore
+                                database_builder_libs.models.abstract_store.AbstractStore --> database_builder_libs.stores.typedb._base.TypeDbBase
+                
+
+
+
+              click database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore href "" "database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore"
+              click database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin href "" "database_builder_libs.stores.typedb._delete.TypeDbDeleteMixin"
+              click database_builder_libs.stores.typedb._write.TypeDbWriteMixin href "" "database_builder_libs.stores.typedb._write.TypeDbWriteMixin"
+              click database_builder_libs.stores.typedb._read.TypeDbReadMixin href "" "database_builder_libs.stores.typedb._read.TypeDbReadMixin"
+              click database_builder_libs.stores.typedb._query.TypeDbQueryMixin href "" "database_builder_libs.stores.typedb._query.TypeDbQueryMixin"
+              click database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin href "" "database_builder_libs.stores.typedb._schema.TypeDbSchemaMixin"
+              click database_builder_libs.stores.typedb._base.TypeDbBase href "" "database_builder_libs.stores.typedb._base.TypeDbBase"
+              click database_builder_libs.models.abstract_store.AbstractStore href "" "database_builder_libs.models.abstract_store.AbstractStore"
+            </code></pre>
+            <script>
+              var diagram = document.getElementById('mermaid-diagram-database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore');
+              diagram.innerHTML = diagram.innerHTML.replace(/click ([\w.]+) href "" "\1"/g, function(match, nodeID, offset) {
+                try {
+                  const link = document.getElementById("mermaid-link-" + nodeID).href;
+                  return `click ${nodeID} href "${link}" "${nodeID}"`
+                } catch (e) {
+                  return '';
+                }
+              });
+            </script>
+
+
+        <p>TypeDB-backed implementation of the AbstractStore knowledge persistence layer.</p>
+<p>This adapter maps canonical <code>Node</code> objects onto a TypeDB schema.</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--mapping-rules">Mapping rules<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--mapping-rules" title="Permanent link">&para;</a></h4>
+<p>Node → TypeDB Entity
+    node.entity_type      → entity type
+    node.id               → key_attribute value
+    node.payload_data     → attributes
+    node.relations        → relations</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--identity-semantics">Identity semantics<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--identity-semantics" title="Permanent link">&para;</a></h4>
+<p>A Node is uniquely identified by id.</p>
+<p>Storing the same node twice MUST NOT create duplicates.
+The adapter performs existence checks before insertion.</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--filter-language">Filter language<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--filter-language" title="Permanent link">&para;</a></h4>
+<p>All read and delete operations use a URL-query style filter string:</p>
+<div class="highlight"><pre><span></span><code>&quot;entity=&lt;type&gt;&amp;&lt;attribute&gt;=&lt;value&gt;&amp;&lt;attribute&gt;=&lt;value&gt;&quot;
+</code></pre></div>
+<p>Examples
+    entity=person&amp;email=a@b.com
+    entity=document&amp;title=Report.pdf</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--behaviour" title="Permanent link">&para;</a></h4>
+<ul>
+<li>get_nodes() returns normalized Node objects reconstructed from TypeDB</li>
+<li>store_node() performs upsert semantics</li>
+<li>remove_node() deletes exactly one node (safety enforced)</li>
+<li>remove_nodes() allows bulk deletion when explicitly enabled</li>
+</ul>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--safety-guarantees">Safety guarantees<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--safety-guarantees" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Refuses full-entity deletion without explicit permission</li>
+<li>Deduplicates overlapping attribute matches</li>
+<li>Ensures relations are not duplicated</li>
+<li>Schema is automatically applied at initialization</li>
+</ul>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--transactions">Transactions<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--transactions" title="Permanent link">&para;</a></h4>
+<p>Each operation runs in its own transaction.
+Writes are committed automatically when successful.</p>
+<h4 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--notes">Notes<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore--notes" title="Permanent link">&para;</a></h4>
+<p>This adapter assumes the schema defines a key attribute for each entity type.</p>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+<p><span class="doc-section-title">Methods:</span></p>
+    <ul>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            connect (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect">connect</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Establish connection to the backend.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_nodes (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes">get_nodes</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Retrieve nodes using a filter query.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            get_relations (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations">get_relations</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Retrieve relations using a filter query.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            query_read (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read">query_read</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Execute a read query and eagerly return its evaluated answer.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            query_schema (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema">query_schema</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Execute a schema query, eagerly return its answer, and invalidate key caches.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            query_write (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write">query_write</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Execute a write query and eagerly return its evaluated answer.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            remove_node (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node">remove_node</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Delete exactly one node and return it.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            remove_nodes (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes">remove_nodes</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Delete nodes matching the filter.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            store_node (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node">store_node</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Insert a Node into TypeDB if it does not already exist, and ensure its relations exist.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            transaction (database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.transaction)" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.transaction">transaction</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Context manager for yielding a TypeDB transaction.</p>
+            </div>
+          </li>
+    </ul>
+
+
+
+                  <details class="mkdocstrings-source">
+                    <summary>Source code in <code>src/database_builder_libs/stores/typedb/_base.py</code></summary>
+                    <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the base TypeDB driver state.&quot;&quot;&quot;</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">typedb_driver</span><span class="p">:</span> <span class="n">Driver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_attr_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_all_attr_cache</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_key_attr_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</code></pre></div></td></tr></table></div>
+                  </details>
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">connect</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">connect</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect(config)">config</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Establish connection to the backend.</p>
+<p>This method is idempotent. Calling it multiple times must be safe.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect--parameters">Parameters<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect--parameters" title="Permanent link">&para;</a></h5>
+<p>config : Any | None
+    Backend-specific configuration object.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect--raises">Raises<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.connect--raises" title="Permanent link">&para;</a></h5>
+<p>ConnectionError
+    Backend unreachable.
+RuntimeError
+    Backend misconfigured.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/models/abstract_store.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Establish connection to the backend.</span>
+
+<span class="sd">    This method is idempotent. Calling it multiple times must be safe.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : Any | None</span>
+<span class="sd">        Backend-specific configuration object.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ConnectionError</span>
+<span class="sd">        Backend unreachable.</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        Backend misconfigured.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connect_impl</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connected</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_connecting</span> <span class="o">=</span> <span class="kc">False</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_nodes</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_nodes</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="../02_stores/#database_builder_libs.models.node.Node">Node</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve nodes using a filter query.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--filter-syntax">Filter syntax<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--filter-syntax" title="Permanent link">&para;</a></h5>
+<p>URL query string:</p>
+<div class="highlight"><pre><span></span><code>entity=&lt;entity_type&gt;&amp;&lt;attr&gt;=&lt;value&gt;&amp;...
+</code></pre></div>
+<p>Example
+    entity=person&amp;email=john@doe.com</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--behaviour" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Returns normalized Node objects</li>
+<li>Deduplicates overlapping matches</li>
+<li>Automatically infers key_attribute from schema</li>
+</ul>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--raises">Raises<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_nodes--raises" title="Permanent link">&para;</a></h5>
+<p>TypeError
+    If filter is not a string
+ValueError
+    If filter missing required entity parameter</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_read.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;TypeDbDatastore&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Node</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve nodes using a filter query.</span>
+
+<span class="sd">    Filter syntax</span>
+<span class="sd">    -------------</span>
+<span class="sd">    URL query string:</span>
+
+<span class="sd">        entity=&lt;entity_type&gt;&amp;&lt;attr&gt;=&lt;value&gt;&amp;...</span>
+
+<span class="sd">    Example</span>
+<span class="sd">        entity=person&amp;email=john@doe.com</span>
+
+<span class="sd">    Behaviour</span>
+<span class="sd">    ---------</span>
+<span class="sd">    - Returns normalized Node objects</span>
+<span class="sd">    - Deduplicates overlapping matches</span>
+<span class="sd">    - Automatically infers key_attribute from schema</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If filter is not a string</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If filter missing required entity parameter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">filter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_all_nodes</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;filter must be a string or None&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;filter cannot be empty; use None to fetch all nodes&quot;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+
+    <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+    <span class="n">entity_type</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;entity_type&quot;</span><span class="p">]</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span>
+    <span class="n">include_relations</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;include_relations&quot;</span><span class="p">]</span>
+
+    <span class="n">match_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_match</span><span class="p">(</span><span class="n">entity_type</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+    <span class="n">attr_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_attribute_labels</span><span class="p">(</span><span class="n">entity_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">attr_labels</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    match</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">match_block</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    fetch </span><span class="se">{{</span>
+<span class="s2">        &#39;data&#39;: </span><span class="se">{{</span><span class="s2">$e.*</span><span class="se">}}</span><span class="s2">,</span>
+<span class="s2">        &#39;entity_type&#39;: &#39;</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">&#39;,</span>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_read</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">as_concept_documents</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_to_nodes</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">include_relations</span><span class="o">=</span><span class="n">include_relations</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">get_relations</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_relations</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            RelationData (database_builder_libs.stores.typedb._types.RelationData)" href="#database_builder_libs.stores.typedb.typedb_store.RelationData">RelationData</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve relations using a filter query.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--filter-syntax">Filter syntax<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--filter-syntax" title="Permanent link">&para;</a></h5>
+<p>URL query string:</p>
+<div class="highlight"><pre><span></span><code>relation=&lt;relation_type&gt;&amp;&lt;attr&gt;=&lt;value&gt;&amp;...
+</code></pre></div>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--example">Example<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--example" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code>relation=friendship&amp;since=2024
+</code></pre></div>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--behaviour" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Returns normalized RelationData objects</li>
+</ul>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--raises">Raises<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.get_relations--raises" title="Permanent link">&para;</a></h5>
+<p>TypeError
+    If filter is not a string
+ValueError
+    If filter missing required relation parameter</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_read.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
+<span class="normal">536</span>
+<span class="normal">537</span>
+<span class="normal">538</span>
+<span class="normal">539</span>
+<span class="normal">540</span>
+<span class="normal">541</span>
+<span class="normal">542</span>
+<span class="normal">543</span>
+<span class="normal">544</span>
+<span class="normal">545</span>
+<span class="normal">546</span>
+<span class="normal">547</span>
+<span class="normal">548</span>
+<span class="normal">549</span>
+<span class="normal">550</span>
+<span class="normal">551</span>
+<span class="normal">552</span>
+<span class="normal">553</span>
+<span class="normal">554</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_relations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;TypeDbDatastore&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RelationData</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve relations using a filter query.</span>
+
+<span class="sd">    Filter syntax</span>
+<span class="sd">    -------------</span>
+<span class="sd">    URL query string:</span>
+
+<span class="sd">        relation=&lt;relation_type&gt;&amp;&lt;attr&gt;=&lt;value&gt;&amp;...</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">        relation=friendship&amp;since=2024</span>
+
+<span class="sd">    Behaviour</span>
+<span class="sd">    ---------</span>
+<span class="sd">    - Returns normalized RelationData objects</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If filter is not a string</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If filter missing required relation parameter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">filter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_all_relations</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;filter must be a string or None&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;filter cannot be empty; use None to fetch all relations&quot;</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+
+    <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_relation_filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+    <span class="n">relation_type</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;relation_type&quot;</span><span class="p">]</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span>
+
+    <span class="n">match_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_relation_match</span><span class="p">(</span><span class="n">relation_type</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+    <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    match</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">match_block</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">        $rel isa! $rel_type;</span>
+<span class="s2">    fetch </span><span class="se">{{</span>
+<span class="s2">        &#39;relation&#39;: </span><span class="se">{{</span>
+<span class="s2">            &#39;type&#39;: $rel_type,</span>
+<span class="s2">            &#39;data&#39;: </span><span class="se">{{</span><span class="s2"> $rel.* </span><span class="se">}}</span>
+<span class="s2">        </span><span class="se">}}</span><span class="s2">,</span>
+<span class="s2">        &#39;players&#39;: [</span>
+<span class="s2">            match</span>
+<span class="s2">            $rel links ($role: $player);</span>
+<span class="s2">            $player isa! $player_type;</span>
+<span class="s2">            fetch </span><span class="se">{{</span>
+<span class="s2">                &#39;role&#39;: $role,</span>
+<span class="s2">                &#39;type&#39;: $player_type,</span>
+<span class="s2">                &#39;data&#39;: </span><span class="se">{{</span><span class="s2"> $player.* </span><span class="se">}}</span>
+<span class="s2">            </span><span class="se">}}</span><span class="s2">;</span>
+<span class="s2">        ]</span>
+<span class="s2">    </span><span class="se">}}</span><span class="s2">;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_read</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">as_concept_documents</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_to_relations</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">rows</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">query_read</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_read</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_read(query)">query</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            EagerQueryAnswer (database_builder_libs.stores.typedb._types.EagerQueryAnswer)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer">EagerQueryAnswer</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Execute a read query and eagerly return its evaluated answer.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">query_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EagerQueryAnswer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a read query and eagerly return its evaluated answer.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">(</span><span class="n">TransactionType</span><span class="o">.</span><span class="n">READ</span><span class="p">)</span> <span class="k">as</span> <span class="n">tx</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EagerQueryAnswer</span><span class="p">(</span><span class="n">tx</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">query_schema</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_schema</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_schema(query)">query</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            EagerQueryAnswer (database_builder_libs.stores.typedb._types.EagerQueryAnswer)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer">EagerQueryAnswer</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Execute a schema query, eagerly return its answer, and invalidate key caches.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">query_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EagerQueryAnswer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a schema query, eagerly return its answer, and invalidate key caches.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">(</span><span class="n">TransactionType</span><span class="o">.</span><span class="n">SCHEMA</span><span class="p">)</span> <span class="k">as</span> <span class="n">tx</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">EagerQueryAnswer</span><span class="p">(</span><span class="n">tx</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+    <span class="c1"># invalidate key attr cache — schema may have changed</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_key_attr_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_all_attr_cache</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_attr_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">type_name</span><span class="p">,</span> <span class="n">key_attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_key_attrs_from_schema</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_key_attr_cache</span><span class="p">[</span><span class="n">type_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_attr</span>
+    <span class="k">return</span> <span class="n">result</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">query_write</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_write</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.query_write(query)">query</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            EagerQueryAnswer (database_builder_libs.stores.typedb._types.EagerQueryAnswer)" href="#database_builder_libs.stores.typedb.typedb_store.EagerQueryAnswer">EagerQueryAnswer</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Execute a write query and eagerly return its evaluated answer.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">query_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EagerQueryAnswer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute a write query and eagerly return its evaluated answer.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction</span><span class="p">(</span><span class="n">TransactionType</span><span class="o">.</span><span class="n">WRITE</span><span class="p">)</span> <span class="k">as</span> <span class="n">tx</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EagerQueryAnswer</span><span class="p">(</span><span class="n">tx</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">remove_node</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">remove_node</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="../02_stores/#database_builder_libs.models.node.Node">Node</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Delete exactly one node and return it.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node--raises">Raises<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_node--raises" title="Permanent link">&para;</a></h5>
+<p>ValueError
+    No match or multiple matches
+RuntimeError
+    Deletion inconsistency detected</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_delete.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_node</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;TypeDbDatastore&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete exactly one node and return it.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        No match or multiple matches</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        Deletion inconsistency detected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No node found for filter: </span><span class="si">{</span><span class="nb">filter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;remove_node() matched multiple nodes. &quot;</span>
+            <span class="s2">&quot;Use remove_nodes(..., allow_multiple=True) instead.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">removed</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">deleted_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">deleted_count</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;TypeDB deletion inconsistency detected&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">removed</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">remove_nodes</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">remove_nodes</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes(filter)">filter</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">,</span> <span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes(allow_multiple)">allow_multiple</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Delete nodes matching the filter.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes--safety-rules">Safety rules<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes--safety-rules" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Refuses deleting entire entity type unless allow_multiple=True</li>
+<li>Requires at least one attribute filter by default</li>
+</ul>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes--returns">Returns<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.remove_nodes--returns" title="Permanent link">&para;</a></h5>
+<p>int
+    Number of deleted nodes</p>
+<p>This operation is irreversible.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_delete.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">remove_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;TypeDbDatastore&quot;</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">allow_multiple</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Delete nodes matching the filter.</span>
+
+<span class="sd">    Safety rules</span>
+<span class="sd">    ------------</span>
+<span class="sd">    - Refuses deleting entire entity type unless allow_multiple=True</span>
+<span class="sd">    - Requires at least one attribute filter by default</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        Number of deleted nodes</span>
+
+<span class="sd">    This operation is irreversible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">filter</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TypeDB datastore requires a keyed filter string&quot;</span><span class="p">)</span>
+
+    <span class="n">parsed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_filter</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+    <span class="n">entity_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;entity_type&quot;</span><span class="p">]</span>
+    <span class="n">attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_multiple</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">attrs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Refusing to delete all instances of &#39;</span><span class="si">{</span><span class="n">entity_type</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+            <span class="s2">&quot;Provide a keyed filter or set allow_multiple=True.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">match_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_match</span><span class="p">(</span><span class="n">entity_type</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+
+    <span class="n">delete_query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    match</span>
+<span class="s2">        </span><span class="si">{</span><span class="n">match_block</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">    delete</span>
+<span class="s2">        $e;</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_nodes</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">query_write</span><span class="p">(</span><span class="n">delete_query</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">count</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">store_node</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">store_node</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node(node)">node</span></span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="            Node
+
+
+  
+      dataclass
+   (database_builder_libs.models.node.Node)" href="../02_stores/#database_builder_libs.models.node.Node">Node</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Insert a Node into TypeDB if it does not already exist, and ensure its relations exist.</p>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node--behaviour">Behaviour<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node--behaviour" title="Permanent link">&para;</a></h5>
+<ul>
+<li>Creates the entity if it does not exist</li>
+<li>Leaves existing entity attributes unchanged (no merge or update of payload_data)</li>
+<li>Inserts missing relations only</li>
+<li>Operation is idempotent</li>
+</ul>
+<h5 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node--identity-rule">Identity rule<a class="headerlink" href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.store_node--identity-rule" title="Permanent link">&para;</a></h5>
+<p>A node is considered existing if an entity with
+(entity_type, key_attribute, id) exists.</p>
+<p>Relations are inserted only if not already present.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_write.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">store_node</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="s2">&quot;TypeDbDatastore&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">Node</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Insert a Node into TypeDB if it does not already exist, and ensure its relations exist.</span>
+
+<span class="sd">    Behaviour</span>
+<span class="sd">    ---------</span>
+<span class="sd">    - Creates the entity if it does not exist</span>
+<span class="sd">    - Leaves existing entity attributes unchanged (no merge or update of payload_data)</span>
+<span class="sd">    - Inserts missing relations only</span>
+<span class="sd">    - Operation is idempotent</span>
+
+<span class="sd">    Identity rule</span>
+<span class="sd">    -------------</span>
+<span class="sd">    A node is considered existing if an entity with</span>
+<span class="sd">    (entity_type, key_attribute, id) exists.</span>
+
+<span class="sd">    Relations are inserted only if not already present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entity_exists</span><span class="p">(</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">entity_type</span><span class="p">,</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">key_attribute</span><span class="p">,</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_entity</span><span class="p">(</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">entity_type</span><span class="p">,</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">key_attribute</span><span class="p">,</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">payload_data</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">relations</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_relation</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">RelationData</span><span class="p">,</span> <span class="n">rel</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.transaction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">transaction</span>
+
+
+<a href="#database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.transaction" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transaction</span><span class="p">(</span><span class="n"><span title="database_builder_libs.stores.typedb.typedb_store.TypeDbDatastore.transaction(transaction_type)">transaction_type</span></span><span class="p">:</span> <span class="n"><span title="typedb.driver.TransactionType">TransactionType</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Generator" href="https://docs.python.org/3/library/typing.html#typing.Generator">Generator</a></span><span class="p">[</span><span class="n"><span title="typedb.driver.Transaction">Transaction</span></span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Context manager for yielding a TypeDB transaction.
+Handles commits automatically for write and schema transactions.</p>
+
+          
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/database_builder_libs/stores/typedb/_base.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction_type</span><span class="p">:</span> <span class="n">TransactionType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Transaction</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Context manager for yielding a TypeDB transaction.</span>
+<span class="sd">    Handles commits automatically for write and schema transactions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_connected</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">typedb_driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">database</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">typedb_driver</span><span class="o">.</span><span class="n">transaction</span><span class="p">(</span><span class="n">database_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">database</span><span class="p">,</span> <span class="n">transaction_type</span><span class="o">=</span><span class="n">transaction_type</span><span class="p">)</span> <span class="k">as</span> <span class="n">transaction</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">transaction</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;TypeDB transaction has encountered an error&quot;</span><span class="p">)</span>
+            <span class="c1"># Do NOT commit — let TypeDB abort on close</span>
+            <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">transaction_type</span><span class="o">.</span><span class="n">is_write</span><span class="p">()</span> <span class="ow">or</span> <span class="n">transaction_type</span><span class="o">.</span><span class="n">is_schema</span><span class="p">())</span> <span class="ow">and</span> <span class="n">transaction</span><span class="o">.</span><span class="n">is_open</span><span class="p">():</span>
+                <span class="n">transaction</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.tabs.link", "navigation.tabs", "content.tabs.link", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
