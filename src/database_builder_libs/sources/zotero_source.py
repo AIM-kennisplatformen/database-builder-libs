@@ -120,129 +120,47 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         self._config = ZoteroConfig(**config)
         self._zotero = zotero.Zotero(**self._config.model_dump(exclude={"collection"}))
 
-    def _select_best_attachment(self, attachments: list[dict]) -> Optional[dict]:
-        """
-        Select the best attachment for download from a list of attachments.
-        
-        Priority order:
-        1. PDF attachments (contentType: application/pdf)
-        2. EPUB attachments (contentType: application/epub+zip)
-        3. Other document formats (.docx, .doc, .txt, .html)
-        4. Any attachment (last resort)
-        
-        This ensures we get PDFs even if they're not the first attachment.
-        Used as fallback when no preferred types match.
-        
-        Args:
-            attachments: List of attachment dictionaries from Zotero API
-        
-        Returns:
-            Best matching attachment dict, or None if no attachments available
-        """
-        if not attachments:
-            return None
-        
-        # Priority 1: PDF files
-        pdf_attachments = [
-            a for a in attachments
-            if a.get("data", {}).get("contentType") == "application/pdf"
-        ]
-        if pdf_attachments:
-            logger.debug("Found {} PDF attachment(s), selecting first", len(pdf_attachments))
-            return pdf_attachments[0]
-        
-        # Priority 2: EPUB files
-        epub_attachments = [
-            a for a in attachments
-            if a.get("data", {}).get("contentType") == "application/epub+zip"
-        ]
-        if epub_attachments:
-            logger.debug("No PDF found, selecting EPUB attachment")
-            return epub_attachments[0]
-        
-        # Priority 3: Other document formats
-        doc_types = {
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",  # .docx
-            "application/msword",  # .doc
-            "text/plain",  # .txt
-            "text/html",  # .html
-        }
-        doc_attachments = [
-            a for a in attachments
-            if a.get("data", {}).get("contentType") in doc_types
-        ]
-        if doc_attachments:
-            logger.debug("No PDF/EPUB found, selecting document attachment")
-            return doc_attachments[0]
-        
-        # Fallback: any attachment
-        logger.debug("No standard format found, selecting any available attachment")
-        return attachments[0]
-
-    def _select_best_attachment_by_type(
+    def _select_best_attachment(
         self,
         attachments: list[dict],
         accept_types: list[str],
-        allow_fallback: bool
+        allow_fallback: bool = True,
     ) -> Optional[dict]:
         """
-        Select attachment matching preferred file types in priority order.
-        
-        Algorithm:
-        1. For each file type in accept_types (in order):
-           - Find all attachments matching that type
-           - Return first match if found
-        2. If no preferred types match and allow_fallback=True:
-           - Return _select_best_attachment() (smart fallback)
-        3. Otherwise:
-           - Return None (no acceptable attachment found)
-        
+        Select the best attachment from a list, ranked by preferred file types.
+
+        Tries each type in `accept_types` in order, returning the first match.
+        If nothing matches and `allow_fallback` is True, returns the first
+        attachment regardless of type. Returns None if the list is empty or
+        no match is found without fallback.
+
         Args:
-            attachments: List of attachment dictionaries from Zotero API
-            accept_types: List of acceptable file types in priority order
-                         Valid types: "pdf", "epub", "docx", "doc", "txt", "html"
-            allow_fallback: If True, use smart selection if no preferred types found
-                           If False, only accept specified types
-        
-        Returns:
-            Best matching attachment dict, or None if no match and no fallback
+            attachments:    Attachment dicts from the Zotero API.
+            accept_types:   File-type priority order, e.g. ["pdf", "epub"].
+                            Valid values are keys of FILE_TYPE_MIME_MAP.
+            allow_fallback: When True, return any attachment if no preferred
+                            type is found. When False, return None instead.
         """
         if not attachments:
             return None
-        
-        # Try each accepted type in priority order
+
+        def content_type(a: dict) -> str:
+            return a.get("data", {}).get("contentType", "")
+
         for file_type in accept_types:
-            mime_type = FILE_TYPE_MIME_MAP.get(file_type)
-            if not mime_type:
-                logger.warning("Unknown file type: {}", file_type)
+            mime = FILE_TYPE_MIME_MAP.get(file_type)
+            if mime is None:
+                logger.warning("Unknown file type '{}', skipping", file_type)
                 continue
-            
-            # Find all attachments matching this type
-            matching = [
-                a for a in attachments
-                if a.get("data", {}).get("contentType") == mime_type
-            ]
-            
-            if matching:
-                logger.debug(
-                    "Found {} {} attachment(s), selecting first",
-                    len(matching),
-                    file_type
-                )
-                return matching[0]
-        
-        # No preferred types found
+            if match := next((a for a in attachments if content_type(a) == mime), None):
+                logger.debug("Selected {} attachment for item", file_type)
+                return match
+
         if allow_fallback:
-            logger.debug(
-                "No preferred types found (wanted: {}), using smart fallback",
-                ", ".join(accept_types)
-            )
-            return self._select_best_attachment(attachments)
-        
-        logger.warning(
-            "No acceptable file types found (wanted: {})",
-            ", ".join(accept_types)
-        )
+            logger.debug("No preferred type found (wanted: {}), using first attachment", accept_types)
+            return attachments[0]
+
+        logger.warning("No acceptable attachment found (wanted: {})", accept_types)
         return None
 
     def _get_file_extension(self, content_type: str) -> str:
@@ -417,12 +335,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         if accept_types is None:
             accept_types = FileType.ALL
 
-        # Select best attachment based on file type preferences
-        attachment = self._select_best_attachment_by_type(
-            attachments,
-            accept_types,
-            allow_fallback
-        )
+        attachment = self._select_best_attachment(attachments, accept_types, allow_fallback)
         
         if not attachment:
             logger.warning("Could not find acceptable attachment for item {}", item_id)
