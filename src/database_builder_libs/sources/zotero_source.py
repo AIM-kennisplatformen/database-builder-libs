@@ -51,7 +51,7 @@ class ZoteroConfig(BaseModel):
     collection: str | None = None
 
 
-class ZoteroSource(AbstractSource):
+class ZoteroSource(AbstractSource[ZoteroConfig]):
     """
     Zotero implementation of AbstractSource.
 

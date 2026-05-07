@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Mapping, Optional, Any
+from typing import Generic, Mapping, Optional, Any, TypeVar
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -32,7 +32,10 @@ class Content(BaseModel):
     content: dict
 
 
-class AbstractSource(ABC, BaseModel):
+TConfig = TypeVar("TConfig")
+
+
+class AbstractSource(ABC, BaseModel, Generic[TConfig]):
     """
     Abstract interface describing a synchronizable external data source.
 
@@ -42,6 +45,13 @@ class AbstractSource(ABC, BaseModel):
     3. Retrieving normalized content for those artefacts
 
     The interface is designed for incremental synchronization workflows.
+
+    Type Parameters
+    ---------------
+    TConfig
+        The configuration model type used by the concrete implementation.
+        Subclasses should bind this to their specific config model, e.g.:
+            class ZoteroSource(AbstractSource[ZoteroConfig]): ...
 
     Lifecycle
     ---------
@@ -59,27 +69,21 @@ class AbstractSource(ABC, BaseModel):
     """
 
     _connected: bool = PrivateAttr(default=False)
-    _config: Mapping[str, str] | None = PrivateAttr(default=None)
+    _config: Optional[TConfig] = PrivateAttr(default=None)
     """
-        Configuration
+    Configuration
     -------------
-    `config` is a mapping containing backend-specific parameters.
+    `_config` holds the parsed, backend-specific configuration object.
+    The concrete type is determined by the TConfig type parameter.
 
     Examples
     --------
     Zotero:
-        {"library_id": "...", "api_key": "..."}
+        TConfig = ZoteroConfig  →  ZoteroSource(AbstractSource[ZoteroConfig])
     Filesystem:
-        {"path": "/data"}
+        TConfig = FilesystemConfig  →  FilesystemSource(AbstractSource[FilesystemConfig])
     REST API:
-        {"url": "...", "token": "..."}
-
-    Consistency guarantees
-    ----------------------
-    Implementations must ensure:
-    - Stable artefact identifiers across runs
-    - Monotonic modification timestamps
-    - Deterministic content serialization
+        TConfig = RestApiConfig  →  RestApiSource(AbstractSource[RestApiConfig])
     """
 
     def connect(self, config: Mapping[str, Any] | None = None) -> None:
@@ -102,7 +106,8 @@ class AbstractSource(ABC, BaseModel):
 
     @abstractmethod
     def _connect_impl(self, config: Mapping[str, Any]) -> None:
-        """Backend-specific connection logic."""
+        """Backend-specific connection logic. Implementations are expected to
+        parse `config` into their TConfig model and assign it to `self._config`."""
         raise NotImplementedError
 
     def _ensure_connected(self) -> None:
