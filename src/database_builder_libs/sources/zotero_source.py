@@ -118,6 +118,18 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         self._config = ZoteroConfig(**config)
         self._zotero = zotero.Zotero(**self._config.model_dump(exclude={"collection"}))
 
+    def _get_zotero(self) -> zotero.Zotero:
+        self._ensure_connected()
+        if self._zotero is None:
+            raise RuntimeError("Zotero client not initialized after connect()")
+        return self._zotero
+
+    def _get_config(self) -> ZoteroConfig:
+        self._ensure_connected()
+        if self._config is None:
+            raise RuntimeError("Zotero config not initialized after connect()")
+        return self._config
+
     def _select_best_attachment(
         self,
         attachments: list[dict],
@@ -178,11 +190,8 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
-        self._ensure_connected()
-
-        return self._zotero.everything(
-            self._zotero.collection_items_top(collection_id, limit=None)
-        )
+        z = self._get_zotero()
+        return z.everything(z.collection_items_top(collection_id, limit=None))
 
     def download_zotero_item(
         self,
@@ -264,11 +273,11 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         ... )
         True
         """
-        self._ensure_connected()
+        z = self._get_zotero()
 
         logger.debug("Fetching file: {}", item_id)
 
-        children = self._zotero.children(item_id)
+        children = z.children(item_id)
         if not children:
             logger.warning("No child attachments found for item {}", item_id)
             return False
@@ -305,7 +314,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             return True
 
         logger.info("Local attachment not found, downloading via Zotero API")
-        self._zotero.dump(
+        z.dump(
             itemkey=attachment["key"],
             filename=target.name,
             path=download_path,
@@ -340,16 +349,14 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         -----
         Zotero `since` uses server modification time, not file change time.
         """
-        self._ensure_connected()
+        z = self._get_zotero()
+        config = self._get_config()
 
-        if self._config.collection:
-            items_iter = self._zotero.collection_items_top(
-                self._config.collection, limit=None
-            )
-        else:
-            items_iter = self._zotero.items()
-
-        items = list(self._zotero.everything(items_iter))
+        items_iter = (
+            z.collection_items_top(config.collection, limit=None)
+            if config.collection else z.items()
+        )
+        items = list(z.everything(items_iter))
 
         # If no cursor → epoch
         if last_synced is None:
@@ -388,12 +395,12 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
 
         This method does not download attachments.
         """
-        self._ensure_connected()
+        z = self._get_zotero()
 
         contents: list[Content] = []
 
         for item_key, modified in artefacts:
-            item = self._zotero.item(item_key)
+            item = z.item(item_key)
             if not item:
                 continue
             contents.append(
