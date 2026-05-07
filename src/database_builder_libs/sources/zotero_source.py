@@ -1,4 +1,5 @@
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 import shutil
 from typing import Any, List, Mapping, Optional
@@ -7,41 +8,38 @@ from pyzotero import zotero
 
 from loguru import logger
 from database_builder_libs.models.abstract_source import AbstractSource, Content
-from datetime import timezone
 from dateutil.parser import isoparse
 
 
-# File type constants for convenience
-class FileType:
-    """Pre-defined file type groups for convenient reference"""
-    
-    # Single types
-    PDF = ["pdf"]
-    EPUB = ["epub"]
-    DOCX = ["docx"]
-    DOC = ["doc"]
-    TXT = ["txt"]
-    HTML = ["html"]
-    
-    # Type groups
-    EBOOKS = ["epub", "pdf"]  # E-book formats (EPUB preferred)
-    DOCUMENTS = ["pdf", "docx", "doc"]  # Document formats
-    TEXT = ["txt", "html"]  # Plain text formats
-    OFFICE = ["docx", "doc"]  # Office documents
-    
-    # All types in order of preference
-    ALL = ["pdf", "epub", "docx", "doc", "txt", "html"]
+@dataclass(frozen=True)
+class _FileTypeInfo:
+    mime: str
+    extension: str  # includes leading dot
 
 
-# Mapping of file types to MIME types
-FILE_TYPE_MIME_MAP = {
-    "pdf": "application/pdf",
-    "epub": "application/epub+zip",
-    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "doc": "application/msword",
-    "txt": "text/plain",
-    "html": "text/html",
+FILE_TYPES: dict[str, _FileTypeInfo] = {
+    "pdf":  _FileTypeInfo("application/pdf",                                                          ".pdf"),
+    "epub": _FileTypeInfo("application/epub+zip",                                                     ".epub"),
+    "docx": _FileTypeInfo("application/vnd.openxmlformats-officedocument.wordprocessingml.document",  ".docx"),
+    "doc":  _FileTypeInfo("application/msword",                                                       ".doc"),
+    "txt":  _FileTypeInfo("text/plain",                                                               ".txt"),
+    "html": _FileTypeInfo("text/html",                                                                ".html"),
 }
+
+# Reverse lookup: MIME type → extension, derived from FILE_TYPES
+MIME_TO_EXT: dict[str, str] = {info.mime: info.extension for info in FILE_TYPES.values()}
+
+
+class FileType:
+    """Pre-defined file type groups for convenient reference."""
+
+    PDF       = ["pdf"]
+    EPUB      = ["epub"]
+    EBOOKS    = ["epub", "pdf"]       # E-book formats (EPUB preferred)
+    DOCUMENTS = ["pdf", "docx", "doc"]  # Document formats
+    TEXT      = ["txt", "html"]       # Plain text formats
+    OFFICE    = ["docx", "doc"]       # Office documents
+    ALL       = list(FILE_TYPES)      # All types in insertion-order priority
 
 
 class ZoteroConfig(BaseModel):
@@ -85,14 +83,14 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
     File Type Configuration
     -----------------------
     Use the FileType class for convenient file type groups:
-    
+
     >>> # EPUB before PDF (for e-books)
     >>> zotero.download_zotero_item(
     ...     item_id="ABC123",
     ...     download_path="./downloads/",
     ...     accept_types=FileType.EBOOKS
     ... )
-    
+
     >>> # PDF only, strict mode
     >>> zotero.download_zotero_item(
     ...     item_id="ABC123",
@@ -100,7 +98,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
     ...     accept_types=FileType.PDF,
     ...     allow_fallback=False
     ... )
-    
+
     >>> # Documents (PDF, DOCX, DOC), no plain text
     >>> zotero.download_zotero_item(
     ...     item_id="ABC123",
@@ -137,7 +135,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         Args:
             attachments:    Attachment dicts from the Zotero API.
             accept_types:   File-type priority order, e.g. ["pdf", "epub"].
-                            Valid values are keys of FILE_TYPE_MIME_MAP.
+                            Valid values are keys of FILE_TYPES.
             allow_fallback: When True, return any attachment if no preferred
                             type is found. When False, return None instead.
         """
@@ -148,11 +146,11 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             return a.get("data", {}).get("contentType", "")
 
         for file_type in accept_types:
-            mime = FILE_TYPE_MIME_MAP.get(file_type)
-            if mime is None:
+            type_info = FILE_TYPES.get(file_type)
+            if type_info is None:
                 logger.warning("Unknown file type '{}', skipping", file_type)
                 continue
-            if match := next((a for a in attachments if content_type(a) == mime), None):
+            if match := next((a for a in attachments if content_type(a) == type_info.mime), None):
                 logger.debug("Selected {} attachment for item", file_type)
                 return match
 
@@ -163,31 +161,8 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         logger.warning("No acceptable attachment found (wanted: {})", accept_types)
         return None
 
-    def _get_file_extension(self, content_type: str) -> str:
-        """
-        Get file extension from MIME content type.
-        
-        Maps common MIME types to file extensions.
-        
-        Args:
-            content_type: MIME type string (e.g., "application/pdf")
-        
-        Returns:
-            File extension including dot (e.g., ".pdf")
-        """
-        mime_to_ext = {
-            "application/pdf": ".pdf",
-            "application/epub+zip": ".epub",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-            "application/msword": ".doc",
-            "text/plain": ".txt",
-            "text/html": ".html",
-        }
-        
-        return mime_to_ext.get(content_type, ".pdf")  # Default to .pdf
-
     def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
-        """Retrieve the metadata of all documents within collection
+        """Retrieve the metadata of all documents within collection.
 
         This function calls the zotero collection items api:
         'https://api.zotero.org/users/<library_id>/collections/<collection_id>/items/top'
@@ -204,7 +179,6 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
         """
         self._ensure_connected()
-        assert self._zotero is not None
 
         return self._zotero.everything(
             self._zotero.collection_items_top(collection_id, limit=None)
@@ -219,105 +193,80 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         allow_fallback: bool = True,
     ) -> bool:
         """
-        Download the best attachment of specified zotero item to specified path.
-        
-        Smart attachment selection based on file type preferences.
-        
+        Download the best attachment of a Zotero item to the specified path.
+
         Parameters
         ----------
         item_id : str
-            The specific item_id of the item to get the attachment from
-        
+            The specific item_id of the item to get the attachment from.
+
         download_path : str
-            The folder to download the item to
-            File will be saved as <download_path>/<item_id>.<ext>
-        
+            The folder to download the item to.
+            File will be saved as <download_path>/<item_id>.<ext>.
+
         accept_types : list[str] | None, default=None
             List of acceptable file types in priority order.
-            
+
             Supported types:
-            - "pdf" : PDF documents (application/pdf)
+            - "pdf"  : PDF documents (application/pdf)
             - "epub" : EPUB ebooks (application/epub+zip)
             - "docx" : Word documents (modern format)
-            - "doc" : Word documents (legacy format)
-            - "txt" : Text files (text/plain)
+            - "doc"  : Word documents (legacy format)
+            - "txt"  : Text files (text/plain)
             - "html" : HTML files (text/html)
-            
-            If None, defaults to FileType.ALL (all types, PDF preferred)
-            
+
+            If None, defaults to FileType.ALL (all types, PDF preferred).
+
             Examples:
-            - ["pdf"] : Only PDFs, fail if not found (with allow_fallback=False)
-            - ["epub", "pdf"] : Try EPUB first, then PDF
-            - ["pdf", "epub"] : Try PDF first, then EPUB
-            - FileType.EBOOKS : Use pre-defined group (EPUB, PDF)
+            - ["pdf"]            : Only PDFs, fail if not found (with allow_fallback=False)
+            - ["epub", "pdf"]    : Try EPUB first, then PDF
+            - FileType.EBOOKS    : Use pre-defined group (EPUB, PDF)
             - FileType.DOCUMENTS : Use pre-defined group (PDF, DOCX, DOC)
-        
+
         allow_fallback : bool, default=True
-            If True: Accept other file types if no matching type found
-            If False: Skip item if no matching type found
-            
-            Examples:
-            - accept_types=["pdf"], allow_fallback=True:
-              Tries PDF first, but accepts EPUB, DOCX, etc. if no PDF
-            
-            - accept_types=["pdf"], allow_fallback=False:
-              Only accepts PDF, skips item if not found
-        
+            If True: accept other file types if no matching type found.
+            If False: skip item if no matching type found.
+
         Returns
         -------
         bool
-            True if file was downloaded successfully
-            False if no matching attachment found (with allow_fallback=False)
-                or no attachments at all
-        
+            True if the file was downloaded successfully.
+            False if no matching attachment was found or no attachments exist.
+
         Notes
         -----
-        - Local storage is checked first, then API fallback
-        - File extension is determined by actual content type
-        - Detailed logging shows attachment selection process
-        
+        - Local storage is checked first, then API fallback.
+        - File extension is determined by actual content type.
+
         Examples
         --------
         >>> zotero = ZoteroSource()
         >>> zotero.connect(config)
-        
+
         # Default: try all formats, prefer PDF
-        >>> zotero.download_zotero_item(
-        ...     item_id="ABC123",
-        ...     download_path="./downloads/"
-        ... )
+        >>> zotero.download_zotero_item(item_id="ABC123", download_path="./downloads/")
         True
-        
+
         # Only PDFs, strict mode
         >>> zotero.download_zotero_item(
         ...     item_id="ABC123",
         ...     download_path="./downloads/",
         ...     accept_types=["pdf"],
-        ...     allow_fallback=False
+        ...     allow_fallback=False,
         ... )
         True  # Only if PDF found
-        
-        # EPUB-first policy for ebook items
+
+        # EPUB-first policy
         >>> zotero.download_zotero_item(
         ...     item_id="XYZ789",
         ...     download_path="./downloads/",
-        ...     accept_types=FileType.EBOOKS
+        ...     accept_types=FileType.EBOOKS,
         ... )
         True
-        
-        # Accept documents only (PDF, DOCX, DOC)
-        >>> zotero.download_zotero_item(
-        ...     item_id="DOC456",
-        ...     download_path="./downloads/",
-        ...     accept_types=FileType.DOCUMENTS,
-        ...     allow_fallback=False
-        ... )
-        True  # Only if PDF, DOCX, or DOC found
         """
         self._ensure_connected()
-        assert self._zotero is not None
 
-        logger.debug("Fetching File: {}", item_id)
+        logger.debug("Fetching file: {}", item_id)
 
         children = self._zotero.children(item_id)
         if not children:
@@ -331,40 +280,37 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             logger.warning("No attachment-type children for item {}", item_id)
             return False
 
-        # Default accept_types to all if not specified
-        if accept_types is None:
-            accept_types = FileType.ALL
+        attachment = self._select_best_attachment(
+            attachments,
+            accept_types=accept_types if accept_types is not None else FileType.ALL,
+            allow_fallback=allow_fallback,
+        )
 
-        attachment = self._select_best_attachment(attachments, accept_types, allow_fallback)
-        
         if not attachment:
             logger.warning("Could not find acceptable attachment for item {}", item_id)
             return False
 
         data = attachment.get("data", {})
-        local_path = data.get("path")
-        
-        # Get correct file extension based on content type
         content_type = data.get("contentType", "application/pdf")
-        ext = self._get_file_extension(content_type)
-        
+        ext = MIME_TO_EXT.get(content_type, ".pdf")
+
         download_dir = Path(download_path)
         download_dir.mkdir(parents=True, exist_ok=True)
         target = download_dir / f"{item_id}{ext}"
-        
+
+        local_path = data.get("path")
         if local_path and Path(local_path).exists():
             logger.info("Copying local attachment from {}", local_path)
             shutil.copy(local_path, target)
             return True
 
         logger.info("Local attachment not found, downloading via Zotero API")
-
         self._zotero.dump(
             itemkey=attachment["key"],
             filename=target.name,
             path=download_path,
         )
-        
+
         return True
 
     def get_list_artefacts(
@@ -395,8 +341,6 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         Zotero `since` uses server modification time, not file change time.
         """
         self._ensure_connected()
-        assert self._zotero is not None
-        assert self._config is not None
 
         if self._config.collection:
             items_iter = self._zotero.collection_items_top(
@@ -407,11 +351,11 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
 
         items = list(self._zotero.everything(items_iter))
 
-        artefacts: list[tuple[str, datetime]] = []
-
         # If no cursor → epoch
         if last_synced is None:
             last_synced = datetime(1970, 1, 1, tzinfo=timezone.utc)
+
+        artefacts: list[tuple[str, datetime]] = []
 
         for item in items:
             data = item.get("data", {})
@@ -445,7 +389,6 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         This method does not download attachments.
         """
         self._ensure_connected()
-        assert self._zotero is not None
 
         contents: list[Content] = []
 
@@ -453,13 +396,11 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             item = self._zotero.item(item_key)
             if not item:
                 continue
-            data = item.get("data", {})
-
             contents.append(
                 Content(
                     id_=item_key,
                     date=modified,
-                    content=data,
+                    content=item.get("data", {}),
                 )
             )
 
