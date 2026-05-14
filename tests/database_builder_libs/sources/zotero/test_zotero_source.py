@@ -10,7 +10,7 @@ from loguru import logger
 from datetime import datetime, timezone
 
 
-from database_builder_libs.sources.zotero_source import ZoteroSource, FileType
+from database_builder_libs.sources.zotero_source import ZoteroSource, DEFAULT_ACCEPT_TYPES
 
 
 class ZoteroTests(unittest.TestCase):
@@ -236,14 +236,10 @@ class ZoteroTests(unittest.TestCase):
         call_args = fake_zotero.dump.call_args
         assert call_args[1]["filename"] == "ITEM123.epub"
 
-    def test_file_type_constants(self):
-        """Test that FileType constants are correctly defined"""
-        assert FileType.PDF == ["pdf"]
-        assert FileType.EPUB == ["epub"]
-        assert FileType.EBOOKS == ["epub", "pdf"]
-        assert FileType.DOCUMENTS == ["pdf", "docx", "doc"]
-        assert "pdf" in FileType.ALL
-        assert "epub" in FileType.ALL
+    def test_default_accept_types(self):
+        """DEFAULT_ACCEPT_TYPES must include all supported file types."""
+        for t in ("pdf", "epub", "docx", "doc", "txt", "html"):
+            self.assertIn(t, DEFAULT_ACCEPT_TYPES)
 
     def test_download_zotero_item_with_correct_file_extensions(self):
         """Test that different file types get correct extensions"""

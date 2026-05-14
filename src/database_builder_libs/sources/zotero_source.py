@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 import shutil
-from typing import Any, List, Mapping, Optional
+from typing import Any, Mapping, Optional
 from pydantic import PrivateAttr, BaseModel
 from pyzotero import zotero
 
@@ -29,17 +29,9 @@ FILE_TYPES: dict[str, _FileTypeInfo] = {
 # Reverse lookup: MIME type → extension, derived from FILE_TYPES
 MIME_TO_EXT: dict[str, str] = {info.mime: info.extension for info in FILE_TYPES.values()}
 
-
-class FileType:
-    """Pre-defined file type groups for convenient reference."""
-
-    PDF       = ["pdf"]
-    EPUB      = ["epub"]
-    EBOOKS    = ["epub", "pdf"]       # E-book formats (EPUB preferred)
-    DOCUMENTS = ["pdf", "docx", "doc"]  # Document formats
-    TEXT      = ["txt", "html"]       # Plain text formats
-    OFFICE    = ["docx", "doc"]       # Office documents
-    ALL       = list(FILE_TYPES)      # All types in insertion-order priority
+# Default priority order when no accept_types are specified.
+# Derived from FILE_TYPES insertion order — update FILE_TYPES to change this.
+DEFAULT_ACCEPT_TYPES: list[str] = list(FILE_TYPES)
 
 
 class ZoteroConfig(BaseModel):
@@ -79,32 +71,6 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
     - Prefers local Zotero storage when available
     - Falls back to API download
     - Saves with correct file extension based on content type
-
-    File Type Configuration
-    -----------------------
-    Use the FileType class for convenient file type groups:
-
-    >>> # EPUB before PDF (for e-books)
-    >>> zotero.download_zotero_item(
-    ...     item_id="ABC123",
-    ...     download_path="./downloads/",
-    ...     accept_types=FileType.EBOOKS
-    ... )
-
-    >>> # PDF only, strict mode
-    >>> zotero.download_zotero_item(
-    ...     item_id="ABC123",
-    ...     download_path="./downloads/",
-    ...     accept_types=FileType.PDF,
-    ...     allow_fallback=False
-    ... )
-
-    >>> # Documents (PDF, DOCX, DOC), no plain text
-    >>> zotero.download_zotero_item(
-    ...     item_id="ABC123",
-    ...     download_path="./downloads/",
-    ...     accept_types=FileType.DOCUMENTS
-    ... )
 
     Lifecycle
     ---------
@@ -173,7 +139,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         logger.warning("No acceptable attachment found (wanted: {})", accept_types)
         return None
 
-    def get_all_documents_metadata(self, collection_id: str) -> List[dict[str, Any]]:
+    def get_all_documents_metadata(self, collection_id: str) -> list[dict[str, Any]]:
         """Retrieve the metadata of all documents within collection.
 
         This function calls the zotero collection items api:
@@ -185,7 +151,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             `collection_id`: The collection to retrieve document metadata from
                             (should be visible in WebURL when using zotero webportal)
 
-        Yields:
+        Returns:
             List containing document-metadata dict for all documents in the library (one dict per document).
             The dict output closely resembles the dict output format of pyzotero:
             https://pyzotero.readthedocs.io/en/latest/#zotero.Zotero.collection_items_top
@@ -224,13 +190,11 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
             - "txt"  : Text files (text/plain)
             - "html" : HTML files (text/html)
 
-            If None, defaults to FileType.ALL (all types, PDF preferred).
+            If None, defaults to DEFAULT_ACCEPT_TYPES (all types, PDF preferred).
 
             Examples:
-            - ["pdf"]            : Only PDFs, fail if not found (with allow_fallback=False)
-            - ["epub", "pdf"]    : Try EPUB first, then PDF
-            - FileType.EBOOKS    : Use pre-defined group (EPUB, PDF)
-            - FileType.DOCUMENTS : Use pre-defined group (PDF, DOCX, DOC)
+            - ["pdf"]         : PDF only
+            - ["epub", "pdf"] : EPUB preferred, PDF fallback
 
         allow_fallback : bool, default=True
             If True: accept other file types if no matching type found.
@@ -269,7 +233,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
         >>> zotero.download_zotero_item(
         ...     item_id="XYZ789",
         ...     download_path="./downloads/",
-        ...     accept_types=FileType.EBOOKS,
+        ...     accept_types=["epub", "pdf"],
         ... )
         True
         """
@@ -291,7 +255,7 @@ class ZoteroSource(AbstractSource[ZoteroConfig]):
 
         attachment = self._select_best_attachment(
             attachments,
-            accept_types=accept_types if accept_types is not None else FileType.ALL,
+            accept_types=accept_types if accept_types is not None else DEFAULT_ACCEPT_TYPES,
             allow_fallback=allow_fallback,
         )
 

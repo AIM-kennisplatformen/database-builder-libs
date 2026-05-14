@@ -71,7 +71,7 @@ download_dir = "zotero_downloads"
 os.makedirs(download_dir, exist_ok=True)
 
 # Download the best attachment for a specific item
-# Default: tries PDF first, then EPUB, then other formats
+# Default: tries all formats in order (pdf, epub, docx, doc, txt, html)
 item_id = "ABC123"  # Replace with an actual item ID
 success = zotero_source.download_zotero_item(
     item_id=item_id,
@@ -87,11 +87,9 @@ else:
 
 #### Download with File Type Preferences
 
-The enhanced `download_zotero_item()` method now supports configurable file type selection:
+The enhanced `download_zotero_item()` method supports configurable file type selection:
 
 ```python
-from database_builder_libs.sources.zotero_source import FileType
-
 # Download PDF only (strict mode - fail if PDF not found)
 success = zotero_source.download_zotero_item(
     item_id="ABC123",
@@ -107,46 +105,13 @@ success = zotero_source.download_zotero_item(
     accept_types=["epub", "pdf"]
 )
 
-# Use FileType constants for convenience
+# Accept documents only (no plain text), strict
 success = zotero_source.download_zotero_item(
     item_id="ABC123",
     download_path=download_dir,
-    accept_types=FileType.EBOOKS  # [epub, pdf]
-)
-
-# Accept documents only (no plain text)
-success = zotero_source.download_zotero_item(
-    item_id="ABC123",
-    download_path=download_dir,
-    accept_types=FileType.DOCUMENTS,  # [pdf, docx, doc]
+    accept_types=["pdf", "docx", "doc"],
     allow_fallback=False
 )
-```
-
-#### FileType Constants
-
-The `FileType` class provides pre-defined file type groups:
-
-```python
-from database_builder_libs.sources.zotero_source import FileType
-
-# Single types
-FileType.PDF        # ["pdf"]
-FileType.EPUB       # ["epub"]
-FileType.DOCX       # ["docx"]
-FileType.DOC        # ["doc"]
-FileType.TXT        # ["txt"]
-FileType.HTML       # ["html"]
-
-# Type groups
-FileType.EBOOKS     # ["epub", "pdf"] - E-book formats (EPUB preferred)
-FileType.DOCUMENTS  # ["pdf", "docx", "doc"] - Document formats
-FileType.TEXT       # ["txt", "html"] - Plain text formats
-FileType.OFFICE     # ["docx", "doc"] - Office documents
-FileType.ALL        # ["pdf", "epub", "docx", "doc", "txt", "html"] - All types
-
-# Custom combinations
-accept_types=["docx", "pdf"]  # Try DOCX first, fallback to PDF
 ```
 
 #### Download Parameters
@@ -156,7 +121,7 @@ download_zotero_item(
     item_id: str,                          # Zotero item ID
     download_path: str,                    # Folder to save to
     accept_types: list[str] | None = None, # File types to accept in priority order
-    allow_fallback: bool = True            # Allow fallback to smart selection
+    allow_fallback: bool = True            # Allow fallback to any type if none match
 ) -> bool
 ```
 
@@ -182,8 +147,8 @@ download_zotero_item(
 #### Complete Workflow Example
 
 ```python
-from database_builder_libs.sources.zotero_source import ZoteroSource, FileType
-import os
+from database_builder_libs.sources.zotero_source import ZoteroSource
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Setup
@@ -195,27 +160,26 @@ zotero_source.connect({
 })
 
 # Create download directories
-pdf_dir = Path("downloads/pdfs")
+pdf_dir   = Path("downloads/pdfs")
 ebook_dir = Path("downloads/ebooks")
 pdf_dir.mkdir(parents=True, exist_ok=True)
 ebook_dir.mkdir(parents=True, exist_ok=True)
 
 # Get modified items
-from datetime import datetime, timezone
 last_sync = datetime(2024, 1, 1, tzinfo=timezone.utc)
 items = zotero_source.get_list_artefacts(last_sync)
 
 # Download with different strategies based on document type
 for item_id, modified_date in items:
-    content = zotero_source.get_content([(item_id, modified_date)])[0]
+    content   = zotero_source.get_content([(item_id, modified_date)])[0]
     item_type = content.content.get("itemType")
-    
+
     if item_type == "book":
         # Books: prefer EPUB for e-readers, fallback to PDF
         success = zotero_source.download_zotero_item(
             item_id=item_id,
             download_path=str(ebook_dir),
-            accept_types=FileType.EBOOKS
+            accept_types=["epub", "pdf"],
         )
     else:
         # Articles: PDF only, strict
@@ -223,9 +187,9 @@ for item_id, modified_date in items:
             item_id=item_id,
             download_path=str(pdf_dir),
             accept_types=["pdf"],
-            allow_fallback=False
+            allow_fallback=False,
         )
-    
+
     if success:
         print(f"✓ Downloaded {item_id}")
     else:
