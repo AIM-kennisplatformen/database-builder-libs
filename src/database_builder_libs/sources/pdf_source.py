@@ -153,7 +153,7 @@ class PDFDocumentConfig(BaseModel):
 _SUMMARY_HEADERS   = frozenset({"abstract", "summary", "executive summary", "samenvatting"})
 _PDF_META_JUNK     = frozenset({"unknown", "untitled", "microsoft word", "writer", "author"})
 
-class PDFSource(AbstractSource):
+class PDFSource(AbstractSource[PDFDocumentConfig]):
     """
     Self-contained PDF source that parses, extracts metadata, chunks, and
     embeds in a single configurable pipeline.
