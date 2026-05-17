@@ -39,10 +39,10 @@ def _retry(max_attempts: int = 3, base_delay: float = 0.1) -> Callable:
                             delay,
                         )
                         time.sleep(delay)
-            logger.error(
-                "Database operation failed after {} attempts", max_attempts
-            )
-            raise last_exc  # type: ignore[union-attr]
+            logger.error("Database operation failed after {} attempts", max_attempts)
+            raise RuntimeError(
+                f"Database operation failed after {max_attempts} attempts"
+            ) from last_exc
 
         return wrapper
 
@@ -84,10 +84,6 @@ class SqliteSyncTracker(AbstractSyncTracker):
         self.conn.execute("PRAGMA synchronous=NORMAL")
         self._init_db()
 
-    # ------------------------------------------------------------------
-    #  Schema management
-    # ------------------------------------------------------------------
-
     def _init_db(self) -> None:
         """Create or migrate database tables to match SCHEMA_VERSION."""
         self._create_schema_version_table()
@@ -118,9 +114,7 @@ class SqliteSyncTracker(AbstractSyncTracker):
         return row[0] if row and row[0] is not None else 0
 
     def _set_schema_version(self, version: int) -> None:
-        self.conn.execute(
-            "INSERT INTO _schema_version(version) VALUES (?)", (version,)
-        )
+        self.conn.execute("INSERT INTO _schema_version(version) VALUES (?)", (version,))
 
     def _run_migrations(self, from_version: int) -> None:
         """Run sequential migrations from `from_version` to SCHEMA_VERSION."""
@@ -128,7 +122,6 @@ class SqliteSyncTracker(AbstractSyncTracker):
             self._migrate_v1()
 
     def _migrate_v1(self) -> None:
-        """Initial schema."""
         cur = self.conn.cursor()
         cur.execute(
             f"""
@@ -156,17 +149,12 @@ class SqliteSyncTracker(AbstractSyncTracker):
             """
         )
 
-    # ------------------------------------------------------------------
-    #  Public API
-    # ------------------------------------------------------------------
-
     @_retry()
     def start_sync(self, source_name: str) -> Optional[float]:
         """Return the last sync timestamp for the source."""
         cur = self.conn.cursor()
         cur.execute(
-            f"SELECT last_sync_time FROM {self._table_sources} "
-            "WHERE source_name=?",
+            f"SELECT last_sync_time FROM {self._table_sources} WHERE source_name=?",
             (source_name,),
         )
         row = cur.fetchone()
@@ -211,9 +199,7 @@ class SqliteSyncTracker(AbstractSyncTracker):
             rows,
         )
         cur.execute(
-            f"UPDATE {self._table_sources} "
-            "SET last_sync_time=? "
-            "WHERE source_name=?",
+            f"UPDATE {self._table_sources} SET last_sync_time=? WHERE source_name=?",
             (now, source_name),
         )
         self.conn.commit()
@@ -251,8 +237,7 @@ class SqliteSyncTracker(AbstractSyncTracker):
         """
         cur = self.conn.cursor()
         cur.execute(
-            f"DELETE FROM {self._table_artifacts} "
-            "WHERE last_sync_time < ?",
+            f"DELETE FROM {self._table_artifacts} WHERE last_sync_time < ?",
             (before,),
         )
         self.conn.commit()
@@ -260,9 +245,7 @@ class SqliteSyncTracker(AbstractSyncTracker):
         return cur.rowcount
 
     @_retry()
-    def sync_history(
-        self, source_name: str
-    ) -> list[dict[str, Any]]:
+    def sync_history(self, source_name: str) -> list[dict[str, Any]]:
         """
         Return sync history for a given source.
 
