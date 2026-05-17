@@ -164,6 +164,8 @@ nav:
     - main_modules/09_abstract_chunk_embedder.md
     - main_modules/10_chunk_embedder_openai.md
     - main_modules/11_chunk_embedder_transformer.md
+  - Sync tracking:
+    - main_modules/13_sync_tracking.md
 
 - Contributing:
   - contributing/rules.md
